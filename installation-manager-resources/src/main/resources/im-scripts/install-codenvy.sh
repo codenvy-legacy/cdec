@@ -15,7 +15,6 @@ trap cleanUp EXIT
 unset HOST_NAME
 unset SYSTEM_ADMIN_NAME
 unset SYSTEM_ADMIN_PASSWORD
-unset PROGRESS_PID
 
 JDK_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
 JRE_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz
@@ -29,17 +28,24 @@ RUNNER_PORTS=("tcp:80" "tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
 BUILDER_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
 ANALYTICS_PORTS=("tcp:7777" "tcp:8080" "udp:5140" "tcp:9763" "tcp:10050" "tcp:32001" "tcp:32101");
 
+TIMER_PID=
+PRINTER_PID=
+
+STEP_LINE=
+PUPPET_LINE=
+PROGRESS_LINE=
+TIMER_LINE=
+
 function cleanUp() {
     killTimer
-
-    println
-    println
+    killPuppetInfoPrinter
 }
 
 validateExitCode() {
     EXIT_CODE=$1
     if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
         pauseTimer
+        pausePuppetInfoPrinter
         println
         println "Unexpected error occurred. See install.log for more details"
         exit ${EXIT_CODE}
@@ -150,11 +156,43 @@ installIm() {
 }
 
 clearLine() {
-    echo -en "\033[2K"                  # clear line
+    echo -en "\033[2K"
 }
 
 cursorUp() {
     echo -en "\e[1A"
+}
+
+cursorDown() {
+    echo -en "\e[1B"
+}
+
+cursorSave() {
+    echo -en "\e[s"
+}
+
+cursorRestore() {
+    echo -en "\e[u"
+}
+
+# $1 - line number
+cursorGotoLine() {
+    echo -en "\033[$1;1f"$2
+}
+
+# $1 - line number
+# $2,.. - messages
+updateLine() {
+    local lineNumber=$1
+
+    if [[ -n ${lineNumber} ]]; then
+        cursorSave
+        cursorGotoLine ${lineNumber}
+        clearLine
+        shift
+        println "$@"
+        cursorRestore
+    fi
 }
 
 # https://wiki.archlinux.org/index.php/Color_Bash_Prompt
@@ -171,6 +209,10 @@ printWarning() {
 }
 
 printImportantInfo() {
+    echo -en "\e[92m$1\e[0m" # with Underline GREEN color
+}
+
+printImportantLink() {
     echo -en "\e[94m$1\e[0m" # with High Intensity blue color
 }
 
@@ -369,7 +411,7 @@ doCheckAvailablePorts_multi() {
 printPreInstallInfo_single() {
     clear
 
-    println "Welcome. This program installs Codenvy "${VERSION}
+    println "Welcome. This program installs Codenvy ${VERSION}."
     println
     println "Sizing Guide:        http://docs.codenvy.com/onprem"
     println "Configuration File:  "${CONFIG}
@@ -392,8 +434,6 @@ printPreInstallInfo_single() {
     [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
 
     doCheckAvailablePorts_single
-    println
-    println
     println
 }
 
@@ -633,7 +673,7 @@ printPreInstallInfo_multi() {
     println
     checkAccessToExternalDependencies
     println
-    println
+
 }
 
 doCheckAvailableResourcesOnNodes() {
@@ -804,6 +844,10 @@ doDownloadBinaries() {
 
 doInstallCodenvy() {
     for ((STEP=1; STEP<=9; STEP++));  do
+        if [ ${STEP} == 8 ]; then
+            runPuppetInfoPrinter
+        fi
+
         if [ ${STEP} == 9 ]; then
             nextStep $(( $STEP+3 )) "Booting Codenvy... "
         else
@@ -823,21 +867,21 @@ doInstallCodenvy() {
 
     sleep 2
     pauseTimer
-    echo
+    pausePuppetInfoPrinter
 }
 
 nextStep() {
     pauseTimer
+    pausePuppetInfoPrinter
 
     CURRENT_STEP=$1
     shift
 
-    cursorUp
-    cursorUp
-    println "$@"
+    updateLine ${STEP_LINE} "$@"
     updateProgress ${CURRENT_STEP}
 
     continueTimer
+    continuePuppetInfoPrinter
 }
 
 initTimer() {
@@ -846,19 +890,25 @@ initTimer() {
 
 runTimer() {
     updateTimer &
-    PROGRESS_PID=$!
+    TIMER_PID=$!
 }
 
 killTimer() {
-    [ ! -z ${PROGRESS_PID} ] && kill -KILL ${PROGRESS_PID}
+    if [ -n "${TIMER_PID}" ]; then
+        kill -KILL ${TIMER_PID}
+    fi
 }
 
 continueTimer() {
-    [ ! -z ${PROGRESS_PID} ] && kill -SIGCONT ${PROGRESS_PID}
+    if [ -n "${TIMER_PID}" ]; then
+        kill -SIGCONT ${TIMER_PID}
+    fi
 }
 
 pauseTimer() {
-    [ ! -z ${PROGRESS_PID} ] && kill -SIGSTOP ${PROGRESS_PID}
+    if [ -n "${TIMER_PID}" ]; then
+        kill -SIGSTOP ${TIMER_PID}
+    fi
 }
 
 updateTimer() {
@@ -868,8 +918,7 @@ updateTimer() {
         M=$(( $DURATION/60 ))
         S=$(( $DURATION%60 ))
 
-        println "Elapsed time: "${M}"m "${S}"s"
-        cursorUp
+        updateLine ${TIMER_LINE} "Elapsed time: "${M}"m "${S}"s"
 
         sleep 1
     done
@@ -880,21 +929,68 @@ updateProgress() {
     LAST_STEP=14
     FACTOR=2
 
-    print "Full install ["
-    for ((i=1; i<=$CURRENT_STEP*$FACTOR; i++));  do
-       echo -n "="
+    local progress_number=$(( CURRENT_STEP*100/LAST_STEP ))
+
+    local progress_field=
+    for ((i=1; i<=CURRENT_STEP*FACTOR; i++));  do
+       progress_field="${progress_field}="
     done
-    for ((i=$CURRENT_STEP*$FACTOR+1; i<=$LAST_STEP*$FACTOR; i++));  do
-       echo -n " "
-    done
-    PROGRESS=$(( $CURRENT_STEP*100/$LAST_STEP ))
-    echo "] "${PROGRESS}"%"
+
+    progress_field=$(printf "[%-$(( LAST_STEP*FACTOR ))s]" ${progress_field})
+
+    local message="Full install ${progress_field} ${progress_number}%"
+
+    updateLine ${PROGRESS_LINE} "${message}"
 }
 
-printLastPuppetLogLine() {
-    local lastLine=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log)
+runPuppetInfoPrinter() {
+    PUPPET_LINE=$STEP_LINE
+    STEP_LINE=$(( STEP_LINE - 1 ))
 
+    updatePuppetInfo &
+    PRINTER_PID=$!
+}
 
+killPuppetInfoPrinter() {
+    if [ -n "${PRINTER_PID}" ]; then
+        kill -KILL ${PRINTER_PID}
+    fi
+}
+
+continuePuppetInfoPrinter() {
+    if [ -n "${PRINTER_PID}" ]; then
+        kill -SIGCONT ${PRINTER_PID}
+    fi
+}
+
+pausePuppetInfoPrinter() {
+    if [ -n "${PRINTER_PID}" ]; then
+        kill -SIGSTOP ${PRINTER_PID}
+    fi
+}
+
+initFooterPosition() {
+    println
+    println
+    println
+    println
+
+    echo -ne "\033[6n"                  # ask the terminal for the position
+    read -s -d\[ garbage                # discard the first part of the response
+    read -s -d R position               # store the position like "31;2" in bash variable 'position'
+    local currentLine="${position%;*}"  # extract line number
+
+    STEP_LINE=$(( currentLine - 3 ))
+    PROGRESS_LINE=$(( currentLine - 2 ))
+    TIMER_LINE=$(( currentLine -1 ))
+}
+
+updatePuppetInfo() {
+    for ((;;)); do
+        local line=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log 2>/dev/null)
+        updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:99}...]"     # print first 100 symbols of line
+        sleep 1
+    done
 }
 
 printPostInstallInfo() {
@@ -903,9 +999,9 @@ printPostInstallInfo() {
     [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
 
     println
-    println "Codenvy is ready at $(printImportantInfo "http://$HOST_NAME")"
+    println "Codenvy is ready at $(printImportantLink "http://$HOST_NAME")"
     println "Admin user name: $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
-    println "Admin password: $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
+    println "Admin password:  $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
     println
     println "!!! Your clients must add a hosts rule, or you can set up a DNS entry. Learn more:"
     println "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq"
@@ -914,6 +1010,8 @@ printPostInstallInfo() {
 set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
+
+initFooterPosition
 
 initTimer
 runTimer
