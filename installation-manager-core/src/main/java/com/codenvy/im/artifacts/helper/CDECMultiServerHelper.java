@@ -32,6 +32,7 @@ import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
+
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -641,7 +642,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoBackupPath.getParent()), dataNode));
+                                              remoteMongoBackupPath), dataNode));
         }
 
         // restore MONGO data at the ANALYTICS node from {temp_backup_directory}/mongo_analytics folder
@@ -661,7 +662,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSh
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoAnalyticsBackupPath.getParent()), analyticsNode));
+                                              remoteMongoAnalyticsBackupPath), analyticsNode));
         }
 
         // restore ANALYTICS_DATA at the ANALYTICS node from {backup_file}/analytics_data
