@@ -421,14 +421,15 @@ printPreInstallInfo_single() {
     println
 
     doCheckAvailableResourcesLocally 8000000 4 300000000
+
     preconfigureSystem
 
     println "Checking access to external dependencies..."
     println
+
     checkAccessToExternalDependencies
 
     println "Configuring system properties with file://${CONFIG}..."
-    println
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -542,7 +543,7 @@ doCheckAvailableResourcesLocally() {
 
         if [[ ${resourceIssueFound} == true ]]; then
             println $(printWarning "!!! The resources available are lower than recommended.")
-            println "!!!  Sizing Guide: http://docs.codenvy.com/onprem"
+            println $(printWarning "!!! Sizing Guide: http://docs.codenvy.com/onprem")
         fi
 
         println
@@ -663,12 +664,14 @@ printPreInstallInfo_multi() {
 
     println "Checking access to Codenvy nodes..."
     println
+
     doCheckAvailableResourcesOnNodes
 
     doCheckAvailablePorts_multi
 
     println "Checking access to external dependencies..."
     println
+
     checkAccessToExternalDependencies
     println
 
