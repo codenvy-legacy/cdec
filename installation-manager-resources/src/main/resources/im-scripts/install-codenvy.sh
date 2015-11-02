@@ -36,6 +36,8 @@ PUPPET_LINE=
 PROGRESS_LINE=
 TIMER_LINE=
 
+DEPENDENCIES_STATUS_OFFSET=100
+
 function cleanUp() {
     killTimer
     killPuppetInfoPrinter
@@ -175,23 +177,23 @@ cursorRestore() {
     echo -en "\e[u"
 }
 
-# $1 - line number
-cursorGotoLine() {
-    echo -en "\033[$1;1f"$2
-}
-
-# $1 - line number
-# $2,.. - messages
+# $1 - line number which is starting backward from 1 - the last bottom row.
+# $2, $3,.. - messages to display in line number $1
 updateLine() {
     local lineNumber=$1
 
     if [[ -n ${lineNumber} ]]; then
-        cursorSave
-        cursorGotoLine ${lineNumber}
+        for ((i=1; i<lineNumber+1; i++)); do
+            cursorUp
+        done
+
         clearLine
         shift
         println "$@"
-        cursorRestore
+
+        for ((i=1; i<lineNumber; i++)); do
+            cursorDown
+        done
     fi
 }
 
@@ -333,6 +335,7 @@ validatePortLocal() {
     OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
 
     if [ "${OUTPUT}" != "" ]; then
+        println
         println $(printError "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
         println $(printError "ERROR: The installation can't be proceeded.")
         exit 1
@@ -346,6 +349,7 @@ validatePortRemote() {
     OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
 
     if [ "${OUTPUT}" != "" ]; then
+        println
         println $(printError "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
         println $(printError "ERROR: The installation can't be proceeded.")
         exit 1
@@ -412,9 +416,6 @@ printPreInstallInfo_single() {
     clear
 
     println "Welcome. This program installs Codenvy ${VERSION}."
-    println
-    println "Sizing Guide:        http://docs.codenvy.com/onprem"
-    println "Configuration File:  "${CONFIG}
     println
     println "Checking system pre-requisites..."
     println
@@ -541,7 +542,7 @@ doCheckAvailableResourcesLocally() {
 
         if [[ ${resourceIssueFound} == true ]]; then
             println $(printWarning "!!! The resources available are lower than recommended.")
-            println $(printWarning "!!! Troubleshooting: http://docs.codenvy.com/onprem")
+            println "!!!  Sizing Guide: http://docs.codenvy.com/onprem"
         fi
 
         println
@@ -602,7 +603,7 @@ checkUrl() {
     fi
 
     local checkStatus=$([ ${checkFailed} == 0 ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
-    println "$(printf "%-79s" ${url}) ${checkStatus}"
+    println "$(printf "%-${DEPENDENCIES_STATUS_OFFSET}s" ${url}) ${checkStatus}"
 
     return ${checkFailed}
 }
@@ -610,10 +611,7 @@ checkUrl() {
 printPreInstallInfo_multi() {
     clear
 
-    println "Welcome. This program installs Codenvy "${VERSION}
-    println
-    println "Sizing Guide:        http://docs.codenvy.com/onprem"
-    println "Configuration File:  "${CONFIG}
+    println "Welcome. This program installs Codenvy ${VERSION}."
     println
     println "Checking system pre-requisites..."
     println
@@ -666,7 +664,7 @@ printPreInstallInfo_multi() {
     println "Checking access to Codenvy nodes..."
     println
     doCheckAvailableResourcesOnNodes
-    println
+
     doCheckAvailablePorts_multi
 
     println "Checking access to external dependencies..."
@@ -844,10 +842,6 @@ doDownloadBinaries() {
 
 doInstallCodenvy() {
     for ((STEP=1; STEP<=9; STEP++));  do
-        if [ ${STEP} == 8 ]; then
-            runPuppetInfoPrinter
-        fi
-
         if [ ${STEP} == 9 ]; then
             nextStep $(( $STEP+3 )) "Booting Codenvy... "
         else
@@ -912,6 +906,8 @@ pauseTimer() {
 }
 
 updateTimer() {
+    pausePuppetInfoPrinter
+
     for ((;;)); do
         END_TIME=`date +%s`
         DURATION=$(( $END_TIME-$START_TIME))
@@ -922,6 +918,8 @@ updateTimer() {
 
         sleep 1
     done
+
+    continuePuppetInfoPrinter
 }
 
 updateProgress() {
@@ -944,9 +942,6 @@ updateProgress() {
 }
 
 runPuppetInfoPrinter() {
-    PUPPET_LINE=$STEP_LINE
-    STEP_LINE=$(( STEP_LINE - 1 ))
-
     updatePuppetInfo &
     PRINTER_PID=$!
 }
@@ -969,28 +964,32 @@ pausePuppetInfoPrinter() {
     fi
 }
 
+# footer lines count descendently
 initFooterPosition() {
     println
     println
     println
-    println
 
-    echo -ne "\033[6n"                  # ask the terminal for the position
-    read -s -d\[ garbage                # discard the first part of the response
-    read -s -d R position               # store the position like "31;2" in bash variable 'position'
-    local currentLine="${position%;*}"  # extract line number
-
-    STEP_LINE=$(( currentLine - 3 ))
-    PROGRESS_LINE=$(( currentLine - 2 ))
-    TIMER_LINE=$(( currentLine -1 ))
+    STEP_LINE=4
+    PUPPET_LINE=3
+    PROGRESS_LINE=2
+    TIMER_LINE=1
 }
 
 updatePuppetInfo() {
+    pauseTimer
+
     for ((;;)); do
         local line=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log 2>/dev/null)
-        updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:99}...]"     # print first 100 symbols of line
+        if [[ -n "$line" ]]; then
+            updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:$(( ${DEPENDENCIES_STATUS_OFFSET}-8 ))}...]"     # print first (${DEPENDENCIES_STATUS_OFFSET}-7) symbols of line
+        else
+            updateLine ${PUPPET_LINE} ""
+        fi
         sleep 1
     done
+
+    continueTimer
 }
 
 printPostInstallInfo() {
@@ -999,9 +998,9 @@ printPostInstallInfo() {
     [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
 
     println
-    println "Codenvy is ready at $(printImportantLink "http://$HOST_NAME")"
-    println "Admin user name: $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
-    println "Admin password:  $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
+    println "Codenvy is ready: $(printImportantLink "http://$HOST_NAME")."
+    println "Admin user name:  $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
+    println "Admin password:   $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
     println
     println "!!! Your clients must add a hosts rule, or you can set up a DNS entry. Learn more:"
     println "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq"
@@ -1015,6 +1014,8 @@ initFooterPosition
 
 initTimer
 runTimer
+
+runPuppetInfoPrinter
 
 doConfigureSystem
 doInstallPackages
