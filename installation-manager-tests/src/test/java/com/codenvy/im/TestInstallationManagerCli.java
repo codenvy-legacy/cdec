@@ -120,7 +120,7 @@ public class TestInstallationManagerCli {
         doTest("test-backup-restore-single-node.sh");
     }
 
-    @Test
+    @Test(priority = 10)
     public void testBackupRestoreMultiNodes() throws Exception {
         doTest("test-backup-restore-multi-nodes.sh");
     }
@@ -145,7 +145,7 @@ public class TestInstallationManagerCli {
         doTest("im-config/test-config-check-im-config.sh");
     }
 
-    @Test
+    @Test(priority = 10)
     public void testMigrationData() throws Exception {
         doTest("test-migration-data.sh");
     }
