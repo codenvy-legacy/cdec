@@ -597,9 +597,9 @@ checkUrl() {
     local cookie=$2
 
     if [[ ${cookie} == "" ]]; then
-        wget --timeout=5 --tries=5 --quiet --spider ${url} || checkFailed=1
+        wget --timeout=10 --tries=5 --quiet --spider ${url} || checkFailed=1
     else
-        wget --timeout=5 --tries=5 --quiet --spider --no-cookies --no-check-certificate --header "${cookie}" ${url} || checkFailed=1
+        wget --timeout=10 --tries=5 --quiet --spider --no-cookies --no-check-certificate --header "${cookie}" ${url} || checkFailed=1
     fi
 
     local checkStatus=$([ ${checkFailed} == 0 ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
