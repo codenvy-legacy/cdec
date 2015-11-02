@@ -36,7 +36,7 @@ PUPPET_LINE=
 PROGRESS_LINE=
 TIMER_LINE=
 
-DEPENDENCIES_STATUS_OFFSET=100
+DEPENDENCIES_STATUS_OFFSET=90
 
 function cleanUp() {
     killTimer
@@ -45,7 +45,7 @@ function cleanUp() {
 
 validateExitCode() {
     EXIT_CODE=$1
-    if [[ ! -z ${EXIT_CODE} ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
+    if [[ -n "${EXIT_CODE}" ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
         pauseTimer
         pausePuppetInfoPrinter
         println
@@ -121,8 +121,15 @@ validateOS() {
 
 # $1 - command name
 installPackageIfNeed() {
+    local exitCode
     rpm -qa | grep "^$1-" &> /dev/null || { # check if requered package had been already installed earlier
-        sudo yum install $1 -y -q
+        echo -n "Install package '$1'... " >> install.log
+
+        exitCode=$(sudo yum install $1 -y -q --errorlevel=0 >> install.log 2>&1; echo $?)
+
+        validateExitCode ${exitCode}
+
+        echo " [OK]" >> install.log
     }
 }
 
@@ -137,12 +144,20 @@ preconfigureSystem() {
 }
 
 installJava() {
-    wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz
+    local exitCode
+    echo -n "Install java package from '${JRE_URL}' into the directory '${DIR}/jre' ... " >> install.log
 
-    tar -xf jre.tar.gz -C ${DIR}
-    mv ${DIR}/jre1.8.0_45 ${DIR}/jre
+    exitCode=$(wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz >> install.log 2>&1; echo $?)
+    validateExitCode ${exitCode}
 
-    rm jre.tar.gz
+    exitCode=$(tar -xf jre.tar.gz -C ${DIR} >> install.log 2>&1; echo $?)
+    validateExitCode ${exitCode}
+
+    rm -fr ${DIR}/jre >> install.log 2>&1
+    mv -f ${DIR}/jre1.8.0_45 ${DIR}/jre >> install.log 2>&1
+    rm jre.tar.gz >> install.log 2>&1
+
+    echo " [OK]" >> install.log
 }
 
 installIm() {
@@ -335,7 +350,6 @@ validatePortLocal() {
     OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
 
     if [ "${OUTPUT}" != "" ]; then
-        println
         println $(printError "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
         println $(printError "ERROR: The installation can't be proceeded.")
         exit 1
@@ -349,7 +363,6 @@ validatePortRemote() {
     OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
 
     if [ "${OUTPUT}" != "" ]; then
-        println
         println $(printError "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
         println $(printError "ERROR: The installation can't be proceeded.")
         exit 1
@@ -430,13 +443,13 @@ printPreInstallInfo_single() {
     checkAccessToExternalDependencies
 
     println "Configuring system properties with file://${CONFIG}..."
+    println
 
     [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
     [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
 
     doCheckAvailablePorts_single
-    println
 }
 
 # parameter 1 - MIN_RAM_KB
@@ -673,8 +686,6 @@ printPreInstallInfo_multi() {
     println
 
     checkAccessToExternalDependencies
-    println
-
 }
 
 doCheckAvailableResourcesOnNodes() {
@@ -789,6 +800,8 @@ doCheckAvailableResourcesOnNodes() {
             println "$(printf "%-43s" "${HOST}" && printSuccess "[OK]")"
         fi
     done
+
+    println
 
     if [[ ${globalNodeIssueFound} == true ]]; then
         println $(printWarning "!!! Some nodes do not match recommended.")
@@ -969,6 +982,7 @@ pausePuppetInfoPrinter() {
 
 # footer lines count descendently
 initFooterPosition() {
+    println
     println
     println
     println
