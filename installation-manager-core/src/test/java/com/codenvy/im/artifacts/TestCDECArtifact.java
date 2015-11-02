@@ -641,6 +641,18 @@ public class TestCDECArtifact extends BaseTest {
 
     }
 
+    @Test
+    public void shouldBeAlive() {
+        doReturn(true).when(spyCdecArtifact).isApiServiceAlive();
+        assertTrue(spyCdecArtifact.isAlive());
+    }
+
+    @Test
+    public void shouldNotBeAlive() {
+        doReturn(false).when(spyCdecArtifact).isApiServiceAlive();
+        assertFalse(spyCdecArtifact.isAlive());
+    }
+
     @AfterMethod
     public void removeTempDir() throws IOException {
         FileUtils.deleteDirectory(new File(BASE_TMP_DIR));

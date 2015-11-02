@@ -72,6 +72,11 @@ public interface Artifact extends Comparable<Artifact> {
      */
     boolean isInstallable(Version versionToInstall) throws IOException;
 
+    /**
+     * @return true if given artifact is alive, that is active at the time of verification
+     */
+    boolean isAlive();
+
     /** @return properties stored at update server */
     Map<String, String> getProperties(Version version) throws IOException;
 

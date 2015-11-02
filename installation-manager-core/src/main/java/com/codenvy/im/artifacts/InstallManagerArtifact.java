@@ -167,6 +167,11 @@ public class InstallManagerArtifact extends AbstractArtifact {
         throw new UnsupportedOperationException("Re-install of installation manager CLI client isn't supported");
     }
 
+    @Override
+    public boolean isAlive() {
+        return true;
+    }
+
     /** @return path where artifact located */
     protected Path getInstalledPath() throws URISyntaxException {
         URL location = getClass().getProtectionDomain().getCodeSource().getLocation();

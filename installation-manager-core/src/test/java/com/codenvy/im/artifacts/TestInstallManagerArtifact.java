@@ -132,4 +132,9 @@ public class TestInstallManagerArtifact {
     public void testGetReinstallCodenvyCommandSingleServer() throws IOException {
         imArtifact.getReinstallCommand();
     }
+
+    @Test
+    public void shouldBeAlive() {
+        assertTrue(imArtifact.isAlive());
+    }
 }

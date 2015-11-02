@@ -229,6 +229,11 @@ public class CDECArtifact extends AbstractArtifact {
         return getHelper(installType).getReinstallCommand(config, installedVersion.get());
     }
 
+    @Override
+    public boolean isAlive() {
+        return isApiServiceAlive();
+    }
+
     protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
     }

@@ -263,6 +263,10 @@ public class TestAbstractArtifact extends BaseTest {
             return null;
         }
 
+        @Override public boolean isAlive() {
+            throw new UnsupportedOperationException();
+        }
+
         @Override
         public Command getBackupCommand(BackupConfig backupConfig) throws IOException {
             return null;
