@@ -120,11 +120,6 @@ public class TestInstallationManagerCli {
         doTest("test-backup-restore-single-node.sh");
     }
 
-    @Test(priority = 10)
-    public void testBackupRestoreMultiNodes() throws Exception {
-        doTest("test-backup-restore-multi-nodes.sh");
-    }
-
     @Test
     public void testLoginWithUsernameAndPassword() throws Exception {
         doTest("im-login/test-login.sh");
@@ -145,8 +140,15 @@ public class TestInstallationManagerCli {
         doTest("im-config/test-config-check-im-config.sh");
     }
 
-    @Test(priority = 10)
-    public void testMigrationData() throws Exception {
+    /** set name with "_" to execute this test as the latest */
+    @Test
+    public void test_BackupRestoreMultiNodes() throws Exception {
+        doTest("test-backup-restore-multi-nodes.sh");
+    }
+
+    /** set name with "_" to execute this test as the latest */
+    @Test
+    public void test_MigrationData() throws Exception {
         doTest("test-migration-data.sh");
     }
 
