@@ -19,7 +19,7 @@ package com.codenvy.im.managers;
 
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.CheckInstalledVersionCommand;
+import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.MacroCommand;
@@ -68,12 +68,6 @@ public class NodeManager {
         String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
         addingNode.setUser(nodeSshUser);
 
-        // check if Codenvy is alive
-        Optional<Version> installedVersion = cdecArtifact.getInstalledVersion();
-        if (!installedVersion.isPresent()) {
-            throw new IllegalStateException("It is impossible to define installed version.");  // TODO [ndp] check is Codenvy alive
-        }
-
         String property = nodesConfigUtil.getPropertyNameBy(addingNode.getType());
         if (property == null) {
             throw new IllegalArgumentException("This type of node isn't supported");
@@ -81,7 +75,7 @@ public class NodeManager {
 
         validate(addingNode);
 
-        Command addNodeCommand = getAddNodeCommand(installedVersion.get(), property, nodesConfigUtil, addingNode, config);
+        Command addNodeCommand = getAddNodeCommand(property, nodesConfigUtil, addingNode, config);
         addNodeCommand.execute();
 
         return addingNode;
@@ -90,8 +84,7 @@ public class NodeManager {
     /**
      * @return commands to add node into puppet master config and wait until node becomes alive
      */
-    protected Command getAddNodeCommand(Version currentCodenvyVersion,
-                                        String property,
+    protected Command getAddNodeCommand(String property,
                                         AdditionalNodesConfigUtil nodesConfigUtil,
                                         NodeConfig node, Config config) throws NodeException {
         List<Command> commands = new ArrayList<>();
@@ -171,7 +164,7 @@ public class NodeManager {
                                        apiNode));
 
             // wait until API server restarts
-            commands.add(new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion));
+            commands.add(new WaitOnAliveCodenvyCommand(cdecArtifact));
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
@@ -191,9 +184,6 @@ public class NodeManager {
         Config config = getCodenvyConfig(configManager);
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
 
-        // check if Codenvy is alive
-        Version currentCodenvyVersion = cdecArtifact.getInstalledVersion().get();
-
         NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeFromConfigBy(dns);
         if (nodeType == null) {
             throw new NodeException(format("Node '%s' is not found in Codenvy configuration among additional nodes", dns));
@@ -207,7 +197,7 @@ public class NodeManager {
         String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
         NodeConfig removingNode = new NodeConfig(nodeType, dns, nodeSshUser);
 
-        Command command = getRemoveNodeCommand(removingNode, config, nodesConfigUtil, currentCodenvyVersion, property);
+        Command command = getRemoveNodeCommand(removingNode, config, nodesConfigUtil, property);
         command.execute();
 
         return removingNode;
@@ -216,7 +206,6 @@ public class NodeManager {
     protected Command getRemoveNodeCommand(NodeConfig node,
                                            Config config,
                                            AdditionalNodesConfigUtil nodesConfigUtil,
-                                           Version currentCodenvyVersion,
                                            String property) throws NodeException {
         try {
             String value = nodesConfigUtil.getValueWithoutNode(node);
@@ -243,7 +232,7 @@ public class NodeManager {
                               apiNode),
 
                 // wait until API server restarts
-                new CheckInstalledVersionCommand(cdecArtifact, currentCodenvyVersion),
+                new WaitOnAliveCodenvyCommand(cdecArtifact),
 
                 // remove out-date puppet agent's certificate
                 createCommand(format("sudo puppet cert clean %s", node.getHost())),

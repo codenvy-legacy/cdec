@@ -19,12 +19,8 @@ package com.codenvy.im.commands;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.utils.Version;
-
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
-
-import java.util.Optional;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -34,27 +30,27 @@ import static org.mockito.Mockito.verify;
 import static org.testng.AssertJUnit.assertNotNull;
 
 /**
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-public class TestCheckInstalledVersionCommand {
+public class TestWaitUntilCodenvyBecomesAliveCommand {
 
-    private Artifact                     artifact;
-    private CheckInstalledVersionCommand command;
+    private Artifact                            artifact;
+    private WaitOnAliveCodenvyCommand command;
 
     @BeforeTest
     public void setUp() throws Exception {
         artifact = mock(CDECArtifact.class);
-        command = spy(new CheckInstalledVersionCommand(artifact, Version.valueOf("3.3.0")));
+        command = spy(new WaitOnAliveCodenvyCommand(artifact));
     }
 
     @Test
     public void testExecute() throws Exception {
-        doReturn(Optional.of(Version.valueOf("3.1.0")))
-            .doReturn(Optional.of(Version.valueOf("3.3.0")))
-            .when(artifact).getInstalledVersion();
+        doReturn(false)
+            .doReturn(true)
+            .when(artifact).isAlive();
         command.execute();
 
-        verify(command, times(2)).checkExpectedVersion();
+        verify(artifact, times(2)).isAlive();
     }
 
     @Test

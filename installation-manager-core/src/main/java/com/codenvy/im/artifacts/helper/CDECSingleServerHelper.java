@@ -19,6 +19,7 @@ package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.CheckInstalledVersionCommand;
+import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
@@ -40,7 +41,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createFileRestoreOrBackupCommand;
@@ -211,7 +211,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new PuppetErrorInterrupter(command, configManager);
 
             case 8:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToInstall), configManager);
+                return new PuppetErrorInterrupter(new WaitOnAliveCodenvyCommand(original), configManager);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -341,10 +341,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server starts
-        Optional<Version> installedVersion = original.getInstalledVersion();  // TODO
-        if (installedVersion.isPresent()) {
-            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
-        }
+        commands.add(new WaitOnAliveCodenvyCommand(original));
 
         // remove temp dir
         commands.add(createCommand(format("rm -rf %s", tempDir)));
@@ -432,10 +429,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server restarts
-        Optional<Version> installedVersion = original.getInstalledVersion();
-        if (installedVersion.isPresent()) {
-            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
-        }
+        commands.add(new WaitOnAliveCodenvyCommand(original));
 
         // remove temp dir
         commands.add(createCommand(format("rm -rf %s", tempDir)));
@@ -467,10 +461,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createForcePuppetAgentCommand());
 
         // wait until API server restarts
-        Optional<Version> installedVersion = original.getInstalledVersion();
-        if (installedVersion.isPresent()) {
-            commands.add(new CheckInstalledVersionCommand(original, installedVersion.get()));
-        }
+        commands.add(new WaitOnAliveCodenvyCommand(original));
 
         return new MacroCommand(commands, "Change config commands");
     }
@@ -495,10 +486,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         // force applying puppet config for puppet agent
         commands.add(createForcePuppetAgentCommand());
 
-        if (installedVersion != null) {
-            // wait until API server starts
-            commands.add(new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, installedVersion), configManager));
-        }
+        // wait until API server starts
+        commands.add(new PuppetErrorInterrupter(new WaitOnAliveCodenvyCommand(original), configManager));
 
         return new MacroCommand(commands, "Re-install Codenvy binaries");
     }

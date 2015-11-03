@@ -77,7 +77,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Optional<Version> getInstalledVersion() throws IOException {
-        return getInstalledVersion(true);
+        return getInstalledVersion(true);  // TODO [ndp] there should be getInstalledVersion(false)
     }
 
     /**
@@ -243,9 +243,9 @@ public class CDECArtifact extends AbstractArtifact {
      * @return installed version or null if it could not be defined, or if there was UnknownInstallationTypeException thrown
      * @throws IOException
      */
-    private Optional<Version> getInstalledVersion(boolean returnEmptyOnDeadApiServer) throws IOException {
+    private Optional<Version> getInstalledVersion(boolean returnEmptyOnDeadApiServer) throws IOException {    // TODO [ndp] remove parameter "returnEmptyOnDeadApiServer"
         try {
-            if (!isApiServiceAlive() && returnEmptyOnDeadApiServer) {
+            if (!isApiServiceAlive() && returnEmptyOnDeadApiServer) {   // TODO [ndp] remove this verification
                 return Optional.empty();
             }
 

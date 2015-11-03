@@ -36,7 +36,7 @@ PUPPET_LINE=
 PROGRESS_LINE=
 TIMER_LINE=
 
-DEPENDENCIES_STATUS_OFFSET=90
+DEPENDENCIES_STATUS_OFFSET=85  # fit screen width = 100 cols
 
 function cleanUp() {
     killTimer

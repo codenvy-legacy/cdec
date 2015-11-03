@@ -28,7 +28,6 @@ import com.codenvy.im.utils.Version;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -97,7 +96,7 @@ public class TestNodeManager extends BaseTest {
         doNothing().when(spyManager).validate(TEST_NODE);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
         doReturn(mockCommand).when(spyManager)
-                             .getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
+                             .getAddNodeCommand(ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
 
         assertEquals(spyManager.add(TEST_NODE_DNS), TEST_NODE);
         verify(mockCommand).execute();
@@ -124,7 +123,7 @@ public class TestNodeManager extends BaseTest {
     @Test
     public void testGetAddNodeCommand() throws Exception {
         prepareMultiNodeEnv(configManager);
-        Command result = spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
+        Command result = spyManager.getAddNodeCommand(ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
         assertNotNull(result);
         assertTrue(result instanceof MacroCommand);
 
@@ -155,7 +154,7 @@ public class TestNodeManager extends BaseTest {
         assertEquals(commands.get(11).toString(), format("{'command'='doneState=\"Installing\"; testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; while [ \"${doneState}\" != \"Installed\" ]; do     if sudo test -f ${testFile}; then doneState=\"Installed\"; fi;     sleep 30; done', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(12).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(13).toString(), format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
-        assertEquals(commands.get(14).toString(), "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'");
+        assertEquals(commands.get(14).toString(), "Wait until artifact 'mockCdecArtifact' becomes alive");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
@@ -164,7 +163,7 @@ public class TestNodeManager extends BaseTest {
         prepareMultiNodeEnv(configManager);
         doThrow(new IllegalArgumentException("error")).when(mockNodesConfigUtil).getValueWithNode(TEST_NODE);
 
-        spyManager.getAddNodeCommand(TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
+        spyManager.getAddNodeCommand(ADDITIONAL_RUNNERS_PROPERTY_NAME, mockNodesConfigUtil, TEST_NODE, config);
     }
 
     @Test
@@ -172,7 +171,7 @@ public class TestNodeManager extends BaseTest {
         prepareMultiNodeEnv(configManager);
         doReturn(TEST_NODE_TYPE).when(mockNodesConfigUtil).recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
         doReturn(mockCommand).when(spyManager)
-                             .getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+                             .getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, ADDITIONAL_RUNNERS_PROPERTY_NAME);
         doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
@@ -184,7 +183,7 @@ public class TestNodeManager extends BaseTest {
     public void testRemoveNonExistsNodeError() throws Exception {
         prepareMultiNodeEnv(configManager);
         doReturn(mockCommand).when(spyManager)
-                             .getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+                             .getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, ADDITIONAL_RUNNERS_PROPERTY_NAME);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
         verify(mockCommand).execute();
@@ -201,7 +200,7 @@ public class TestNodeManager extends BaseTest {
     public void testGetRemoveNodeCommand() throws Exception {
         prepareMultiNodeEnv(configManager);
         Command removeNodeCommand =
-                spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+                spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, ADDITIONAL_RUNNERS_PROPERTY_NAME);
 
         List<Command> commands = ((MacroCommand) removeNodeCommand).getCommands();
         assertEquals(commands.size(), 9);
@@ -218,7 +217,7 @@ public class TestNodeManager extends BaseTest {
                      "&& sudo mv tmp.tmp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp', 'agent'='LocalAgent'}");
         assertEquals(commands.get(2).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(3).toString(), format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"localhost\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='127.0.0.1', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
-        assertEquals(commands.get(4).toString(), "Expected to be installed 'mockCdecArtifact' of the version '1.0.0'");
+        assertEquals(commands.get(4).toString(), "Wait until artifact 'mockCdecArtifact' becomes alive");
         assertEquals(commands.get(5).toString(), "{'command'='sudo puppet cert clean localhost', 'agent'='LocalAgent'}");
         assertEquals(commands.get(6).toString(), "{'command'='sudo service puppetmaster restart', 'agent'='LocalAgent'}");
         assertEquals(commands.get(7).toString(), format("{'command'='sudo service puppet stop', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
@@ -232,7 +231,7 @@ public class TestNodeManager extends BaseTest {
         doThrow(new IllegalArgumentException("error")).when(config)
                                                       .getValue(NodeConfig.NodeType.API.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
 
-        spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, TEST_VERSION, ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        spyManager.getRemoveNodeCommand(TEST_NODE, config, mockNodesConfigUtil, ADDITIONAL_RUNNERS_PROPERTY_NAME);
     }
 
     @Test

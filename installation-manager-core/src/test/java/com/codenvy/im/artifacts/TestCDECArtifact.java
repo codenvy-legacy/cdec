@@ -548,7 +548,7 @@ public class TestCDECArtifact extends BaseTest {
                      "| sed 's|~n|\\n|g' > tmp.tmp " +
                      "&& sudo mv tmp.tmp /etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}");
         assertEquals(commands.get(4).toString(), "{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(5).toString(), "Expected to be installed 'codenvy' of the version '1.0.0'");
+        assertEquals(commands.get(5).toString(), "Wait until artifact 'codenvy' becomes alive");
     }
 
     @Test
@@ -589,7 +589,7 @@ public class TestCDECArtifact extends BaseTest {
                      "&& sudo mv tmp.tmp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}");
         assertEquals(commands.get(4).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='data.dev.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(5).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='api.dev.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
-        assertEquals(commands.get(6).toString(), "Expected to be installed 'codenvy' of the version '1.0.0'");
+        assertEquals(commands.get(6).toString(), "Wait until artifact 'codenvy' becomes alive");
     }
 
     @Test
@@ -609,7 +609,7 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(1).toString(), "{'command'='sudo rm -rf /home/codenvy-im/archives', 'agent'='LocalAgent'}");
         assertEquals(commands.get(2).toString(), "{'command'='/bin/systemctl status codenvy.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop codenvy.service; fi; ', 'agent'='LocalAgent'}");
         assertEquals(commands.get(3).toString(), "{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(4).toString(), "PuppetErrorInterrupter{ Expected to be installed 'codenvy' of the version '1.0.0' }; looking on errors in file /var/log/puppet/puppet-agent.log locally");
+        assertEquals(commands.get(4).toString(), "PuppetErrorInterrupter{ Wait until artifact 'codenvy' becomes alive }; looking on errors in file /var/log/puppet/puppet-agent.log locally");
     }
 
     @Test
@@ -636,7 +636,7 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(3).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='api.dev.com', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(4).toString(), "{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='LocalAgent'}");
 
-        assertEquals(commands.get(5).toString(), format("PuppetErrorInterrupter{ Expected to be installed 'codenvy' of the version '1.0.0' }; looking on errors in file /var/log/puppet/puppet-agent.log locally and at the nodes: [" +
+        assertEquals(commands.get(5).toString(), format("PuppetErrorInterrupter{ Wait until artifact 'codenvy' becomes alive }; looking on errors in file /var/log/puppet/puppet-agent.log locally and at the nodes: [" +
                                                         "{'host':'api.dev.com', 'port':'22', 'user':'%1$s', 'privateKeyFile':'~/.ssh/id_rsa', 'type':'API'}]", SYSTEM_USER_NAME));
 
     }

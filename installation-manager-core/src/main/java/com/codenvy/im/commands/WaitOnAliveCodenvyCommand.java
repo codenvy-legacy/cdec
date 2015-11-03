@@ -18,31 +18,26 @@
 package com.codenvy.im.commands;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.utils.Version;
 
-import java.io.IOException;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
 
 /**
- * Command runs until expected version is installed.
+ * Command is running until Codenvy becomes alive.
  *
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-public class CheckInstalledVersionCommand implements Command {
-    public static final int CHECK_VERSION_TIMEOUT_MILLIS = 500;
+public class WaitOnAliveCodenvyCommand implements Command {
+    public static final int TIMEOUT_MILLIS = 500;
     private final Artifact artifact;
-    private final Version expectedVersion;
 
-    private static final Logger LOG = Logger.getLogger(CheckInstalledVersionCommand.class.getSimpleName());
+    private static final Logger LOG = Logger.getLogger(WaitOnAliveCodenvyCommand.class.getSimpleName());
 
 
-    public CheckInstalledVersionCommand(Artifact artifact, Version expectedVersion) {
+    public WaitOnAliveCodenvyCommand(Artifact artifact) {
         this.artifact = artifact;
-        this.expectedVersion = expectedVersion;
     }
 
     /** {@inheritDoc} */
@@ -51,16 +46,12 @@ public class CheckInstalledVersionCommand implements Command {
         LOG.log(Level.INFO, toString());
 
         for (; ; ) {
-            try {
-                if (checkExpectedVersion()) {
-                    break;
-                }
-            } catch (IOException e) {
-                // ignore because it is correct exception until Codenvy API server starts
+            if (artifact.isAlive()) {
+                break;
             }
 
             try {
-                Thread.sleep(CHECK_VERSION_TIMEOUT_MILLIS);
+                Thread.sleep(TIMEOUT_MILLIS);
             } catch (InterruptedException e) {
                 // ignore to allow being successful interrupted by PuppetErrorInterrupter
                 break;
@@ -68,15 +59,6 @@ public class CheckInstalledVersionCommand implements Command {
         }
 
         return null;
-    }
-
-    protected boolean checkExpectedVersion() throws IOException {
-        Optional<Version> installedVersion = artifact.getInstalledVersion();  // TODO [ndp] check on codenvy alive before
-        if (!installedVersion.isPresent()) {
-            return false;
-        }
-
-        return expectedVersion.equals(installedVersion.get());
     }
 
     /** {@inheritDoc} */
@@ -88,7 +70,7 @@ public class CheckInstalledVersionCommand implements Command {
     /** {@inheritDoc} */
     @Override
     public String toString() {
-        return format("Expected to be installed '%s' of the version '%s'", artifact, expectedVersion);
+        return format("Wait until artifact '%s' becomes alive", artifact);
     }
 
 }
