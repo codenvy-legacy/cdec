@@ -26,6 +26,7 @@ validateInstalledCodenvyVersion
 
 # add runner
 executeIMCommand "im-add-node" "runner2.codenvy"
+sleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/runner/server?token=${TOKEN}"
@@ -33,6 +34,7 @@ validateExpectedString ".*http://runner2.codenvy:8080/runner/internal/runner.*"
 
 # add builder
 executeIMCommand "im-add-node" "builder2.codenvy"
+sleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/builder/server?token=${TOKEN}"
@@ -42,7 +44,7 @@ validateExpectedString ".*http://builder2.codenvy:8080/builder/internal/builder.
 executeIMCommand "--valid-exit-code=1" "im-add-node" "bla-bla-bla"
 validateExpectedString ".*Correct.name.template.is...prefix..number..base_node_domain.*"
 
-# Host is not reachiable
+# Host is not reachable
 executeIMCommand "--valid-exit-code=1" "im-add-node" "builder3.codenvy"
 validateExpectedString ".*Can.t.connect.to.host..vagrant@builder3.codenvy:22.*"
 
@@ -52,6 +54,7 @@ validateExpectedString ".*Node..runner2.codenvy..has.been.already.used.*"
 
 # remove runner
 executeIMCommand "im-remove-node" "runner2.codenvy"
+sleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/runner/server?token=${TOKEN}"
