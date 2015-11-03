@@ -639,10 +639,11 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), dataNode));
 
-            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSH
+            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",
+                                              // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoBackupPath), dataNode));
+                                              remoteMongoBackupPath.getParent()), dataNode));
         }
 
         // restore MONGO data at the ANALYTICS node from {temp_backup_directory}/mongo_analytics folder
@@ -662,7 +663,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSh
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoAnalyticsBackupPath), analyticsNode));
+                                              remoteMongoAnalyticsBackupPath.getParent()), analyticsNode));
         }
 
         // restore ANALYTICS_DATA at the ANALYTICS node from {backup_file}/analytics_data
