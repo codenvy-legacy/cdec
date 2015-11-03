@@ -31,7 +31,7 @@ executeIMCommand "im-backup"
 fetchJsonParameter "file"
 BACKUP_AT_START=${OUTPUT}
 
-# modify data: add accout, workspace, project, user, factory
+# modify data: add account, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 

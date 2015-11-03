@@ -31,11 +31,11 @@ printAndLog() {
 
 logStartCommand() {
     log
-    log "================== COMMAND STARTED: "$@
+    log "[ "`date`" ] COMMAND STARTED: "$@
 }
 
 logEndCommand() {
-    log "================== COMMAND COMPLETED: "$@
+    log "================================ COMMAND COMPLETED: "$@\
     log
 }
 
@@ -311,7 +311,7 @@ createDefaultFactory() {
 }
 
 validateExpectedString() {
-    logStartCommand "validateRegex "${OUTPUT}" =~ "$@
+    logStartCommand "validateRegex "$@
 
     [[ ${OUTPUT} =~ $1 ]] || validateExitCode 1
 
@@ -319,7 +319,7 @@ validateExpectedString() {
 }
 
 validateErrorString() {
-    logStartCommand "validateErrorRegex "${OUTPUT}" =~ "$@
+    logStartCommand "validateErrorRegex "$@
 
     [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
 

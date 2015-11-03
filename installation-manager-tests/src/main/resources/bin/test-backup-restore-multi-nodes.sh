@@ -29,9 +29,9 @@ auth "admin" "password"
 # backup
 executeIMCommand "im-backup"
 fetchJsonParameter "file"
-BACKUP=${OUTPUT}
+BACKUP_AT_START=${OUTPUT}
 
-# modify data: add accout, workspace, project, user, factory
+# modify data: add account, workspace, project, user, factory
 executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
@@ -59,7 +59,7 @@ createDefaultFactory ${TOKEN}
 fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
-# set date on tomorrow (repeate 3 times for sure)
+# set date on tomorrow (repeat 3 times for sure)
 executeSshCommand "sudo service puppet stop" "analytics.codenvy"   # stop puppet which ensures that ntpd service is alive"
 executeSshCommand "sudo service ntpd stop" "analytics.codenvy"
 TOMORROW_DATE=$(LC_TIME="uk_US.UTF-8" date -d '1 day')
@@ -79,8 +79,13 @@ validateExpectedString ".*\"value\"\:\"1\".*"
 
 executeSshCommand "sudo service puppet start" "analytics.codenvy"
 
-# restore
-executeIMCommand "im-restore" ${BACKUP}
+# backup with modifications
+executeIMCommand "im-backup"
+fetchJsonParameter "file"
+BACKUP_WITH_MODIFICATIONS=${OUTPUT}
+
+# restore initial state
+executeIMCommand "im-restore" ${BACKUP_AT_START}
 
 # check data
 auth "admin" "password"
@@ -100,9 +105,34 @@ validateExpectedString ".*User.*not.found.*"
 doGet "http://codenvy/api/factory/${FACTORY_ID}?token=${TOKEN}"
 validateExpectedString ".*Factory.*not.found.*"
 
-# check analytics: request users profiles  = 0
 doGet "http://codenvy/api/analytics/metric/users_profiles?token=${TOKEN}"
 validateExpectedString ".*\"value\"\:\"0\".*"
+
+# restore state after modifications
+executeIMCommand "im-restore" ${BACKUP_WITH_MODIFICATIONS}
+
+# check if modified data was restored correctly
+auth "admin" "new-password"
+
+doGet "http://codenvy/api/account/${ACCOUNT_ID}?token=${TOKEN}"
+validateExpectedString ".*account-1.*"
+
+doGet "http://codenvy/api/project/${WORKSPACE_ID}?token=${TOKEN}"
+validateExpectedString ".*project-1.*"
+
+doGet "http://codenvy/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
+validateExpectedString ".*workspace-1.*"
+
+doGet "http://codenvy/api/user/${USER_ID}?token=${TOKEN}"
+validateExpectedString ".*user-1.*"
+
+doGet "http://codenvy/api/factory/${FACTORY_ID}?token=${TOKEN}"
+validateExpectedString ".*\"name\"\:\"my-minimalistic-factory\".*"
+
+doGet "http://codenvy/api/analytics/metric/users_profiles?token=${TOKEN}"
+validateExpectedString ".*\"value\"\:\"1\".*"
+
+authOnSite "user-1" "pwd123ABC"
 
 # update
 executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
@@ -110,7 +140,7 @@ executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
 validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
 
 # restore
-executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP}
+executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP_AT_START}
 validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"
