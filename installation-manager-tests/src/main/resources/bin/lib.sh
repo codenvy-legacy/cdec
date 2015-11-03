@@ -311,7 +311,7 @@ createDefaultFactory() {
 }
 
 validateExpectedString() {
-    logStartCommand "validateRegex "$@
+    logStartCommand "validateRegex "${OUTPUT}" =~ "$@
 
     [[ ${OUTPUT} =~ $1 ]] || validateExitCode 1
 
@@ -319,7 +319,7 @@ validateExpectedString() {
 }
 
 validateErrorString() {
-    logStartCommand "validateRegex "$@
+    logStartCommand "validateErrorRegex "${OUTPUT}" =~ "$@
 
     [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
 
