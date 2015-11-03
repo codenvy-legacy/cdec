@@ -135,16 +135,15 @@ public class TestInstallationManagerCli {
         doTest("im-config/test-config-check-im-config.sh");
     }
 
-    /** set name with "_" to execute this test as the latest */
-    @Test
-    public void test_BackupRestoreMultiNodes() throws Exception {
-        doTest("test-backup-restore-multi-nodes.sh");
+
+    @Test(priority = 9)
+    public void testMigrationData() throws Exception {
+        doTest("test-migration-data.sh");
     }
 
-    /** set name with "_" to execute this test as the latest */
-    @Test
-    public void test_MigrationData() throws Exception {
-        doTest("test-migration-data.sh");
+    @Test(priority = 10)
+    public void testBackupRestoreMultiNodes() throws Exception {
+        doTest("test-backup-restore-multi-nodes.sh");
     }
 
     private void doTest(String testScript) throws Exception {
