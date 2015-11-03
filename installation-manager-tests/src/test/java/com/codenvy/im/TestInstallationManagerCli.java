@@ -96,11 +96,6 @@ public class TestInstallationManagerCli {
     }
 
     @Test
-    public void testCheckRemoteUpdate() throws Exception {
-        doTest("im-download/test-download-check-remote-update.sh");
-    }
-
-    @Test
     public void testDownloadAllUpdates() throws Exception {
         doTest("im-download/test-download-all-updates.sh");
     }

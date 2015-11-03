@@ -64,9 +64,9 @@ public class VersionCommand extends AbstractIMCommand {
         }
 
         if (info.getVersion() != null) {
-            if ((info.getAvailableVersion() == null || info.getAvailableVersion().getStable() == null)) {
+            if (info.getAvailableVersion() == null || info.getAvailableVersion().getStable() == null) {
                 info.setStatus(LATEST_STABLE_MESSAGE);
-            } else if (info.getAvailableVersion() != null && info.getAvailableVersion().getStable() != null) {
+            } else {
                 if (info.getVersion().equals(info.getAvailableVersion().getStable())) {
                     info.setStatus(LATEST_STABLE_MESSAGE);
                 } else {
@@ -103,7 +103,7 @@ public class VersionCommand extends AbstractIMCommand {
 
     @Nullable
     private String getLatestUnstableVersion(List<UpdatesArtifactInfo> updatesCodenvy) {
-        for (int i = updatesCodenvy.size() - 1; i>=0; i--) {
+        for (int i = updatesCodenvy.size() - 1; i >= 0; i--) {
             UpdatesArtifactInfo updateInfo = updatesCodenvy.get(i);
 
             if (updateInfo.getLabel() == VersionLabel.UNSTABLE) {

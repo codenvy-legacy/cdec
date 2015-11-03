@@ -34,9 +34,9 @@ executeSshCommand "sed -i '2iexport https_proxy=http://127.0.0.1:3128/' ~/.bashr
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "im-download" "--check-remote"
+executeIMCommand "im-version"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"availableVersion\".:.{\"stable\".\:.\"${LATEST_CODENVY_VERSION}\".*"
 
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"AVAILABLE_TO_DOWNLOAD\".*"
 
 # Ensure, there is record with info about request in the log of Squid proxy-server
 executeSshCommand "sudo grep \"GET ${UPDATE_SERVICE}\" /var/log/squid/access.log"
