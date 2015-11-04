@@ -334,59 +334,59 @@ validateErrorString() {
     logEndCommand "validateRegex: OK"
 }
 
-createDummyArtifactInLocalReposiotryOfIMCli() {
-    REPOSITORY_DIR_IM_CLI=$1
-    ARTIFACT=$2
-    VERSION=$3
-    PREVIOUS_VERSION=$4
-    LABLE=$5
-
-    LOCAL_REPOSITORY_DIR="./"
-    NEW_ARTIFACT_PATH="${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}"
-    NEW_ARTIFACT_FILE_NAME="${ARTIFACT}-${VERSION}.zip"
-    NEW_ARTIFACT_PROPERTY_FILE_NAME=".properties"
-
-    mkdir -p "${NEW_ARTIFACT_PATH}"
-
-    touch "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}"
-
-    MD5=`md5sum "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" |awk -F'  ' '{print $1}'`
-    DATE=`date`
-
-    echo -e "${DATE}
-file=${NEW_ARTIFACT_FILE_NAME}
-build-time=2015-10-25 20\:01\:19
-md5=${MD5}
-version=${VERSION}
-previous-version=${PREVIOUS_VERSION}
-label=${LABLE}
-authentication-required=false
-description=${ARTIFACT} binaries
-artifact=${ARTIFACT}
-size=0" > "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_PROPERTY_FILE_NAME}"
-
-    executeSshCommand "mkdir -p ${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}"
-    INSTALLED_TO_NODE=$(detectMasterNode)
-    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_PROPERTY_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
-    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
-}
-
-removeArtifactInLocalReposiotryOfIMCli() {
-    LOCAL_REPOSITORY_DIR=$1
-    ARTIFACT=$2
-    VERSION=$3
-
-    executeSshCommand 'rm -r ${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}'
-}
-
-changePropertyOfArtifactInLocalReposiotryOfIMCli() {
-    LOCAL_REPOSITORY_DIR=$1
-    ARTIFACT=$2
-    VERSION=$3
-    OLD_PROPERY=$4
-    NEW_PROPERY=$5
-
-    PROPERTIES_FILE="${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}/.properties"
-
-    executeSshCommand 'sed -i "s/${OLD_PROPERY}/${NEW_PROPERY}/g" "${PROPERTIES_FILE}"'
-}
+#createDummyArtifactInLocalRepositoryOfIMCli() {
+#    REPOSITORY_DIR_IM_CLI=$1
+#    ARTIFACT=$2
+#    VERSION=$3
+#    PREVIOUS_VERSION=$4
+#    LABEL=$5
+#
+#    LOCAL_REPOSITORY_DIR="./"
+#    NEW_ARTIFACT_PATH="${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}"
+#    NEW_ARTIFACT_FILE_NAME="${ARTIFACT}-${VERSION}.zip"
+#    NEW_ARTIFACT_PROPERTY_FILE_NAME=".properties"
+#
+#    mkdir -p "${NEW_ARTIFACT_PATH}"
+#
+#    touch "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}"
+#
+#    MD5=`md5sum "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" |awk -F'  ' '{print $1}'`
+#    DATE=`date`
+#
+#    echo -e "${DATE}
+#file=${NEW_ARTIFACT_FILE_NAME}
+#build-time=2015-10-25 20\:01\:19
+#md5=${MD5}
+#version=${VERSION}
+#previous-version=${PREVIOUS_VERSION}
+#label=${LABLE}
+#authentication-required=false
+#description=${ARTIFACT} binaries
+#artifact=${ARTIFACT}
+#size=0" > "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_PROPERTY_FILE_NAME}"
+#
+#    executeSshCommand "mkdir -p ${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}"
+#    INSTALLED_TO_NODE=$(detectMasterNode)
+#    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_PROPERTY_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
+#    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
+#}
+#
+#removeArtifactInLocalRepositoryOfIMCli() {
+#    LOCAL_REPOSITORY_DIR=$1
+#    ARTIFACT=$2
+#    VERSION=$3
+#
+#    executeSshCommand 'rm -r ${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}'
+#}
+#
+#changePropertyOfArtifactInLocalRepositoryOfIMCli() {
+#    LOCAL_REPOSITORY_DIR=$1
+#    ARTIFACT=$2
+#    VERSION=$3
+#    OLD_PROPERTY=$4
+#    NEW_PROPERTY=$5
+#
+#    PROPERTIES_FILE="${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}/.properties"
+#
+#    executeSshCommand 'sed -i "s/${OLD_PROPERTY}/${NEW_PROPERTY}/g" "${PROPERTIES_FILE}"'
+#}
