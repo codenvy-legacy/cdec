@@ -31,11 +31,11 @@ printAndLog() {
 
 logStartCommand() {
     log
-    log "[ "`date`" ] COMMAND STARTED: "$@
+    log "=== [ "`date`" ] COMMAND STARTED: "$@
 }
 
 logEndCommand() {
-    log "================================ COMMAND COMPLETED: "$@\
+    log "==================================== COMMAND COMPLETED: "$@
     log
 }
 
