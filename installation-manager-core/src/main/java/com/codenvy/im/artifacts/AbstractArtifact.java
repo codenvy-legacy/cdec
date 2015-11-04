@@ -113,7 +113,7 @@ public abstract class AbstractArtifact implements Artifact {
     public boolean isInstallable(Version versionToInstall) throws IOException {
         Optional<Version> installedVersion = getInstalledVersion();
 
-        if (!installedVersion.isPresent()) {  // check if Codenvy alive TODO [ndp]
+        if (!installedVersion.isPresent()) {
             return true;
         }
 

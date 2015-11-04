@@ -32,15 +32,15 @@ import static org.testng.AssertJUnit.assertNotNull;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestWaitUntilCodenvyBecomesAliveCommand {
+public class TestWaitOnAliveArtifactCommand {
 
-    private Artifact                            artifact;
-    private WaitOnAliveCodenvyCommand command;
+    private Artifact                   artifact;
+    private WaitOnAliveArtifactCommand command;
 
     @BeforeTest
     public void setUp() throws Exception {
         artifact = mock(CDECArtifact.class);
-        command = spy(new WaitOnAliveCodenvyCommand(artifact));
+        command = spy(new WaitOnAliveArtifactCommand(artifact));
     }
 
     @Test

@@ -64,7 +64,6 @@ public class TestNodeManager extends BaseTest {
     private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
     private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS, null);
 
-    private static final Version TEST_VERSION                     = Version.valueOf("1.0.0");
     private static final String  TEST_RUNNER_NODE_URL             = "test_runner_node_url";
     private static final String  ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
 
@@ -73,8 +72,6 @@ public class TestNodeManager extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        doReturn(Optional.of(TEST_VERSION)).when(mockCdecArtifact).getInstalledVersion();
 
         initConfigs();
 

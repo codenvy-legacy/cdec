@@ -18,8 +18,8 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.CheckInstalledVersionCommand;
-import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactOfCorrectVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
@@ -211,7 +211,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 return new PuppetErrorInterrupter(command, configManager);
 
             case 8:
-                return new PuppetErrorInterrupter(new WaitOnAliveCodenvyCommand(original), configManager);
+                return new PuppetErrorInterrupter(new WaitOnAliveArtifactCommand(original), configManager);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -258,7 +258,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                             "sudo mv %2$s/* %1$s", getPuppetDir(), getTmpCodenvyDir()));
 
             case 4:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate), configManager);
+                return new PuppetErrorInterrupter(new WaitOnAliveArtifactOfCorrectVersionCommand(original, versionToUpdate), configManager);
 
             case 5:
                 return createPatchCommand(Paths.get(getPuppetDir(), "patches"),
@@ -341,7 +341,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server starts
-        commands.add(new WaitOnAliveCodenvyCommand(original));
+        commands.add(new WaitOnAliveArtifactCommand(original));
 
         // remove temp dir
         commands.add(createCommand(format("rm -rf %s", tempDir)));
@@ -429,7 +429,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server restarts
-        commands.add(new WaitOnAliveCodenvyCommand(original));
+        commands.add(new WaitOnAliveArtifactCommand(original));
 
         // remove temp dir
         commands.add(createCommand(format("rm -rf %s", tempDir)));
@@ -461,7 +461,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createForcePuppetAgentCommand());
 
         // wait until API server restarts
-        commands.add(new WaitOnAliveCodenvyCommand(original));
+        commands.add(new WaitOnAliveArtifactCommand(original));
 
         return new MacroCommand(commands, "Change config commands");
     }
@@ -487,7 +487,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createForcePuppetAgentCommand());
 
         // wait until API server starts
-        commands.add(new PuppetErrorInterrupter(new WaitOnAliveCodenvyCommand(original), configManager));
+        commands.add(new PuppetErrorInterrupter(new WaitOnAliveArtifactCommand(original), configManager));
 
         return new MacroCommand(commands, "Re-install Codenvy binaries");
     }

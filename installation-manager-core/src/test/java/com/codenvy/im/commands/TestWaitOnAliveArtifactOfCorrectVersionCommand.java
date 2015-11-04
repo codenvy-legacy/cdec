@@ -36,25 +36,34 @@ import static org.testng.AssertJUnit.assertNotNull;
 /**
  * @author Anatoliy Bazko
  */
-public class TestCheckInstalledVersionCommand {
+public class TestWaitOnAliveArtifactOfCorrectVersionCommand {
 
-    private Artifact                     artifact;
-    private CheckInstalledVersionCommand command;
+    public static final Version EXPECTED_VERSION = Version.valueOf("3.3.0");
+    public static final Version WRONG_VERSION = Version.valueOf("3.1.0");
+
+    private Artifact                                   artifact;
+    private WaitOnAliveArtifactOfCorrectVersionCommand command;
 
     @BeforeTest
     public void setUp() throws Exception {
         artifact = mock(CDECArtifact.class);
-        command = spy(new CheckInstalledVersionCommand(artifact, Version.valueOf("3.3.0")));
+        command = spy(new WaitOnAliveArtifactOfCorrectVersionCommand(artifact, EXPECTED_VERSION));
     }
 
     @Test
     public void testExecute() throws Exception {
-        doReturn(Optional.of(Version.valueOf("3.1.0")))
-            .doReturn(Optional.of(Version.valueOf("3.3.0")))
+        doReturn(false)
+            .doReturn(true)
+            .when(artifact).isAlive();
+
+        doReturn(Optional.empty())
+            .doReturn(Optional.of(WRONG_VERSION))
+            .doReturn(Optional.of(EXPECTED_VERSION))
             .when(artifact).getInstalledVersion();
         command.execute();
 
-        verify(command, times(2)).checkExpectedVersion();
+        verify(artifact, times(4)).isAlive();
+        verify(artifact, times(3)).getInstalledVersion();
     }
 
     @Test

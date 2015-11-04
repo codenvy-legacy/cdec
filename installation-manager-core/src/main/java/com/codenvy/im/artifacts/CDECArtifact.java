@@ -77,7 +77,34 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Optional<Version> getInstalledVersion() throws IOException {
-        return getInstalledVersion(true);  // TODO [ndp] there should be getInstalledVersion(false)
+        try {
+            Optional<Version> version;
+            try {
+                version = fetchAssemblyVersion();
+                if (version.isPresent()) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore IOException here
+            }
+
+            try {
+                version = getVersionFromApiService();
+                if (version.isPresent()) {
+                    return version;
+                }
+            } catch (IOException e) {
+                // ignore IOException here
+            }
+
+            try {
+                return fetchVersionFromPuppetConfig();
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        } catch(UnknownInstallationTypeException | IllegalVersionException e) {
+            return Optional.empty();
+        }
     }
 
     /**
@@ -218,7 +245,7 @@ public class CDECArtifact extends AbstractArtifact {
     /** {@inheritDoc} */
     @Override
     public Command getReinstallCommand() throws IOException {
-        Optional<Version> installedVersion = getInstalledVersion(false);
+        Optional<Version> installedVersion = getInstalledVersion();
         if (!installedVersion.isPresent()) {
             throw new RuntimeException("It is impossible to define installed version.");
         }
@@ -236,46 +263,6 @@ public class CDECArtifact extends AbstractArtifact {
 
     protected CDECArtifactHelper getHelper(InstallType type) {
         return helpers.get(type);
-    }
-
-    /**
-     * @param returnEmptyOnDeadApiServer
-     * @return installed version or null if it could not be defined, or if there was UnknownInstallationTypeException thrown
-     * @throws IOException
-     */
-    private Optional<Version> getInstalledVersion(boolean returnEmptyOnDeadApiServer) throws IOException {    // TODO [ndp] remove parameter "returnEmptyOnDeadApiServer"
-        try {
-            if (!isApiServiceAlive() && returnEmptyOnDeadApiServer) {   // TODO [ndp] remove this verification
-                return Optional.empty();
-            }
-
-            Optional<Version> version;
-            try {
-                version = fetchAssemblyVersion();
-                if (version.isPresent()) {
-                    return version;
-                }
-            } catch (IOException e) {
-                // ignore IOException here
-            }
-
-            try {
-                version = getVersionFromApiService();
-                if (version.isPresent()) {
-                    return version;
-                }
-            } catch (IOException e) {
-                // ignore IOException here
-            }
-
-            try {
-                return fetchVersionFromPuppetConfig();
-            } catch (IOException e) {
-                return Optional.empty();
-            }
-        } catch(UnknownInstallationTypeException | IllegalVersionException e) {
-            return Optional.empty();
-        }
     }
 
     protected boolean isApiServiceAlive() {

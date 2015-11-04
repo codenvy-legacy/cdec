@@ -19,11 +19,10 @@ package com.codenvy.im.managers;
 
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.MacroCommand;
-import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -31,7 +30,6 @@ import com.google.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
@@ -164,7 +162,7 @@ public class NodeManager {
                                        apiNode));
 
             // wait until API server restarts
-            commands.add(new WaitOnAliveCodenvyCommand(cdecArtifact));
+            commands.add(new WaitOnAliveArtifactCommand(cdecArtifact));
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
@@ -232,7 +230,7 @@ public class NodeManager {
                               apiNode),
 
                 // wait until API server restarts
-                new WaitOnAliveCodenvyCommand(cdecArtifact),
+                new WaitOnAliveArtifactCommand(cdecArtifact),
 
                 // remove out-date puppet agent's certificate
                 createCommand(format("sudo puppet cert clean %s", node.getHost())),

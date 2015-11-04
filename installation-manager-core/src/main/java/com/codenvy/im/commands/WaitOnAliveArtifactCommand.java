@@ -29,14 +29,14 @@ import static java.lang.String.format;
  *
  * @author Dmytro Nochevnov
  */
-public class WaitOnAliveCodenvyCommand implements Command {
+public class WaitOnAliveArtifactCommand implements Command {
     public static final int TIMEOUT_MILLIS = 500;
     private final Artifact artifact;
 
-    private static final Logger LOG = Logger.getLogger(WaitOnAliveCodenvyCommand.class.getSimpleName());
+    private static final Logger LOG = Logger.getLogger(WaitOnAliveArtifactCommand.class.getSimpleName());
 
 
-    public WaitOnAliveCodenvyCommand(Artifact artifact) {
+    public WaitOnAliveArtifactCommand(Artifact artifact) {
         this.artifact = artifact;
     }
 

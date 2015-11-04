@@ -303,7 +303,7 @@ public class InstallCommand extends AbstractIMCommand {
 
     protected boolean isInstall(Artifact artifact) throws IOException {
         return (installStep != null && forceInstall)
-               || !artifact.getInstalledVersion().isPresent();  // TODO [ndp] check is Codenvy alive
+               || !artifact.getInstalledVersion().isPresent();
     }
 
     private int getFirstInstallStep() {

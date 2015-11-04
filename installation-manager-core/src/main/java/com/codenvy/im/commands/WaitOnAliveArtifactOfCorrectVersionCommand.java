@@ -28,19 +28,19 @@ import java.util.logging.Logger;
 import static java.lang.String.format;
 
 /**
- * Command runs until expected version is installed.
+ * Command runs until codenvy becames alive and be of expected version.
  *
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-public class CheckInstalledVersionCommand implements Command {
-    public static final int CHECK_VERSION_TIMEOUT_MILLIS = 500;
+public class WaitOnAliveArtifactOfCorrectVersionCommand implements Command {
+    public static final int TIMEOUT_MILLIS = 500;
     private final Artifact artifact;
-    private final Version expectedVersion;
+    private final Version  expectedVersion;
 
-    private static final Logger LOG = Logger.getLogger(CheckInstalledVersionCommand.class.getSimpleName());
+    private static final Logger LOG = Logger.getLogger(WaitOnAliveArtifactOfCorrectVersionCommand.class.getSimpleName());
 
-
-    public CheckInstalledVersionCommand(Artifact artifact, Version expectedVersion) {
+    public WaitOnAliveArtifactOfCorrectVersionCommand(Artifact artifact, Version expectedVersion) {
         this.artifact = artifact;
         this.expectedVersion = expectedVersion;
     }
@@ -52,15 +52,21 @@ public class CheckInstalledVersionCommand implements Command {
 
         for (; ; ) {
             try {
-                if (checkExpectedVersion()) {
-                    break;
+                if (! artifact.isAlive()) {
+                    continue;
                 }
+
+                if (! expectedVersion.equals(artifact.getInstalledVersion().orElse(null))) {
+                    continue;
+                }
+
+                break;
             } catch (IOException e) {
                 // ignore because it is correct exception until Codenvy API server starts
             }
 
             try {
-                Thread.sleep(CHECK_VERSION_TIMEOUT_MILLIS);
+                Thread.sleep(TIMEOUT_MILLIS);
             } catch (InterruptedException e) {
                 // ignore to allow being successful interrupted by PuppetErrorInterrupter
                 break;
@@ -68,15 +74,6 @@ public class CheckInstalledVersionCommand implements Command {
         }
 
         return null;
-    }
-
-    protected boolean checkExpectedVersion() throws IOException {
-        Optional<Version> installedVersion = artifact.getInstalledVersion();  // TODO [ndp] check on codenvy alive before
-        if (!installedVersion.isPresent()) {
-            return false;
-        }
-
-        return expectedVersion.equals(installedVersion.get());
     }
 
     /** {@inheritDoc} */

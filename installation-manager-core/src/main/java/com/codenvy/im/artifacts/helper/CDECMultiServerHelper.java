@@ -18,11 +18,11 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.CheckInstalledVersionCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactOfCorrectVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
-import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -302,7 +302,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 return new PuppetErrorInterrupter(command, nodeConfigs, configManager);
 
             case 8:
-                return new PuppetErrorInterrupter(new WaitOnAliveCodenvyCommand(original), nodeConfigs, configManager);
+                return new PuppetErrorInterrupter(new WaitOnAliveArtifactCommand(original), nodeConfigs, configManager);
 
             default:
                 throw new IllegalArgumentException(format("Step number %d is out of install range", step));
@@ -357,7 +357,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                      "sudo mv %2$s/* %1$s", getPuppetDir(), getTmpCodenvyDir()));
 
             case 4:
-                return new PuppetErrorInterrupter(new CheckInstalledVersionCommand(original, versionToUpdate), configManager);
+                return new PuppetErrorInterrupter(new WaitOnAliveArtifactOfCorrectVersionCommand(original, versionToUpdate), configManager);
 
             case 5:
                 return createPatchCommand(Paths.get(getPuppetDir(), "patches"),
@@ -543,7 +543,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet", apiNode));
 
         // wait until API server restarts
-        commands.add(new WaitOnAliveCodenvyCommand(original));
+        commands.add(new WaitOnAliveArtifactCommand(original));
 
         // remove local temp dir
         commands.add(createCommand(format("rm -rf %s", localTempDir)));
@@ -716,7 +716,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStartServiceCommand("puppet", apiNode));
 
         // wait until API server restarts
-        commands.add(new WaitOnAliveCodenvyCommand(original));
+        commands.add(new WaitOnAliveArtifactCommand(original));
 
         // remove local temp dir
         commands.add(createCommand(format("rm -rf %s", tempDir)));
@@ -757,7 +757,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
 
         // wait until API server restarts
-        commands.add(new WaitOnAliveCodenvyCommand(original));
+        commands.add(new WaitOnAliveArtifactCommand(original));
         return new MacroCommand(commands, "Change config commands");
     }
 
@@ -790,7 +790,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         }
         commands.add(createForcePuppetAgentCommand());
 
-        commands.add(new PuppetErrorInterrupter(new WaitOnAliveCodenvyCommand(original), nodes, configManager));
+        commands.add(new PuppetErrorInterrupter(new WaitOnAliveArtifactCommand(original), nodes, configManager));
 
         return new MacroCommand(commands, "Re-install Codenvy binaries");
     }
