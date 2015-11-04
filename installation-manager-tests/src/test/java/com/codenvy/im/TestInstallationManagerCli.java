@@ -135,7 +135,6 @@ public class TestInstallationManagerCli {
         doTest("im-config/test-config-check-im-config.sh");
     }
 
-
     @Test(priority = 9)
     public void testMigrationData() throws Exception {
         doTest("test-migration-data.sh");
@@ -144,6 +143,11 @@ public class TestInstallationManagerCli {
     @Test(priority = 10)
     public void testBackupRestoreMultiNodes() throws Exception {
         doTest("test-backup-restore-multi-nodes.sh");
+    }
+
+    @Test
+    public void testVersionCommand() throws Exception {
+        doTest("im-version/test-im-version.sh");
     }
 
     private void doTest(String testScript) throws Exception {

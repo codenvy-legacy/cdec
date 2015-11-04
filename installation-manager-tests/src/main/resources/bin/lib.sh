@@ -59,6 +59,14 @@ validateExitCode() {
     fi
 
     printAndLog "RESULT: FAILED"
+
+    TEST_PROCESSES=$(ps x | grep test- | wc -l)
+
+    if [ "${TEST_PROCESSES}" != "2" ]; then
+        printAndLog "RESULT: Recurcive error generation detected. Process stopped."
+        exit 1
+    fi
+
     $(retrieveTestLogs)
 
     if [[ ! -z ${IS_INSTALL_CODENVY} ]]; then
@@ -86,9 +94,9 @@ retrieveTestLogs() {
             scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy:/var/log/puppet/puppet-agent.log ${logDirName}/puppet-agent-${HOST}.log
         done
     else
-        $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@$(detectMasterNode) "sudo chown -R root:root /var/log/puppet")
-        $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@$(detectMasterNode) "sudo chmod 777 /var/log/puppet")
-        scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy:/var/log/puppet/puppet-agent.log ${logDirName}/puppet-agent.log
+        $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} "sudo chown -R root:root /var/log/puppet")
+        $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE} "sudo chmod 777 /var/log/puppet")
+        scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/var/log/puppet/puppet-agent.log ${logDirName}/puppet-agent.log
     fi
 
     scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${INSTALL_ON_NODE}:/home/vagrant/install.log ${logDirName}/install.log
@@ -155,12 +163,12 @@ installCodenvy() {
 
 installImCliClient() {
     logStartCommand "installImCliClient "$@
-
+    INSTALL_ON_NODE=$(detectMasterNode)
     VERSION=$1
     VERSION_OPTION=""
     [[ ! -z ${VERSION} ]] && VERSION_OPTION="--version="${VERSION}
 
-    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
+    ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "vagrant@${INSTALL_ON_NODE}" 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
     logEndCommand "installImCliClient: OK"
@@ -324,4 +332,61 @@ validateErrorString() {
     [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
 
     logEndCommand "validateRegex: OK"
+}
+
+createDummyArtifactInLocalReposiotryOfIMCli() {
+    REPOSITORY_DIR_IM_CLI=$1
+    ARTIFACT=$2
+    VERSION=$3
+    PREVIOUS_VERSION=$4
+    LABLE=$5
+
+    LOCAL_REPOSITORY_DIR="./"
+    NEW_ARTIFACT_PATH="${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}"
+    NEW_ARTIFACT_FILE_NAME="${ARTIFACT}-${VERSION}.zip"
+    NEW_ARTIFACT_PROPERTY_FILE_NAME=".properties"
+
+    mkdir -p "${NEW_ARTIFACT_PATH}"
+
+    touch "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}"
+
+    MD5=`md5sum "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" |awk -F'  ' '{print $1}'`
+    DATE=`date`
+
+    echo -e "${DATE}
+file=${NEW_ARTIFACT_FILE_NAME}
+build-time=2015-10-25 20\:01\:19
+md5=${MD5}
+version=${VERSION}
+previous-version=${PREVIOUS_VERSION}
+label=${LABLE}
+authentication-required=false
+description=${ARTIFACT} binaries
+artifact=${ARTIFACT}
+size=0" > "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_PROPERTY_FILE_NAME}"
+
+    executeSshCommand "mkdir -p ${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}"
+    INSTALLED_TO_NODE=$(detectMasterNode)
+    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_PROPERTY_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
+    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
+}
+
+removeArtifactInLocalReposiotryOfIMCli() {
+    LOCAL_REPOSITORY_DIR=$1
+    ARTIFACT=$2
+    VERSION=$3
+
+    executeSshCommand 'rm -r ${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}'
+}
+
+changePropertyOfArtifactInLocalReposiotryOfIMCli() {
+    LOCAL_REPOSITORY_DIR=$1
+    ARTIFACT=$2
+    VERSION=$3
+    OLD_PROPERY=$4
+    NEW_PROPERY=$5
+
+    PROPERTIES_FILE="${LOCAL_REPOSITORY_DIR}/${ARTIFACT}/${VERSION}/.properties"
+
+    executeSshCommand 'sed -i "s/${OLD_PROPERY}/${NEW_PROPERY}/g" "${PROPERTIES_FILE}"'
 }
