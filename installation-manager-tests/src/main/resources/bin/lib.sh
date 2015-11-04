@@ -248,11 +248,11 @@ executeSshCommand() {
 }
 
 detectMasterNode() {
-    ping -c1 -q "master.codenvy" >> ${TEST_LOG}
+    ping -c1 -q "master.codenvy" >> /dev/null
     if [[ $? == 0 ]]; then
         echo "master.codenvy"
     else
-        ping -c1 -q "codenvy" >> ${TEST_LOG}
+        ping -c1 -q "codenvy" >> /dev/null
         if [[ $? == 0 ]]; then
             echo "codenvy"
         else
