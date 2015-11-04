@@ -35,7 +35,7 @@ logStartCommand() {
 }
 
 logEndCommand() {
-    log "==================================== COMMAND COMPLETED: "$@
+    log "=================================== COMMAND COMPLETED: "$@
     log
 }
 

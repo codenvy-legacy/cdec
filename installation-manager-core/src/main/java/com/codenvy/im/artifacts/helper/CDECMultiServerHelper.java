@@ -19,10 +19,10 @@ package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.CheckInstalledVersionCommand;
-import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.WaitOnAliveCodenvyCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -627,7 +627,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         if (Files.exists(localMongoBackupPath)) {
             commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
             commands.add(createCopyFromLocalToRemoteCommand(localMongoBackupPath,
-                                                            remoteMongoBackupPath.getParent(),
+                                                            remoteMongoBackupPath,
                                                             dataNode));
 
             // remove all databases except 'admin' one
@@ -640,7 +640,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                               // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoBackupPath.getParent()), dataNode));
+                                              remoteMongoBackupPath), dataNode));
         }
 
         // restore MONGO data at the ANALYTICS node from {temp_backup_directory}/mongo_analytics folder
