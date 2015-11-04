@@ -627,7 +627,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         if (Files.exists(localMongoBackupPath)) {
             commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
             commands.add(createCopyFromLocalToRemoteCommand(localMongoBackupPath,
-                                                            remoteMongoBackupPath,
+                                                            remoteMongoBackupPath.getParent(),
                                                             dataNode));
 
             // remove all databases except 'admin' one
@@ -657,10 +657,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), analyticsNode));
 
-            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",  // suppress stdout to avoid hanging up SecureSSh
+            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop > /dev/null",// suppress stdout to avoid hanging up SecureSSh
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
-                                              remoteMongoAnalyticsBackupPath.getParent()), analyticsNode));
+                                              remoteMongoAnalyticsBackupPath), analyticsNode));
         }
 
         // restore ANALYTICS_DATA at the ANALYTICS node from {backup_file}/analytics_data
