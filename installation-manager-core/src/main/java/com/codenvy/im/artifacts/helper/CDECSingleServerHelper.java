@@ -18,11 +18,11 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
-import com.codenvy.im.commands.WaitOnAliveArtifactOfCorrectVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactOfCorrectVersionCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -34,6 +34,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -323,7 +324,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         // dump MONGO data into {backup_directory}/mongo dir
         Path mongoBackupPath = getComponentTempPath(tempDir, MONGO);
         commands.add(createCommand(format("mkdir -p %s", mongoBackupPath)));
-        commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin &> /dev/null",
+        commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin --quiet",
                                           codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                           codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
                                           mongoBackupPath)));
@@ -411,7 +412,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                               "'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY))));
-            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop &> /dev/null",  // suppress stdout to avoid hanging up SecureSSH
+            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop --quiet",
+                                              // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
                                               mongoBackupPath)));

@@ -18,11 +18,11 @@
 package com.codenvy.im.artifacts.helper;
 
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
-import com.codenvy.im.commands.WaitOnAliveArtifactOfCorrectVersionCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
+import com.codenvy.im.commands.WaitOnAliveArtifactOfCorrectVersionCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
@@ -444,7 +444,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         Path localMongoBackupPath = getComponentTempPath(localTempDir, MONGO);
 
         commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
-        commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin &> /dev/null",  // suppress stdout to avoid hanging up SecureSSh
+        commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin --quiet",
+                                          // suppress stdout to avoid hanging up SecureSSh
                                           codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                           codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
                                           remoteMongoBackupPath), dataNode));
@@ -461,7 +462,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         Path remoteMongoAnalyticsBackupPath = getComponentTempPath(remoteTempDir, MONGO_ANALYTICS);
         Path localMongoAnalyticsBackupPath = getComponentTempPath(localTempDir, MONGO_ANALYTICS);
         commands.add(createCommand(format("mkdir -p %s", remoteMongoAnalyticsBackupPath), analyticsNode));
-        commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin &> /dev/null",  // suppress stdout to avoid hanging up SecureSSh
+        commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin --quiet",
+                                          // suppress stdout to avoid hanging up SecureSSh
                                           codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                           codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
                                           remoteMongoAnalyticsBackupPath), analyticsNode));
@@ -636,7 +638,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), dataNode));
 
-            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop &> /dev/null",
+            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop --quiet",
                                               // suppress stdout to avoid hanging up SecureSSH
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
@@ -657,7 +659,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), analyticsNode));
 
-            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop &> /dev/null",// suppress stdout to avoid hanging up SecureSSh
+            commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop --quiet",
+// suppress stdout to avoid hanging up SecureSSh
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
                                               remoteMongoAnalyticsBackupPath), analyticsNode));
