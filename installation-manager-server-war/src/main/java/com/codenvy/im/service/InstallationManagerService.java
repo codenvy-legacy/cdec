@@ -660,9 +660,9 @@ public class InstallationManagerService {
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "OK"),
             @ApiResponse(code = 500, message = "Unexpected error occurred")})
-    @ApiOperation(value = "Changes admin passwords")
-    public Response changeAdminPassword(
-            @ApiParam(required = true, value = "currentPassword and newPassword parameters are specified here") Map<String, String> passwords) {
+    @ApiOperation(value = "Changes admin passwords",
+                  notes = "currentPassword and newPassword parameters have to be passed in the request body")
+    public Response changeAdminPassword(Map<String, String> passwords) {
         try {
             final String currentPwdKey = "currentPassword";
             final String newPwdKey = "newPassword";
