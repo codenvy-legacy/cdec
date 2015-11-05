@@ -30,11 +30,14 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,20 +74,21 @@ public abstract class BaseTestPuppetErrorInterrupter {
     PuppetErrorInterrupter spyInterrupter;
 
     String logWithoutErrorMessages =
-        "Jun  8 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
-        + "Jun  8 15:17:31 test systemd[1]: Time has been changed\n"
-        + "Jun  8 15:17:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:17:42 test puppet-agent[22754]: Finished catalog run in 1.83 seconds\n"
-        + "Jun  8 15:22:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.23 seconds\n"
-        + "Jun  8 15:22:42 test puppet-agent[23240]: Finished catalog run in 1.95 seconds\n"
-        + "Jun  8 15:27:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.12 seconds\n"
-        + "Jun  8 15:27:42 test puppet-agent[23713]: Finished catalog run in 2.01 seconds\n"
-        + "Jun  8 15:51:51 test systemd[1]: Time has been changed\n"
-        + "Jun  8 15:51:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
-        + "Jun  8 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
-        + "Jun  8 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
+        "2015-06-08 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+        + "2015-06-08 14:53:55 test puppet-agent[22276]: Finished catalog run in 1.98 seconds\n"
+        + "2015-06-08 15:17:31 test systemd[1]: Time has been changed\n"
+        + "2015-06-08 15:17:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+        + "2015-06-08 15:17:42 test puppet-agent[22754]: Finished catalog run in 1.83 seconds\n"
+        + "2015-06-08 15:22:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.23 seconds\n"
+        + "2015-06-08 15:22:42 test puppet-agent[23240]: Finished catalog run in 1.95 seconds\n"
+        + "2015-06-08 15:27:40 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.12 seconds\n"
+        + "2015-06-08 15:27:42 test puppet-agent[23713]: Finished catalog run in 2.01 seconds\n"
+        + "2015-06-08 15:51:51 test systemd[1]: Time has been changed\n"
+        + "2015-06-08 15:51:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+        + "2015-06-08 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
+        + "2015-06-08 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
+        + "2015-06-08 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
+    private NodeConfig testNode;
 
     @BeforeMethod
     public void setup() throws IOException {
@@ -138,69 +142,6 @@ public abstract class BaseTestPuppetErrorInterrupter {
         deleteDirectory(BASE_TMP_DIRECTORY.toFile());
     }
 
-    @DataProvider
-    public Object[][] getDataToCheckPuppetError() {
-        return new Object[][] {
-            {// only 1 error message
-             "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
-             + "Wrapped exception:\n"
-             + "getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (notice): Using cached catalog\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog; skipping run\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not send report: getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:18:34 +0100 Puppet (warning): Unable to fetch my node definition, but the agent run will continue:\n"
-             + "2015-07-30 13:18:34 +0100 Puppet (warning): getaddrinfo: Name or service not known",
-             null},
-
-            // 3 (= min_error_events_to_interrupt_im) the equal error messages
-            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
-             + "Wrapped exception:\n"
-             + "getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n",
-             null},
-
-            // 3 different error messages
-            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
-             + "Wrapped exception:\n"
-             + "getaddrinfo: Name or service not known\n"
-             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
-             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
-             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
-             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::yet-another (notice): Dependency Package[yet-another] has failures: true\n",
-             null},
-
-            // 2 similar error messages
-            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
-             + "Wrapped exception:\n"
-             + "getaddrinfo: Name or service not known\n"
-             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
-             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
-             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
-             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n",
-             null},
-
-            // 3 similar error messages
-            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
-             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
-             + "Wrapped exception:\n"
-             + "getaddrinfo: Name or service not known\n"
-             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
-             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
-             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
-             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
-             + "2015-07-29 16:17:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
-             + "2015-07-29 16:18:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n",
-             getTestPuppetError()}
-        };
-    }
-
     protected void assertLocalErrorReport(String errorMessage, String expectedContentOfLogFile) throws IOException, InterruptedException {
         Pattern errorReportInfoPattern = Pattern.compile("target/reports/error_report_.*.tar.gz");
         Matcher pathToReportMatcher = errorReportInfoPattern.matcher(errorMessage);
@@ -239,4 +180,89 @@ public abstract class BaseTestPuppetErrorInterrupter {
         String logFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
         assertEquals(logFileContent, expectedContentOfLogFile);
     }
+
+    protected void checkPuppetErrors(String puppetLog, PuppetError expectedError) {
+        List<String> lines = Arrays.asList(puppetLog.split("\n"));
+
+        PuppetError error = null;
+        for (String line : lines) {
+            error = spyInterrupter.checkPuppetError(getTestNode(), line);
+            if (error != null) {
+                break;
+            }
+        }
+
+        assertEquals(error, expectedError);
+    }
+
+    @Test(dataProvider = "getDataToCheckPuppetError")
+    public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
+        checkPuppetErrors(puppetLog, expectedError);
+    }
+
+    @DataProvider
+    public Object[][] getDataToCheckPuppetError() {
+        return new Object[][] {
+            {// 1 batch of error messages caused by the same error "Dependency Exec[import_base_schema] has failures: true"
+             "2015-10-07 16:44:57 +0100 Puppet (err): Command exceeded timeout\n"
+             + "Wrapped exception:\n"
+             + "execution expired\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_schema]/returns (err): change from notrun to 0 failed: Command exceeded timeout\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/File[/etc/zabbix/zabbix_java_gateway.conf]/content (notice): \n"
+             + "--- /etc/zabbix/zabbix_java_gateway.conf\t2014-11-02 08:56:09.000000000 +0000",
+             null},
+
+            // 5 batches of 5 different errors
+            {"2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Failed to generate additional resources using 'eval_generate': getaddrinfo: Name or service not known\n"
+             + "2015-07-30 13:13:34 +0100 /File[/var/lib/puppet/lib] (err): Could not evaluate: Could not retrieve file metadata for puppet://puppet/plugins: getaddrinfo: Name or service not known\n"
+             + "Wrapped exception:\n"
+             + "getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:12:52 +0100 /Stage[main]/Third_party::Openldap_servers::Package/Package[openldap-servers] (notice): Dependency Package[openldap] has failures: true\n"
+             + "2015-07-30 16:14:35 +0100 Puppet (err): Could not retrieve catalog from remote server: getaddrinfo: Name or service not known\n"
+             + "2015-07-29 16:15:52 +0100 /Stage[main]/Third_party::another (notice): Dependency Package[another] has failures: true\n"
+             + "2015-07-29 16:16:52 +0100 /Stage[main]/Third_party::yet-another (notice): Dependency Package[yet-another] has failures: true\n",
+             null},
+
+            // 3 batches of error messages caused by the same error "Dependency Exec[import_base_schema] has failures: true"
+            {"2015-10-07 16:44:57 +0100 Puppet (err): Command exceeded timeout\n"
+             + "Wrapped exception:\n"
+             + "execution expired\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_schema]/returns (err): change from notrun to 0 failed: Command exceeded timeout\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/File[/etc/zabbix/zabbix_java_gateway.conf]/content (notice): \n"
+             + "--- /etc/zabbix/zabbix_java_gateway.conf\t2014-11-02 08:56:09.000000000 +0000"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_schema]/returns (err): change from notrun to 0 failed: Command exceeded timeout\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:45:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/File[/etc/zabbix/zabbix_java_gateway.conf]/content (notice): \n"
+             + "--- /etc/zabbix/zabbix_java_gateway.conf\t2014-11-02 08:56:09.000000000 +0000"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_schema]/returns (err): change from notrun to 0 failed: Command exceeded timeout\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_images] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[import_base_data] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (notice): Dependency Exec[import_base_schema] has failures: true\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/Exec[disable_listen_80_port] (warning): Skipping because of failed dependencies\n"
+             + "2015-10-07 16:46:57 +0100 /Stage[main]/Third_party::Zabbix::Server_config/File[/etc/zabbix/zabbix_java_gateway.conf]/content (notice): \n",
+             getTestPuppetError()}
+        };
+    }
+
+    abstract public NodeConfig getTestNode();
+
 }

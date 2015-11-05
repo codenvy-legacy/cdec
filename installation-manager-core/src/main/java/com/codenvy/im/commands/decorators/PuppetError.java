@@ -18,8 +18,13 @@
 package com.codenvy.im.commands.decorators;
 
 import com.codenvy.im.managers.NodeConfig;
-
 import org.eclipse.che.commons.annotation.Nullable;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -126,5 +131,27 @@ public class PuppetError {
         }
 
         return null;
+    }
+
+    /**
+     * Extract date and time with zero seconds from the puppet-agent.log lines like the follow: "2015-10-07 16:44:57 +0100 /Stage[main]/Third_party::Zabbix::...."
+     * Locale doesn't matter so as Puppet uses it's own date formatting like "2015-10-07 16:44:57 +0100" when is writing into the puppet-agent.log
+     */
+    public static Optional<LocalDateTime> getTimeTruncatedToMinutes(String line) {
+        if (line == null || line.length() < 20) {
+            return Optional.empty();
+        }
+
+        String timeStr = line.substring(0, 19);          // extract time string "2015-10-07 16:44:57"
+        timeStr = timeStr.replace(" ", "T");             // convert to ISO time "2015-10-07T16:44:57"
+
+        try {
+            LocalDateTime time = LocalDateTime.parse(timeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            time = time.truncatedTo(ChronoUnit.MINUTES);
+            return Optional.ofNullable(time);
+
+        } catch(DateTimeParseException e) {
+            return Optional.empty();
+        }
     }
 }

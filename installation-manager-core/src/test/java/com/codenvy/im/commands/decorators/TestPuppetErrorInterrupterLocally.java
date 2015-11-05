@@ -20,6 +20,7 @@ package com.codenvy.im.commands.decorators;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.NodeConfig;
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -35,8 +36,8 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
-import static org.testng.AssertJUnit.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterrupter {
@@ -93,7 +94,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
                                                           "Installation & Troubleshooting Docs: http://docs.codenvy" +
                                                           ".com/onpremises/installation-single-node/#install-troubleshooting.");
 
-            assertTrue("Actual errorMessage: " + errorMessage, errorMessagePattern.matcher(errorMessage).find());
+            assertTrue(errorMessagePattern.matcher(errorMessage).find(), "Actual errorMessage: " + errorMessage);
 
             assertLocalErrorReport(errorMessage, logWithoutErrorMessages + puppetErrorMessages);
             return;
@@ -126,7 +127,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
                 Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
                 // append non-error message into puppet log file
-                String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
+                String errorMessage = "2015-06-08 15:56:59 test puppet-agent[10240]: dummy message";
 
                 FileUtils.write(spyInterrupter.getPuppetLogFile().toFile(), errorMessage, true);
             } catch (Exception e) {
@@ -207,20 +208,14 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
         };
     }
 
-    @Test(dataProvider = "getDataToCheckPuppetError")
-    public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
-        List<String> lines = Arrays.asList(puppetLog.split("\n"));
-
-        PuppetError error = null;
-        for (String line : lines) {
-            error = spyInterrupter.checkPuppetError(null, line);
-        }
-
-        assertEquals(error, expectedError);
+    @Override
+    public PuppetError getTestPuppetError() {
+        return new PuppetError(null, "Dependency Exec[import_base_schema] has failures: true");
     }
 
-    public PuppetError getTestPuppetError() {
-        return new PuppetError(null, "Dependency Package[openldap] has failures: true");
+    @Override
+    public NodeConfig getTestNode() {
+        return null;
     }
 
     public InstallType getInstallType() {

@@ -34,6 +34,7 @@ import org.eclipse.che.commons.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,8 +68,8 @@ public class PuppetErrorInterrupter implements Command {
 
     private FutureTask<String> task;
 
-    /** Map PuppetError{node, type, shortMessage} -> Set<logLine>  */
-    protected Map<PuppetError, Set<String>> registeredErrors = new HashMap<>();   // protected access for testing propose
+    /** Map PuppetError{node, type, date} -> Set<logLine>  */
+    protected Map<PuppetError, Set<LocalDateTime>> registeredErrors = new HashMap<>();   // protected access for testing propose
 
     public PuppetErrorInterrupter(Command command, ConfigManager configManager) {
         this(command, null, configManager);
@@ -167,15 +168,20 @@ public class PuppetErrorInterrupter implements Command {
             return null;
         }
 
-        Set<String> lines = registeredErrors.get(error);
-        if (lines == null) {
-            lines = new HashSet<>(Arrays.asList(line));
-            registeredErrors.put(error, lines);
-        } else {
-            lines.add(line);
+        LocalDateTime errorTime = PuppetError.getTimeTruncatedToMinutes(line).orElse(null);
+        if (errorTime == null) {
+            return null;
         }
 
-        if (lines.size() == MIN_ERROR_EVENTS_TO_INTERRUPT_IM) {
+        Set<LocalDateTime> times = registeredErrors.get(error);
+        if (times == null) {
+            times = new HashSet<>(Arrays.asList(errorTime));
+        }
+
+        times.add(errorTime);
+        registeredErrors.put(error, times);
+
+        if (times.size() >= MIN_ERROR_EVENTS_TO_INTERRUPT_IM) {
             return error;
         }
 

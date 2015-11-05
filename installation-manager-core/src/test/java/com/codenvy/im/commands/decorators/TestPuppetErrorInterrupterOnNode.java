@@ -201,7 +201,7 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
                 Thread.sleep(MOCK_COMMAND_TIMEOUT_MILLIS / 2);
 
                 // append non-error message into puppet log file
-                String errorMessage = "Jun  8 15:56:59 test puppet-agent[10240]: dummy message";
+                String errorMessage = "2015-06-08 15:56:59 test puppet-agent[10240]: dummy message";
 
                 FileUtils.write(spyInterrupter.getPuppetLogFile().toFile(), errorMessage, true);
             } catch (Exception e) {
@@ -265,19 +265,17 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
 
     @Test(dataProvider = "getDataToCheckPuppetError")
     public void testCheckPuppetError(String puppetLog, PuppetError expectedError) {
-        List<String> lines = Arrays.asList(puppetLog.split("\n"));
-
-        PuppetError error = null;
-        for (String line : lines) {
-            error = spyInterrupter.checkPuppetError(testNode, line);
-        }
-
-        assertEquals(error, expectedError);
+        checkPuppetErrors(puppetLog, expectedError);
     }
 
     @Override
     public PuppetError getTestPuppetError() {
-        return new PuppetError(testNode, "Dependency Package[openldap] has failures: true");
+        return new PuppetError(testNode, "Dependency Exec[import_base_schema] has failures: true");
+    }
+
+    @Override
+    public NodeConfig getTestNode() {
+        return testNode;
     }
 
     @AfterClass
@@ -292,4 +290,5 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
     public PuppetErrorInterrupter getSpyInterrupter() {
         return spy(new PuppetErrorInterrupter(mockCommand, Collections.singletonList(testNode), mockConfigManager));
     }
+
 }
