@@ -221,6 +221,51 @@ public class TestVersionCommand extends AbstractTestCommand {
     }
 
     @Test
+    public void shouldBePrintAvailableStableVersionAndStatusNewStableVersionAvailableAndInstallIt() throws Exception {
+        List<InstallArtifactInfo> installedList = new ArrayList<>();
+
+        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
+        installedArtifactInfo.setArtifact("install-im-cli");
+        installedArtifactInfo.setVersion("1.0.1");
+        installedArtifactInfo.setLabel(VersionLabel.STABLE);
+        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
+        installedList.add(installedArtifactInfo);
+
+        installedArtifactInfo = new InstallArtifactInfo();
+        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
+        installedArtifactInfo.setVersion("1.0.1");
+        installedArtifactInfo.setLabel(VersionLabel.STABLE);
+        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
+        installedList.add(installedArtifactInfo);
+
+        doReturn(installedList).when(facade).getInstalledVersions();
+
+        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
+        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
+        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
+        updatesArtifactInfo.setVersion("1.0.2");
+        updatesArtifactInfo.setLabel(VersionLabel.STABLE);
+        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+        updateList.add(updatesArtifactInfo);
+
+        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n" +
+                             "  \"artifact\" : \"codenvy\",\n" +
+                             "  \"version\" : \"1.0.1\",\n" +
+                             "  \"label\" : \"STABLE\",\n" +
+                             "  \"availableVersion\" : {\n" +
+                             "    \"stable\" : \"1.0.2\"\n" +
+                             "  },\n" +
+                             "  \"status\" : \"There is a new stable version of Codenvy available. Run im-install to install it.\"\n" +
+                             "}\n");
+    }
+
+    @Test
     public void shouldBePrintAvailableStableAndUnstableVersionsAndStatusNewStableVersionAvailable() throws Exception {
         List<InstallArtifactInfo> installedList = new ArrayList<>();
 

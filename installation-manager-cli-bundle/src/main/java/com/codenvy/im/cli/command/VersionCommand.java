@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.response.AvailableVersionInfo;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
+import com.codenvy.im.response.UpdatesArtifactStatus;
 import com.codenvy.im.response.VersionArtifactInfo;
 
 import org.apache.karaf.shell.commands.Command;
@@ -39,8 +40,10 @@ import static com.codenvy.im.utils.Commons.toJson;
  */
 @Command(scope = "codenvy", name = "im-version", description = "Print the list of available latest versions and installed ones")
 public class VersionCommand extends AbstractIMCommand {
-    private static final String LATEST_STABLE_MESSAGE = "You are running the latest stable version of Codenvy!";
-    private static final String NEW_VERSION_MESSAGE   = "There is a new stable version of Codenvy available. Run im-download %s.";
+    private static final String LATEST_STABLE_MESSAGE      = "You are running the latest stable version of Codenvy!";
+    private static final String NEW_VERSION_MESSAGE        = "There is a new stable version of Codenvy available. %s";
+    private static final String SUFFIX_WHEN_DOWNLOADED     = "Run im-install to install it.";
+    private static final String SUFFIX_WHEN_NOT_DOWNLOADED = "Run im-download %s.";
 
     @Override
     protected void doExecuteCommand() throws Exception {
@@ -54,9 +57,10 @@ public class VersionCommand extends AbstractIMCommand {
         }
 
         List<UpdatesArtifactInfo> updatesCodenvy = facade.getAllUpdates(ArtifactFactory.createArtifact(CDECArtifact.NAME));
+        UpdatesArtifactInfo latestStableVersionInfo = getLatestStableVersionInfo(updatesCodenvy);
 
         AvailableVersionInfo availableVersion = new AvailableVersionInfo();
-        availableVersion.setStable(getLatestStableVersion(updatesCodenvy));
+        availableVersion.setStable(latestStableVersionInfo != null ? latestStableVersionInfo.getVersion() : null);
         availableVersion.setUnstable(getLatestUnstableVersion(updatesCodenvy));
 
         if (availableVersion.getStable() != null || availableVersion.getUnstable() != null) {
@@ -70,7 +74,14 @@ public class VersionCommand extends AbstractIMCommand {
                 if (info.getVersion().equals(info.getAvailableVersion().getStable())) {
                     info.setStatus(LATEST_STABLE_MESSAGE);
                 } else {
-                    info.setStatus(String.format(NEW_VERSION_MESSAGE, info.getAvailableVersion().getStable()));
+                    String suffix;
+                    if (latestStableVersionInfo.getStatus() == UpdatesArtifactStatus.DOWNLOADED) {
+                        suffix = SUFFIX_WHEN_DOWNLOADED;
+                    } else {
+                        suffix = String.format(SUFFIX_WHEN_NOT_DOWNLOADED, info.getAvailableVersion().getStable());
+                    }
+
+                    info.setStatus(String.format(NEW_VERSION_MESSAGE, suffix));
                 }
             }
         }
@@ -89,12 +100,12 @@ public class VersionCommand extends AbstractIMCommand {
     }
 
     @Nullable
-    private String getLatestStableVersion(List<UpdatesArtifactInfo> updatesCodenvy) throws IOException, JsonParseException {
+    private UpdatesArtifactInfo getLatestStableVersionInfo(List<UpdatesArtifactInfo> updatesCodenvy) throws IOException, JsonParseException {
         for (int i = updatesCodenvy.size() - 1; i >= 0; i--) {
             UpdatesArtifactInfo updateInfo = updatesCodenvy.get(i);
 
             if (updateInfo.getLabel() == VersionLabel.STABLE) {
-                return updateInfo.getVersion();
+                return updateInfo;
             }
         }
 
