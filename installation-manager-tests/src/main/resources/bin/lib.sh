@@ -63,7 +63,7 @@ validateExitCode() {
     TEST_PROCESSES=$(ps x | grep test- | wc -l)
 
     if [ "${TEST_PROCESSES}" != "2" ]; then
-        printAndLog "RESULT: Recurcive error generation detected. Process stopped."
+        printAndLog "RESULT: Recursive error generation detected. Process stopped."
         exit 1
     fi
 
@@ -359,7 +359,7 @@ validateErrorString() {
 #md5=${MD5}
 #version=${VERSION}
 #previous-version=${PREVIOUS_VERSION}
-#label=${LABLE}
+#label=${LABEL}
 #authentication-required=false
 #description=${ARTIFACT} binaries
 #artifact=${ARTIFACT}
@@ -371,7 +371,7 @@ validateErrorString() {
 #    scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "${NEW_ARTIFACT_PATH}/${NEW_ARTIFACT_FILE_NAME}" vagrant@${INSTALLED_TO_NODE}:${REPOSITORY_DIR_IM_CLI}/${ARTIFACT}/${VERSION}
 #}
 #
-#removeArtifactInLocalRepositoryOfIMCli() {
+#removeArtifactInLocalRepositoryOfIMCliLABEL() {
 #    LOCAL_REPOSITORY_DIR=$1
 #    ARTIFACT=$2
 #    VERSION=$3
