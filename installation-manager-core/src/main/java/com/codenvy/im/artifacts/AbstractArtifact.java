@@ -201,16 +201,18 @@ public abstract class AbstractArtifact implements Artifact {
 
     @Override
     public Optional<VersionLabel> getLabel(Version version) throws IOException {
-        VersionLabel versionLabel;
         try {
             String labelStr = getProperty(version, ArtifactProperties.LABEL_PROPERTY);
-            versionLabel = VersionLabel.valueOf(labelStr.toUpperCase());
-        } catch(Exception e) {
+            if (labelStr == null) {
+                return Optional.empty();
+            }
+
+            VersionLabel versionLabel = VersionLabel.valueOf(labelStr.toUpperCase());
+            return Optional.of(versionLabel);
+        } catch(IOException | IllegalArgumentException e) {
             LOG.log(Level.WARNING, format("Error of getting label of artifact %s:%s", name, version), e);
             return Optional.empty();
         }
-
-        return Optional.of(versionLabel);
     }
 
     /**
