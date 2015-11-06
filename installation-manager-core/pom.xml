@@ -71,7 +71,6 @@
         <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
-            <!-- TODO -->
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
