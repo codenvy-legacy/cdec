@@ -60,13 +60,6 @@ validateExitCode() {
 
     printAndLog "RESULT: FAILED"
 
-    TEST_PROCESSES=$(ps x | grep test- | wc -l)
-
-    if [ "${TEST_PROCESSES}" != "2" ]; then
-        printAndLog "RESULT: Recursive error generation detected. Process stopped."
-        exit 1
-    fi
-
     $(retrieveTestLogs)
 
     if [[ ! -z ${IS_INSTALL_CODENVY} ]]; then
@@ -84,6 +77,7 @@ retrieveTestLogs() {
     INSTALL_ON_NODE=$(detectMasterNode)
     logDirName="logs/`basename "$0" | sed 's/\\.sh//g'`"
     log "Name of directory with logs: "${logDirName}
+    [[ -d "${logDirName}" ]] && exit
 
     mkdir --parent ${logDirName}
 
@@ -116,7 +110,7 @@ validateInstalledCodenvyVersion() {
     executeIMCommand "im-install" "--list"
     validateExpectedString ".*\"artifact\".*\:.*\"codenvy\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".*"
 
-    logEndCommand "validateInstalledCodenvyVersion: OK"
+    logEndCommand "validateInstalledCodenvyVersion"
 }
 
 validateInstalledImCliClientVersion() {
@@ -129,7 +123,7 @@ validateInstalledImCliClientVersion() {
     executeIMCommand "im-install" "--list"
     validateExpectedString ".*\"artifact\".*\:.*\"installation-manager-cli\".*\"version\".*\:.*\"${VERSION}\".*\"status\".*\:.*\"SUCCESS\".*"
 
-    logEndCommand "validateInstalledImCliClientVersion: OK"
+    logEndCommand "validateInstalledImCliClientVersion"
 }
 
 installCodenvy() {
@@ -158,7 +152,7 @@ installCodenvy() {
     validateExitCode ${EXIT_CODE} ${VALID_CODE} --installCodenvy
 
     sleep 5m
-    logEndCommand "installCodenvy: OK"
+    logEndCommand "installCodenvy"
 }
 
 installImCliClient() {
@@ -171,7 +165,7 @@ installImCliClient() {
     ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key "vagrant@${INSTALL_ON_NODE}" 'export TERM="xterm" && bash <(curl -L -s '${UPDATE_SERVICE}'/repository/public/download/install-im-cli) '${VERSION_OPTION} >> ${TEST_LOG}
     validateExitCode $?
 
-    logEndCommand "installImCliClient: OK"
+    logEndCommand "installImCliClient"
 }
 
 vagrantUp() {
@@ -210,7 +204,7 @@ doAuth() {
     fetchJsonParameter "value"
     TOKEN=${OUTPUT}
 
-    logEndCommand "auth: OK"
+    logEndCommand "auth"
 }
 
 executeIMCommand() {
@@ -229,7 +223,7 @@ executeIMCommand() {
     log ${OUTPUT}
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
-    logEndCommand "executeIMCommand: OK"
+    logEndCommand "executeIMCommand"
 }
 
 executeSshCommand() {
@@ -252,7 +246,7 @@ executeSshCommand() {
     log ${OUTPUT}
     validateExitCode ${EXIT_CODE} ${VALID_CODE}
 
-    logEndCommand "executeSshCommand: OK"
+    logEndCommand "executeSshCommand"
 }
 
 detectMasterNode() {
@@ -287,7 +281,7 @@ doPost() {
 
     validateExitCode ${EXIT_CODE}
 
-    logEndCommand "curl: OK"
+    logEndCommand "curl"
 }
 
 doGet() {
@@ -301,7 +295,7 @@ doGet() {
 
     validateExitCode ${EXIT_CODE}
 
-    logEndCommand "curl: OK"
+    logEndCommand "curl"
 }
 
 createDefaultFactory() {
@@ -315,7 +309,7 @@ createDefaultFactory() {
 
     validateExitCode ${EXIT_CODE}
 
-    logEndCommand "createDefaultFactory: OK"
+    logEndCommand "createDefaultFactory"
 }
 
 validateExpectedString() {
@@ -323,7 +317,7 @@ validateExpectedString() {
 
     [[ ${OUTPUT} =~ $1 ]] || validateExitCode 1
 
-    logEndCommand "validateRegex: OK"
+    logEndCommand "validateRegex"
 }
 
 validateErrorString() {
@@ -331,7 +325,7 @@ validateErrorString() {
 
     [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
 
-    logEndCommand "validateRegex: OK"
+    logEndCommand "validateRegex"
 }
 
 #createDummyArtifactInLocalRepositoryOfIMCli() {
