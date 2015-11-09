@@ -33,7 +33,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -42,6 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.commands.decorators.PuppetErrorInterrupter.READ_LOG_TIMEOUT_MILLIS;
+import static com.codenvy.im.commands.decorators.PuppetErrorReport.Constants;
 import static java.nio.file.Files.createDirectory;
 import static java.nio.file.Files.deleteIfExists;
 import static java.nio.file.Files.exists;
@@ -62,8 +62,7 @@ public abstract class BaseTestPuppetErrorInterrupter {
     static final Path TEST_TMP_DIRECTORY   = Paths.get("target/tmp/test").toAbsolutePath();
     static final Path LOG_TMP_DIRECTORY    = Paths.get("target/tmp/log").toAbsolutePath();
 
-    static final Path ORIGIN_BASE_TMP_DIRECTORY                  = PuppetErrorReport.BASE_TMP_DIRECTORY;
-    static final Path ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
+    static final Constants ORIGIN_REPORT_CONSTANTS = PuppetErrorReport.getConstants();
 
     @Mock
     Command mockCommand;
@@ -72,6 +71,8 @@ public abstract class BaseTestPuppetErrorInterrupter {
     ConfigManager mockConfigManager;
 
     PuppetErrorInterrupter spyInterrupter;
+
+    Constants spyReportConstants;
 
     String logWithoutErrorMessages =
         "2015-06-08 14:53:53 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
@@ -110,12 +111,16 @@ public abstract class BaseTestPuppetErrorInterrupter {
         when(spyInterrupter.getPuppetLogFile()).thenReturn(puppetLogFile);
 
         // create IM CLI client log
-        Path imLogFile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
+        Path imLogFile = TEST_TMP_DIRECTORY.resolve(ORIGIN_REPORT_CONSTANTS.getCliNonInteractiveLog().getFileName());
         FileUtils.write(imLogFile.toFile(), "");
 
-        PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = imLogFile;
-        PuppetErrorReport.BASE_TMP_DIRECTORY = REPORT_TMP_DIRECTORY;
-        PuppetErrorReport.useSudo = false;   // prevents asking sudo password when running the tests locally
+        // create constants
+        spyReportConstants = spy(new Constants());
+        doReturn(REPORT_TMP_DIRECTORY).when(spyReportConstants).getBaseTmpDir();
+        doReturn(imLogFile).when(spyReportConstants).getCliNonInteractiveLog();
+        doReturn(false).when(spyReportConstants).useSudo();   // prevents asking sudo password when running the tests locally
+
+        PuppetErrorReport.setConstants(spyReportConstants);
 
         // prepare Codenvy Config
         doReturn(getInstallType()).when(mockConfigManager).detectInstallationType();
@@ -135,9 +140,7 @@ public abstract class BaseTestPuppetErrorInterrupter {
 
     @AfterMethod
     public void tearDown() throws InterruptedException, IOException {
-        PuppetErrorReport.BASE_TMP_DIRECTORY = ORIGIN_BASE_TMP_DIRECTORY;
-        PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = ORIGIN_CLI_CLIENT_NON_INTERACTIVE_MODE_LOG;
-        PuppetErrorReport.useSudo = true;
+        PuppetErrorReport.setConstants(ORIGIN_REPORT_CONSTANTS);
 
         deleteDirectory(BASE_TMP_DIRECTORY.toFile());
     }
@@ -157,7 +160,7 @@ public abstract class BaseTestPuppetErrorInterrupter {
         String puppetLogFileContent = FileUtils.readFileToString(puppetLogFile.toFile());
         assertEquals(puppetLogFileContent, expectedContentOfLogFile);
 
-        Path imLogfile = TEST_TMP_DIRECTORY.resolve(PuppetErrorReport.CLI_CLIENT_NON_INTERACTIVE_MODE_LOG.getFileName());
+        Path imLogfile = TEST_TMP_DIRECTORY.resolve(spyReportConstants.getCliNonInteractiveLog().getFileName());
         assertTrue(exists(imLogfile));
     }
 

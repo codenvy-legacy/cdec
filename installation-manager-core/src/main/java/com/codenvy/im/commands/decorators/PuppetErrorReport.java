@@ -48,34 +48,21 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class PuppetErrorReport {
-    public static final Path REPORT_DIR =
-            Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
-    public static final String ERROR_REPORT_NAME_TEMPLATE = "error_report_%s.tar.gz";
+    private static final Logger LOG = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
 
-    public static final Logger LOG = Logger.getLogger(PuppetErrorReport.class.getSimpleName());
-
-    public static final Path INSTALLATION_MANAGER_SERVER_LOG = (System.getProperty("catalina.base") != null) ?
-                                                               Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out")
-                                                                                                             : null;
-
-    public static Path BASE_TMP_DIRECTORY = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
-    public static Path CLI_CLIENT_INTERACTIVE_MODE_LOG     = BASE_TMP_DIRECTORY.getParent().getParent().resolve("im-interactive.log");
-    public static Path CLI_CLIENT_NON_INTERACTIVE_MODE_LOG = BASE_TMP_DIRECTORY.getParent().getParent().resolve("im-non-interactive.log");
-
-    protected static String  REPORT_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
-    protected static boolean useSudo                 = true;  // for testing
+    private static Constants constants = new Constants();
 
     /**
      * @return path to created error report, or null in case of problems with report creation
      */
     @Nullable
     public static Path create(@Nullable final NodeConfig node, Path puppetLogFile) {
-        final Path report = createPathToErrorReport();
+        final Path report = constants.getPathToErrorReport();
 
         try {
             // re-create local temp dir
-            FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
-            Files.createDirectory(BASE_TMP_DIRECTORY);
+            FileUtils.deleteQuietly(constants.getBaseTmpDir().toFile());
+            Files.createDirectory(constants.getBaseTmpDir());
 
             // create report dir
             if (!Files.exists(report.getParent())) {
@@ -89,19 +76,10 @@ public class PuppetErrorReport {
             return null;
         } finally {
             // remove temp dir
-            FileUtils.deleteQuietly(BASE_TMP_DIRECTORY.toFile());
+            FileUtils.deleteQuietly(constants.getBaseTmpDir().toFile());
         }
 
         return report;
-    }
-
-    private static Path createPathToErrorReport() {
-        DateFormat dateFormat = new SimpleDateFormat(REPORT_NAME_TIME_FORMAT);
-        String currentTime = dateFormat.format(new Date());
-
-        String fileName = format(ERROR_REPORT_NAME_TEMPLATE, currentTime);
-
-        return REPORT_DIR.resolve(fileName);
     }
 
     /**
@@ -130,15 +108,15 @@ public class PuppetErrorReport {
 
         if (node == null) {
             // copy puppet log file into temp dir
-            commands.add(createCopyCommand(puppetLogFile, BASE_TMP_DIRECTORY, useSudo));
+            commands.add(createCopyCommand(puppetLogFile, constants.getBaseTmpDir(), constants.useSudo()));
 
             // change permission of puppet log file with puppet logs to the 666 to be able to pack it
-            Path copyPuppetLogFile = BASE_TMP_DIRECTORY.resolve(puppetLogFile.getFileName());
-            commands.add(createChmodCommand("666", copyPuppetLogFile, useSudo));
+            Path copyPuppetLogFile = constants.getBaseTmpDir().resolve(puppetLogFile.getFileName());
+            commands.add(createChmodCommand("666", copyPuppetLogFile, constants.useSudo()));
 
         } else {
             // create local temp dir for puppet log file from node with name = type_of_node
-            Path tempDirForNodeLog = BASE_TMP_DIRECTORY.resolve(node.getType().toString().toLowerCase());
+            Path tempDirForNodeLog = constants.getBaseTmpDir().resolve(node.getType().toString().toLowerCase());
             commands.add(createCommand(format("mkdir -p %s", tempDirForNodeLog)));
 
             // create remote temp dir
@@ -146,11 +124,11 @@ public class PuppetErrorReport {
             commands.add(createCommand(format("mkdir -p %s", remoteTempDir), node));
 
             // copy file with puppet logs into the remote temp dir
-            commands.add(createCopyCommand(puppetLogFile, remoteTempDir, node, useSudo));
+            commands.add(createCopyCommand(puppetLogFile, remoteTempDir, node, constants.useSudo()));
 
             // change permission of file with puppet logs to the 666 to be able to copy it to local machine
             Path remoteLogFile = remoteTempDir.resolve(puppetLogFile.getFileName());
-            commands.add(createChmodCommand("666", remoteLogFile, node, useSudo));
+            commands.add(createChmodCommand("666", remoteLogFile, node, constants.useSudo()));
 
             // copy remote puppet log file into the local_temp_dir/{node_type}/ directory
             commands.add(createCopyFromRemoteToLocalCommand(remoteLogFile,
@@ -162,22 +140,69 @@ public class PuppetErrorReport {
         }
 
         // copy installation manager logs
-        if (Files.exists(CLI_CLIENT_INTERACTIVE_MODE_LOG)) {
-            commands.add(createCopyCommand(CLI_CLIENT_INTERACTIVE_MODE_LOG, BASE_TMP_DIRECTORY));
+        if (Files.exists(constants.getCliInteractiveLog())) {
+            commands.add(createCopyCommand(constants.getCliInteractiveLog(), constants.getBaseTmpDir()));
         }
 
-        if (Files.exists(CLI_CLIENT_NON_INTERACTIVE_MODE_LOG)) {
-            commands.add(createCopyCommand(CLI_CLIENT_NON_INTERACTIVE_MODE_LOG, BASE_TMP_DIRECTORY));
+        if (Files.exists(constants.getCliNonInteractiveLog())) {
+            commands.add(createCopyCommand(constants.getCliNonInteractiveLog(), constants.getBaseTmpDir()));
         }
 
-        if (INSTALLATION_MANAGER_SERVER_LOG != null && Files.exists(INSTALLATION_MANAGER_SERVER_LOG)) {
-            commands.add(createCopyCommand(INSTALLATION_MANAGER_SERVER_LOG, BASE_TMP_DIRECTORY));
+        if (constants.getInstallationManagerServerLog() != null && Files.exists(constants.getInstallationManagerServerLog())) {
+            commands.add(createCopyCommand(constants.getInstallationManagerServerLog(), constants.getBaseTmpDir()));
         }
 
         // pack local temp dir into report file
-        commands.add(createPackCommand(BASE_TMP_DIRECTORY, reportFile, ".", false));
+        commands.add(createPackCommand(constants.getBaseTmpDir(), reportFile, ".", false));
 
         return new MacroCommand(commands, "Commands to create error report");
+    }
+
+    protected static void setConstants(Constants newConstants) {
+        constants = newConstants;
+    }
+
+    protected static Constants getConstants() {
+        return constants;
+    }
+
+    protected static class Constants {
+        private final Path   REPORT_DIR              = Paths.get(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.report_dir"))));
+        private final String REPORT_NAME_TEMPLATE    = "error_report_%s.tar.gz";
+        private final String REPORT_NAME_TIME_FORMAT = "dd-MMM-yyyy_HH-mm-ss";
+        private final Path   BASE_TMP_DIR            = Paths.get(System.getProperty("java.io.tmpdir")).resolve("codenvy");
+
+        protected Path getBaseTmpDir() {
+            return BASE_TMP_DIR;
+        }
+
+        private Path getCliInteractiveLog() {
+            return getBaseTmpDir().getParent().resolve("im-interactive.log");
+        }
+
+        protected Path getCliNonInteractiveLog() {
+            return getBaseTmpDir().getParent().resolve("im-non-interactive.log");
+        }
+
+        protected Path getInstallationManagerServerLog() {
+            return (System.getProperty("catalina.base") != null) ?
+                Paths.get(System.getProperty("catalina.base")).resolve("logs").resolve("catalina.out")
+                : null;
+        }
+
+        private Path getPathToErrorReport() {
+            DateFormat dateFormat = new SimpleDateFormat(REPORT_NAME_TIME_FORMAT);
+            String currentTime = dateFormat.format(new Date());
+
+            String fileName = format(REPORT_NAME_TEMPLATE, currentTime);
+
+            return REPORT_DIR.resolve(fileName);
+        }
+
+        /** for testing propose */
+        protected boolean useSudo() {
+            return true;
+        }
     }
 
 }
