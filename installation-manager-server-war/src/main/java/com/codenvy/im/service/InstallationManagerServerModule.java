@@ -22,7 +22,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
 
 import org.eclipse.che.commons.schedule.executor.ScheduleModule;
 import org.eclipse.che.inject.DynaModule;
@@ -33,12 +32,7 @@ public class InstallationManagerServerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-//        bindConstant().annotatedWith(Names.named("mail.notification.recipients")).to("sales@codenvy.com,ceo@codenvy.com");  // TODO [AB]
-        bindConstant().annotatedWith(Names.named("installation-manager.report-sender.recipients")).to("abazko@codenvy.com");
-        bindConstant().annotatedWith(Names.named("installation-manager.report-sender.sender")).to("no-replay@codenvy.com");
-
         bind(InstallationManagerService.class);
-        bind(ReportSender.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(InstallManagerArtifact.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(CDECArtifact.class);
 
