@@ -89,7 +89,6 @@ public abstract class BaseTestPuppetErrorInterrupter {
         + "2015-06-08 15:52:00 test puppet-agent[24198]: Finished catalog run in 2.04 seconds\n"
         + "2015-06-08 15:56:57 test puppet-master[5409]: Compiled catalog for test.com in environment production in 0.13 seconds\n"
         + "2015-06-08 15:56:59 test puppet-agent[24672]: Finished catalog run in 1.67 seconds\n";
-    private NodeConfig testNode;
 
     @BeforeMethod
     public void setup() throws IOException {

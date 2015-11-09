@@ -445,9 +445,17 @@ printPreInstallInfo_single() {
     println "Configuring system properties with file://${CONFIG}..."
     println
 
-    [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-    [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
-    [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
+    if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
+        insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
+    fi
+
+    if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
+        insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+    fi
+
+    if [ -n "${HOST_NAME}" ]; then
+        insertProperty "host_url" ${HOST_NAME}
+    fi
 
     doCheckAvailablePorts_single
 }
@@ -556,7 +564,6 @@ doCheckAvailableResourcesLocally() {
 
         if [[ ${resourceIssueFound} == true ]]; then
             println $(printWarning "!!! The resources available are lower than recommended.")
-            println $(printWarning "!!! Sizing Guide: http://docs.codenvy.com/onprem")
         fi
 
         println
@@ -591,7 +598,6 @@ checkAccessToExternalDependencies() {
     if [[ ${resourceIssueFound} == true ]]; then
         println $(printError "!!! Some repositories are not accessible. The installation will fail.")
         println $(printError "!!! Consider setting up a proxy server.")
-        println $(printError "!!! See: http://docs.codenvy.com/onprem/installation-bootstrap/")
         println
 
         if [[ ${SILENT} == true ]]; then
@@ -636,11 +642,18 @@ printPreInstallInfo_multi() {
     println "Configuring system properties with file://${CONFIG}..."
     println
 
-    [ ! -z "${SYSTEM_ADMIN_NAME}" ] && insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
-    [ ! -z "${SYSTEM_ADMIN_PASSWORD}" ] && insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+    if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
+        insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
+    fi
+
+    if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
+        insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+    fi
 
     if [[ ${SILENT} == true ]]; then
-        [ ! -z "${HOST_NAME}" ] && insertProperty "host_url" ${HOST_NAME}
+        if [ -n "${HOST_NAME}" ]; then
+            insertProperty "host_url" ${HOST_NAME}
+        fi
 
         doGetHostsVariables
 
@@ -805,7 +818,6 @@ doCheckAvailableResourcesOnNodes() {
 
     if [[ ${globalNodeIssueFound} == true ]]; then
         println $(printWarning "!!! Some nodes do not match recommended.")
-        println $(printWarning "!!! See: http://docs.codenvy.com/onprem/#sizing-guide")
         println
 
         if [[ ${SILENT} == true && ${globalOsIssueFound} == true ]]; then
@@ -1010,17 +1022,24 @@ updatePuppetInfo() {
 }
 
 printPostInstallInfo() {
-    [ -z ${SYSTEM_ADMIN_NAME} ] && SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
-    [ -z ${SYSTEM_ADMIN_PASSWORD} ] && SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
-    [ -z ${HOST_NAME} ] && HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
+    if [ -z ${SYSTEM_ADMIN_NAME} ]; then
+        SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
+    fi
+
+    if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
+        SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
+    fi
+
+    if [ -z ${HOST_NAME} ]; then
+        HOST_NAME=$(grep host_url\\s*=\\s*.* ${CONFIG} | sed 's/host_url\s*=\s*\(.*\)/\1/')
+    fi
 
     println
     println "Codenvy is ready: $(printImportantLink "http://$HOST_NAME")."
     println "Admin user name:  $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
     println "Admin password:   $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
     println
-    println "!!! Your clients must add a hosts rule, or you can set up a DNS entry. Learn more:"
-    println "!!! http://docs.codenvy.com/onprem/installation-bootstrap/#prereq"
+    println "!!! Set up DNS or add a hosts rule on your clients to reach this hostname."
 }
 
 set -e
