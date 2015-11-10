@@ -95,7 +95,7 @@ uploadCodenvySingleServerInstallProperties() {
 
 uploadCodenvyMultiServerInstallProperties() {
     ARTIFACT=codenvy-multi-server-properties
-    FILENAME=codenv.properties
+    FILENAME=codenvy.properties
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/codenvy-multi-server.properties
     DESCRIPTION="Codenvy multi-server installation properties"
