@@ -132,6 +132,9 @@
                                         fi
                                         main "$@"</replacevalue>
                                 </replace>
+                                <delete>
+                                    <fileset dir="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/" includes="*.bat"/>
+                                </delete>
                                 <!-- make it possible to pass empty command-line argument "" or argument with spaces only " " to java -->
                                 <replace file="${project.build.directory}/codenvy-cli-${codenvy.cli.version}/bin/codenvy">
                                     <replacetoken>codenvy:$COMMAND "$*"</replacetoken>

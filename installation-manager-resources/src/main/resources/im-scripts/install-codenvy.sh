@@ -75,7 +75,7 @@ setRunOptions() {
             SYSTEM_ADMIN_PASSWORD=`echo "$var" | sed -e "s/--systemAdminPassword=//g"`
         fi
     done
-    CONFIG="codenvy-${CODENVY_TYPE}-server.properties"
+    CONFIG="codenvy.properties"
 
     if [[ ${CODENVY_TYPE} == "single" ]] && [[ ! -z ${HOST_NAME} ]] && [[ ! -z ${SYSTEM_ADMIN_PASSWORD} ]] && [[ ! -z ${SYSTEM_ADMIN_NAME} ]]; then
         SILENT=true
@@ -122,7 +122,7 @@ validateOS() {
 # $1 - command name
 installPackageIfNeed() {
     local exitCode
-    rpm -qa | grep "^$1-" &> /dev/null || { # check if requered package had been already installed earlier
+    rpm -qa | grep "^$1-" &> /dev/null || { # check if required package already has been installed earlier
         echo -n "Install package '$1'... " >> install.log
 
         exitCode=$(sudo yum install $1 -y -q --errorlevel=0 >> install.log 2>&1; echo $?)
@@ -133,7 +133,7 @@ installPackageIfNeed() {
     }
 }
 
-preconfigureSystem() {
+preConfigureSystem() {
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
     installPackageIfNeed net-tools
@@ -435,7 +435,7 @@ printPreInstallInfo_single() {
 
     doCheckAvailableResourcesLocally 8000000 4 300000000
 
-    preconfigureSystem
+    preConfigureSystem
 
     println "Checking access to external dependencies..."
     println
@@ -637,7 +637,7 @@ printPreInstallInfo_multi() {
     println
 
     doCheckAvailableResourcesLocally 1000000 1 14000000
-    preconfigureSystem
+    preConfigureSystem
 
     println "Configuring system properties with file://${CONFIG}..."
     println
@@ -1042,6 +1042,11 @@ printPostInstallInfo() {
     println "!!! Set up DNS or add a hosts rule on your clients to reach this hostname."
 }
 
+postInstallationConfigure() {
+    echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
+    source ${HOME}/.bashrc
+}
+
 set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
@@ -1063,3 +1068,5 @@ doDownloadBinaries
 doInstallCodenvy
 
 printPostInstallInfo
+
+postInstallationConfigure

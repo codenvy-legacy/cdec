@@ -86,18 +86,18 @@ uploadCodenvyServerInstallInstalationManagerScript() {
 
 uploadCodenvySingleServerInstallProperties() {
     ARTIFACT=codenvy-single-server-properties
-    FILENAME=codenvy-single-server.properties
+    FILENAME=codenvy.properties
     VERSION=$1
-    SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/${FILENAME}
+    SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/codenvy-single-server.properties
     DESCRIPTION="Codenvy single-server installation properties"
     doUpload
 }
 
 uploadCodenvyMultiServerInstallProperties() {
     ARTIFACT=codenvy-multi-server-properties
-    FILENAME=codenvy-multi-server.properties
+    FILENAME=codenv.properties
     VERSION=$1
-    SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/${FILENAME}
+    SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/codenvy-multi-server.properties
     DESCRIPTION="Codenvy multi-server installation properties"
     doUpload
 }
