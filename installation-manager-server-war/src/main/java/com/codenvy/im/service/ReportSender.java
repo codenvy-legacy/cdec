@@ -57,7 +57,7 @@ public class ReportSender {
     }
 
     //    @ScheduleCron(cron = "0 0 1 ? * SUN *") // TODO [AB] every sunday's night
-    @ScheduleCron(cron = "0 0/1 * 1/1 * ? *")
+    // @ScheduleCron(cron = "0 0/1 * 1/1 * ? *")
     public void sendWeeklyReports() throws IOException, MessagingException {
         sendNumberOfUsers();
     }
