@@ -39,13 +39,15 @@ public class PasswordManagerTest extends BaseTest {
     private HttpTransport transport;
     @Mock
     private ConfigManager configManager;
+    @Mock
+    private LdapManager ldapManager;
 
     private PasswordManager passwordManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        passwordManager = spy(new PasswordManager(configManager, transport));
+        passwordManager = spy(new PasswordManager(configManager, transport, ldapManager));
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
