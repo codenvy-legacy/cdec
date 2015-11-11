@@ -39,6 +39,7 @@ executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service
+executeSshCommand "cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
 auth "admin" "new-password" "http://${NEW_HOSTNAME}"
