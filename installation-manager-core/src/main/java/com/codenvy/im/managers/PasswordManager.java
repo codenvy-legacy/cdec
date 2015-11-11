@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.managers;
 
-import com.codenvy.api.dao.authentication.SSHAPasswordEncryptor;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -25,20 +24,10 @@ import com.google.inject.Singleton;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 
-import javax.naming.Context;
-import javax.naming.NamingException;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import javax.naming.directory.ModificationItem;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.Hashtable;
 
-import static com.codenvy.im.managers.NodeConfig.extractConfigFrom;
 import static com.codenvy.im.utils.Commons.combinePaths;
-import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 
 /**
  * @author Anatoliy Bazko
@@ -48,12 +37,15 @@ public class PasswordManager {
 
     private final ConfigManager configManager;
     private final HttpTransport httpTransport;
+    private final LdapManager   ldapManager;
 
     @Inject
     public PasswordManager(ConfigManager configManager,
-                           HttpTransport httpTransport) throws IOException {
+                           HttpTransport httpTransport,
+                           LdapManager ldapManager) throws IOException {
         this.configManager = configManager;
         this.httpTransport = httpTransport;
+        this.ldapManager = ldapManager;
     }
 
     /**
@@ -71,9 +63,9 @@ public class PasswordManager {
         validateCurrentPassword(currentPassword, config);
 
         try {
-            InitialDirContext ldapContext = connect(installType, config);
+            InitialDirContext ldapContext = ldapManager.connect(installType, config);
             try {
-                updatePwd(newPassword, ldapContext, config);
+                ldapManager.updatePwd(newPassword, ldapContext, config);
             } finally {
                 ldapContext.close();
             }
@@ -96,36 +88,5 @@ public class PasswordManager {
         }
     }
 
-    private void updatePwd(byte[] newPassword, InitialDirContext ldapContext, Config config) throws NamingException, UnsupportedEncodingException {
-        SSHAPasswordEncryptor sshaPasswordEncryptor = new SSHAPasswordEncryptor();
-        String encryptedPwd = new String(sshaPasswordEncryptor.encrypt(newPassword), "UTF-8");
 
-        ModificationItem[] mods = new ModificationItem[]{
-                new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("userPassword", encryptedPwd))
-        };
-        ldapContext.modifyAttributes(format("cn=%s,ou=users,dc=codenvycorp,dc=com", config.getValue("admin_ldap_user_name")), mods);
-    }
-
-    private InitialDirContext connect(InstallType installType, Config config) throws NamingException, IOException {
-        String server = recogniseLDAPServer(installType, config);
-
-        Hashtable<String, String> ldapEnv = new Hashtable<>(5);
-        ldapEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        ldapEnv.put(Context.PROVIDER_URL, format("ldap://%s:389", server));
-        ldapEnv.put(Context.SECURITY_AUTHENTICATION, "simple");
-        ldapEnv.put(Context.SECURITY_PRINCIPAL, "cn=root,dc=codenvycorp,dc=com");
-        ldapEnv.put(Context.SECURITY_CREDENTIALS, config.getValue("system_ldap_password"));
-        return new InitialDirContext(ldapEnv);
-    }
-
-    private String recogniseLDAPServer(InstallType installType, Config config) throws IOException {
-        if (installType == InstallType.SINGLE_SERVER) {
-            return "localhost";
-        } else {
-            NodeConfig nodeConfig = extractConfigFrom(config, NodeConfig.NodeType.DATA);
-            requireNonNull(nodeConfig);
-
-            return nodeConfig.getHost();
-        }
-    }
 }
