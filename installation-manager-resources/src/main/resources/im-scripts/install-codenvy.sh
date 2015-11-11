@@ -351,7 +351,7 @@ validatePortLocal() {
 
     if [ "${OUTPUT}" != "" ]; then
         println $(printError "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
-        println $(printError "ERROR: The installation can't be proceeded.")
+        println $(printError "ERROR: TThe installation cannot proceed.")
         exit 1
     fi
 }
@@ -364,7 +364,7 @@ validatePortRemote() {
 
     if [ "${OUTPUT}" != "" ]; then
         println $(printError "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
-        println $(printError "ERROR: The installation can't be proceeded.")
+        println $(printError "ERROR: The installation cannot proceed.")
         exit 1
     fi
 }
