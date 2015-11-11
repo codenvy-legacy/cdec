@@ -68,9 +68,17 @@ executeSshCommand "sudo LC_TIME=\"uk_US.UTF-8\" date -s \"${TOMORROW_DATE}\"" "a
 # analytics data
 DATE=`date +"%Y%m%d"`
 auth "admin" "new-password"
+
+executeSshCommand "date" "analytics.codenvy"
 doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.PigRunnerFeature/${DATE}/${DATE}?token=${TOKEN}"   # takes about 20 minutes
+
+executeSshCommand "date" "analytics.codenvy"
 doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.DataComputationFeature/${DATE}/${DATE}?token=${TOKEN}"
+
+executeSshCommand "date" "analytics.codenvy"
 doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.DataIntegrityFeature/${DATE}/${DATE}?token=${TOKEN}"
+
+executeSshCommand "date" "analytics.codenvy"
 doPost "" "" "http://codenvy/analytics/api/service/com.codenvy.analytics.services.ViewBuilderFeature/${DATE}/${DATE}?token=${TOKEN}"
 
 # check analytics: request users profiles = 1
