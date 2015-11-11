@@ -1011,7 +1011,7 @@ updatePuppetInfo() {
     for ((;;)); do
         local line=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log 2>/dev/null)
         if [[ -n "$line" ]]; then
-            updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:$(( ${DEPENDENCIES_STATUS_OFFSET}-8 ))}...]"     # print first (${DEPENDENCIES_STATUS_OFFSET}-7) symbols of line
+            updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:$(( ${DEPENDENCIES_STATUS_OFFSET}-8 ))}...]"     # print first N symbols of line
         else
             updateLine ${PUPPET_LINE} ""
         fi
@@ -1039,7 +1039,7 @@ printPostInstallInfo() {
     println "Admin user name:  $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
     println "Admin password:   $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
     println
-    println "!!! Set up DNS or add a hosts rule on your clients to reach this hostname."
+    println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }
 
 postInstallationConfigure() {
