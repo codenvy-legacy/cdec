@@ -70,6 +70,8 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     private static final Logger LOG = Logger.getLogger(AbstractIMCommand.class.getSimpleName());  // use java.util.logging instead of slf4j
 
+    protected static boolean updateImClientDone;
+
     public AbstractIMCommand() {
         facade = INJECTOR.getInstance(IMArtifactLabeledFacade.class);
     }
@@ -78,7 +80,10 @@ public abstract class AbstractIMCommand extends AbsCommand {
     protected Void execute() throws Exception {
         try {
             init();
-            updateImCliClientIfNeeded();
+            if (!updateImClientDone) {
+                updateImCliClientIfNeeded();
+                updateImClientDone = true;
+            }
             doExecuteCommand();
 
         } catch (Exception e) {

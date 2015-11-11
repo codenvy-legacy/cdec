@@ -62,6 +62,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
     public void initMocks() throws IOException {
         MockitoAnnotations.initMocks(this);
 
+        AbstractIMCommand.updateImClientDone = false;
         spyCommand = spy(new DownloadCommand());
         spyCommand.facade = service;
 
