@@ -55,6 +55,7 @@ installIm() {
     tar -xf ${IM_FILE} -C ${DIR}/codenvy-cli
 
     sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/codenvy
+    echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
 }
 
 printPrompt() {
@@ -106,11 +107,6 @@ doInstallStep3() {
     printLn "Codenvy Installation Manager is installed into ${DIR}/codenvy-cli directory"
 }
 
-postInstallationConfigure() {
-    echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
-    source ${HOME}/.bashrc
-}
-
 clear
 preconfigureSystem "$@"
 
@@ -119,5 +115,3 @@ printPreInstallInfo
 doInstallStep1
 doInstallStep2
 doInstallStep3
-
-postInstallationConfigure

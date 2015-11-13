@@ -97,28 +97,6 @@ downloadConfig() {
     curl --silent --output ${CONFIG} ${url}
 }
 
-validateOS() {
-    if [ -f /etc/redhat-release ]; then
-        osToDisplay="Red Hat"
-    else
-        println  "Operation system isn't supported."
-        exit 1
-    fi
-
-    OS=`cat /etc/redhat-release`
-    osVersion=`${osToDisplay} | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
-
-    if [ "${VERSION}" == "3.1.0" ] && [ "${osVersion}" != "6" ]; then
-        println "Codenvy 3.1.0 can be installed onto CentOS 6.x only"
-        exit 1
-    fi
-
-    if [ "${CODENVY_TYPE}" == "multi" ] && [ "${osVersion}" != "7" ]; then
-        println "Codenvy multi-node can be installed onto CentOS 7.x only"
-        exit 1
-    fi
-}
-
 # $1 - command name
 installPackageIfNeed() {
     local exitCode
@@ -137,6 +115,7 @@ preConfigureSystem() {
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
     installPackageIfNeed net-tools
+    installPackageIfNeed wget
 
     if [[ ! -f ${CONFIG} ]]; then
         downloadConfig
@@ -170,6 +149,8 @@ installIm() {
     tar -xf ${IM_FILE} -C ${DIR}/codenvy-cli
 
     sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/codenvy
+
+    echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
 }
 
 clearLine() {
@@ -711,7 +692,7 @@ doCheckAvailableResourcesOnNodes() {
         # check if host available
         local OUTPUT=$(validateHostname ${HOST})
         if [ "${OUTPUT}" != "success" ]; then
-            println $(printError "ERROR: The hostname '${HOST}' isn't availabe or wrong.")
+            println $(printError "ERROR: The hostname '${HOST}' isn't available or wrong.")
             exit 1
         fi
 
@@ -760,6 +741,7 @@ doCheckAvailableResourcesOnNodes() {
         # check on OS CentOS 7
         if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
             osIssueFound=true
+            globalOsIssueFound=true
         fi
 
         local availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
@@ -841,9 +823,6 @@ doConfigureSystem() {
 doInstallPackages() {
     nextStep 1 "Installing required packages... [tar ]"
     installPackageIfNeed tar
-
-    nextStep 1 "Installing required packages... [wget]"
-    installPackageIfNeed wget
 
     nextStep 1 "Installing required packages... [unzip]"
     installPackageIfNeed unzip
@@ -1042,11 +1021,6 @@ printPostInstallInfo() {
     println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }
 
-postInstallationConfigure() {
-    echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
-    source ${HOME}/.bashrc
-}
-
 set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
@@ -1068,5 +1042,3 @@ doDownloadBinaries
 doInstallCodenvy
 
 printPostInstallInfo
-
-postInstallationConfigure
