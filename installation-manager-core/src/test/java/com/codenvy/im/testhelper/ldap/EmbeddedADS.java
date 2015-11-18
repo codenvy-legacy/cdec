@@ -15,7 +15,7 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.ldap;
+package com.codenvy.im.testhelper.ldap;
 
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -48,7 +48,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author Alexander Reshetnyak
+ * A simple example exposing how to embed Apache Directory Server version 1.5.7
+ * into an application.
+ *
+ * @author <a href="mailto:dev@directory.apache.org">Apache Directory Project</a>
  */
 public class EmbeddedADS {
     /** The directory service */
@@ -212,7 +215,7 @@ public class EmbeddedADS {
         Partition apachePartition = addPartition("apache", "dc=apache,dc=org", service.getDnFactory());
 
         // Index some attributes on the apache partition
-        addIndex(apachePartition, "objectClass", "ou", "uid");
+//        addIndex(apachePartition, "objectClass", "ou", "uid");
 
         // And start the service
         service.startup();

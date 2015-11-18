@@ -17,10 +17,9 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.im.saas.SaasApiServiceProxy;
+import com.codenvy.im.managers.LdapManager;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.codenvy.mail.MailSenderClient;
 import org.eclipse.che.commons.schedule.ScheduleCron;
 
@@ -40,17 +39,17 @@ import java.net.InetAddress;
 public class ReportSender {
     private static final String WEEKLY_ON_PREM_REPORT = "Weekly On-Prem report";
 
-    private final SaasApiServiceProxy apiService;
-    private final MailSenderClient    mailClient;
-    private final String              recipients;
-    private final String              sender;
+    private final LdapManager      ldapManager;
+    private final MailSenderClient mailClient;
+    private final String           recipients;
+    private final String           sender;
 
     @Inject
     public ReportSender(@Named("installation-manager.report-sender.recipients") String recipients,
                         @Named("installation-manager.report-sender.sender") String sender,
-                        SaasApiServiceProxy apiService,
+                        LdapManager ldapManager,
                         MailSenderClient mailClient) {
-        this.apiService = apiService;
+        this.ldapManager = ldapManager;
         this.mailClient = mailClient;
         this.recipients = recipients;
         this.sender = sender;
@@ -68,7 +67,7 @@ public class ReportSender {
         msg.append(InetAddress.getLocalHost().getHostName());
         msg.append('\n');
         msg.append("Number of users: ");
-        msg.append(apiService.getUsersCount());
+        msg.append(ldapManager.getNumberOfUsers());
         msg.append('\n');
         msg.append('\n');
 

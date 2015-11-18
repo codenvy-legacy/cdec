@@ -29,9 +29,9 @@ import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.InstallationNotStartedException;
+import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
-import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.ArtifactStatus;
@@ -57,16 +57,15 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -93,7 +92,7 @@ public class InstallationManagerFacade {
     protected final SaasAuthServiceProxy       saasAuthServiceProxy;
     protected final SaasAccountServiceProxy    saasAccountServiceProxy;
     protected final SaasRepositoryServiceProxy saasRepositoryServiceProxy;
-    protected final PasswordManager            passwordManager;
+    protected final LdapManager                ldapManager;
     protected final NodeManager                nodeManager;
     protected final BackupManager              backupManager;
     protected final StorageManager             storageManager;
@@ -112,7 +111,7 @@ public class InstallationManagerFacade {
                                      SaasAuthServiceProxy saasAuthServiceProxy,
                                      SaasAccountServiceProxy saasAccountServiceProxy,
                                      SaasRepositoryServiceProxy saasRepositoryServiceProxy,
-                                     PasswordManager passwordManager,
+                                     LdapManager ldapManager,
                                      NodeManager nodeManager,
                                      BackupManager backupManager,
                                      StorageManager storageManager,
@@ -126,7 +125,7 @@ public class InstallationManagerFacade {
         this.updateServerEndpoint = updateServerEndpoint;
         this.saasAuthServiceProxy = saasAuthServiceProxy;
         this.saasAccountServiceProxy = saasAccountServiceProxy;
-        this.passwordManager = passwordManager;
+        this.ldapManager = ldapManager;
         this.nodeManager = nodeManager;
         this.backupManager = backupManager;
         this.storageManager = storageManager;
@@ -554,10 +553,10 @@ public class InstallationManagerFacade {
     }
 
     /**
-     * @see com.codenvy.im.managers.PasswordManager#changeAdminPassword(byte[], byte[])
+     * @see com.codenvy.im.managers.LdapManager#changeAdminPassword(byte[], byte[])
      */
     public void changeAdminPassword(byte[] currentPassword, byte[] newPassword) throws IOException {
-        passwordManager.changeAdminPassword(currentPassword, newPassword);
+        ldapManager.changeAdminPassword(currentPassword, newPassword);
     }
 
     /**

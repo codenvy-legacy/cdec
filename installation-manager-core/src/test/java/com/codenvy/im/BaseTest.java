@@ -133,14 +133,18 @@ public class BaseTest {
     }
 
     protected void prepareSingleNodeEnv(ConfigManager configManager) throws Exception {
-        Map<String, String> properties = ImmutableMap.of("host_url", "hostname",
-                                                         Config.VERSION, TEST_VERSION_STR);
+        Map<String, String> properties = getTestSingleNodeProperties();
 
         createSingleNodeConf();
         createAssemblyProperty();
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doReturn("http://localhost/api").when(configManager).getApiEndpoint();
         doReturn(new Config(properties)).when(configManager).loadInstalledCodenvyConfig();
+    }
+
+    protected Map<String, String> getTestSingleNodeProperties() {
+        return ImmutableMap.of("host_url", "hostname",
+                               Config.VERSION, TEST_VERSION_STR);
     }
 
     protected void prepareMultiNodeEnv(ConfigManager configManager, HttpTransport transport) throws Exception {
