@@ -24,8 +24,8 @@ import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
-import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BasicArtifactInfo;
@@ -39,12 +39,11 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -68,7 +67,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
                                SaasAuthServiceProxy saasAuthServiceProxy,
                                SaasAccountServiceProxy saasAccountServiceProxy,
                                SaasRepositoryServiceProxy saasRepositoryServiceProxy,
-                               PasswordManager passwordManager,
+                               LdapManager ldapManager,
                                NodeManager nodeManager,
                                BackupManager backupManager,
                                StorageManager storageManager,
@@ -81,7 +80,7 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
               saasAuthServiceProxy,
               saasAccountServiceProxy,
               saasRepositoryServiceProxy,
-              passwordManager,
+              ldapManager,
               nodeManager,
               backupManager,
               storageManager,

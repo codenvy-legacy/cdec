@@ -15,8 +15,9 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im;
+package com.codenvy.im.testhelper.ssh;
 
+import com.codenvy.im.BaseTest;
 import com.google.common.collect.ImmutableSet;
 import org.apache.sshd.SshServer;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;

@@ -27,8 +27,8 @@ import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
-import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -73,7 +73,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
     @Mock
     private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
-    private PasswordManager            passwordManager;
+    private LdapManager                ldapManager;
     @Mock
     private NodeManager                nodeManager;
     @Mock
@@ -108,7 +108,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
                                                  saasAuthServiceProxy,
                                                  saasAccountServiceProxy,
                                                  saasRepositoryServiceProxy,
-                                                 passwordManager,
+                                                 ldapManager,
                                                  nodeManager,
                                                  backupManager,
                                                  storageManager,

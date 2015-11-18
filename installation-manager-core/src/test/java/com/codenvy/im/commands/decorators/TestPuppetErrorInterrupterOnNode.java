@@ -17,35 +17,24 @@
  */
 package com.codenvy.im.commands.decorators;
 
-import com.codenvy.im.SshServerFactory;
+import com.codenvy.im.testhelper.ssh.SshServerFactory;
 import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import org.apache.commons.io.FileUtils;
 import org.apache.sshd.SshServer;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.commons.io.FileUtils.deleteDirectory;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;

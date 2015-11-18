@@ -19,14 +19,13 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
-import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BasicArtifactInfo;
@@ -41,17 +40,15 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
@@ -71,7 +68,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    SaasAuthServiceProxy saasAuthServiceProxy,
                                    SaasAccountServiceProxy saasAccountServiceProxy,
                                    SaasRepositoryServiceProxy saasRepositoryServiceProxy,
-                                   PasswordManager passwordManager,
+                                   LdapManager ldapManager,
                                    NodeManager nodeManager,
                                    BackupManager backupManager,
                                    StorageManager storageManager,
@@ -84,7 +81,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
               saasAuthServiceProxy,
               saasAccountServiceProxy,
               saasRepositoryServiceProxy,
-              passwordManager,
+              ldapManager,
               nodeManager,
               backupManager,
               storageManager,

@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.agent;
 
-import com.codenvy.im.SshServerFactory;
+import com.codenvy.im.testhelper.ssh.SshServerFactory;
 import org.apache.sshd.SshServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
