@@ -19,6 +19,38 @@ unset SYSTEM_ADMIN_PASSWORD
 JDK_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
 JRE_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz
 
+
+EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
+                       "https://install.codenvycorp.com||0"
+                       "http://archive.apache.org/dist/ant/binaries||0"
+                       "http://dl.fedoraproject.org/pub/epel/||1"
+                       "https://storage.googleapis.com/appengine-sdks/||0"
+                       "http://www.us.apache.org/dist/maven/||0"
+                       "https://repo.mongodb.org/yum/redhat/||0"
+                       "http://repo.mysql.com/||0"
+                       "http://nginx.org/packages/centos/||1"
+                       "http://yum.postgresql.org/||0"
+                       "http://yum.puppetlabs.com/||1"
+                       "http://repo.zabbix.com/zabbix/||0"
+                       "${JDK_URL}|Cookie:oraclelicense=accept-securebackup-cookie|0"
+                       "http://mirror.centos.org/centos||0");
+
+CURRENT_STEP=
+INSTALLATION_STEPS=("Configuring system..."
+                    "Installing required packages... [java]"
+                    "Install the Codenvy installation manager..."
+                    "Downloading Codenvy binaries... "
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Installing Codenvy... ~20 mins"
+                    "Booting Codenvy... "
+                    "");                      
+
 PUPPET_MASTER_PORTS=("tcp:8140");
 SITE_PORTS=("tcp:80" "tcp:443" "tcp:10050" "tcp:32001" "tcp:32101");
 API_PORTS=("tcp:8080" "tcp:8180" "tcp:10050" "tcp:32001" "tcp:32101" "tcp:32201" "tcp:32301");
@@ -28,8 +60,10 @@ RUNNER_PORTS=("tcp:80" "tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
 BUILDER_PORTS=("tcp:8080" "tcp:10050" "tcp:32001" "tcp:32101");
 ANALYTICS_PORTS=("tcp:7777" "tcp:8080" "udp:5140" "tcp:9763" "tcp:10050" "tcp:32001" "tcp:32101");
 
+INTERNET_CHECKER_PID=
 TIMER_PID=
 PRINTER_PID=
+LINE_UPDATER_PID=
 
 STEP_LINE=
 PUPPET_LINE=
@@ -41,6 +75,8 @@ DEPENDENCIES_STATUS_OFFSET=85  # fit screen width = 100 cols
 function cleanUp() {
     killTimer
     killPuppetInfoPrinter
+    killInternetAccessChecker
+    killFooterUpdater
 }
 
 validateExitCode() {
@@ -48,6 +84,8 @@ validateExitCode() {
     if [[ -n "${EXIT_CODE}" ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
         pauseTimer
         pausePuppetInfoPrinter
+        pauseInternetAccessChecker
+        pauseFooterUpdater
         println
         println "Unexpected error occurred. See install.log for more details"
         exit ${EXIT_CODE}
@@ -76,6 +114,7 @@ setRunOptions() {
         fi
     done
     CONFIG="codenvy.properties"
+    EXTERNAL_DEPENDENCIES[0]="https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION}||0"
 
     if [[ ${CODENVY_TYPE} == "single" ]] && [[ ! -z ${HOST_NAME} ]] && [[ ! -z ${SYSTEM_ADMIN_PASSWORD} ]] && [[ ! -z ${SYSTEM_ADMIN_NAME} ]]; then
         SILENT=true
@@ -116,6 +155,8 @@ preConfigureSystem() {
     installPackageIfNeed curl
     installPackageIfNeed net-tools
     installPackageIfNeed wget
+    installPackageIfNeed tar
+    installPackageIfNeed unzip
 
     if [[ ! -f ${CONFIG} ]]; then
         downloadConfig
@@ -175,22 +216,28 @@ cursorRestore() {
 
 # $1 - line number which is starting backward from 1 - the last bottom row.
 # $2, $3,.. - messages to display in line number $1
+# replace spaces with "_" character not to loose them
 updateLine() {
     local lineNumber=$1
+    shift
+    echo "$@" | tr ' ' '_' > /dev/shm/line_${lineNumber}
+}
 
-    if [[ -n ${lineNumber} ]]; then
-        for ((i=1; i<lineNumber+1; i++)); do
-            cursorUp
+updateFooter() {
+    for ((;;)); do
+        cursorUp
+        cursorUp
+        cursorUp
+        cursorUp
+        
+        for ((line=4; line>=1; line--));  do
+            clearLine
+            local text=`echo $(</dev/shm/line_${line}) | tr '_' ' '`
+            println "${text}"
         done
 
-        clearLine
-        shift
-        println "$@"
-
-        for ((i=1; i<lineNumber; i++)); do
-            cursorDown
-        done
-    fi
+        sleep 1
+    done
 }
 
 # https://wiki.archlinux.org/index.php/Color_Bash_Prompt
@@ -314,7 +361,7 @@ doCheckPortRemote() {
     PROTOCOL=$1
     PORT=$2
     HOST=$3
-    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t $HOST "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
+    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
     echo ${OUTPUT}
 }
 
@@ -421,7 +468,7 @@ printPreInstallInfo_single() {
     println "Checking access to external dependencies..."
     println
 
-    checkAccessToExternalDependencies
+    checkResourceAccess
 
     println "Configuring system properties with file://${CONFIG}..."
     println
@@ -556,23 +603,13 @@ doCheckAvailableResourcesLocally() {
     fi
 }
 
-checkAccessToExternalDependencies() {
+checkResourceAccess() {
     local resourceIssueFound=false
+    local printStatus=true
 
-    checkUrl https://install.codenvycorp.com || resourceIssueFound=true
-    checkUrl http://archive.apache.org/dist/ant/binaries || resourceIssueFound=true
-    checkUrl ${JDK_URL} "Cookie: oraclelicense=accept-securebackup-cookie" || resourceIssueFound=true
-    checkUrl http://dl.fedoraproject.org/pub/epel/ || resourceIssueFound=true
-    checkUrl https://storage.googleapis.com/appengine-sdks/ || resourceIssueFound=true
-    checkUrl http://www.us.apache.org/dist/maven/ || resourceIssueFound=true
-    checkUrl https://repo.mongodb.org/yum/redhat/ || resourceIssueFound=true
-    checkUrl http://repo.mysql.com/ || resourceIssueFound=true
-    checkUrl http://nginx.org/packages/centos/ || resourceIssueFound=true
-    checkUrl http://yum.postgresql.org/ || resourceIssueFound=true
-    checkUrl http://yum.puppetlabs.com/ || resourceIssueFound=true
-    checkUrl http://repo.zabbix.com/zabbix/ || resourceIssueFound=true
-    checkUrl http://mirror.centos.org/centos/ || resourceIssueFound=true
-    checkUrl https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION} || resourceIssueFound=true  # check Codenvy binary accessibility
+    for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
+        doCheckResourceAccess ${resource} ${printStatus} || resourceIssueFound=true
+    done
 
     println
 
@@ -590,12 +627,12 @@ checkAccessToExternalDependencies() {
     fi
 }
 
-# parameter 1 - url
-# parameter 2 - cookie
-checkUrl() {
+doCheckResourceAccess() {
+    local resource=$1
+    local printStatus=$2
+    local url=`echo ${resource} | awk -F'|' '{print $1}'`;
+    local cookie=`echo ${resource} | awk -F'|' '{print $2}'`;
     local checkFailed=0
-    local url=$1
-    local cookie=$2
 
     if [[ ${cookie} == "" ]]; then
         wget --timeout=10 --tries=5 --quiet --spider ${url} || checkFailed=1
@@ -603,8 +640,10 @@ checkUrl() {
         wget --timeout=10 --tries=5 --quiet --spider --no-cookies --no-check-certificate --header "${cookie}" ${url} || checkFailed=1
     fi
 
-    local checkStatus=$([ ${checkFailed} == 0 ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
-    println "$(printf "%-${DEPENDENCIES_STATUS_OFFSET}s" ${url}) ${checkStatus}"
+    if [[ ${printStatus} == true ]]; then
+        local checkStatus=$([ ${checkFailed} == 0 ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
+        println "$(printf "%-${DEPENDENCIES_STATUS_OFFSET}s" ${url}) ${checkStatus}"
+    fi
 
     return ${checkFailed}
 }
@@ -679,7 +718,7 @@ printPreInstallInfo_multi() {
     println "Checking access to external dependencies..."
     println
 
-    checkAccessToExternalDependencies
+    checkResourceAccess
 }
 
 doCheckAvailableResourcesOnNodes() {
@@ -814,30 +853,24 @@ doCheckAvailableResourcesOnNodes() {
 }
 
 doConfigureSystem() {
-    nextStep 0 "Configuring system..."
+    nextStep 0
 
     if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
     mkdir ${DIR}
 }
 
-doInstallPackages() {
-    nextStep 1 "Installing required packages... [tar ]"
-    installPackageIfNeed tar
-
-    nextStep 1 "Installing required packages... [unzip]"
-    installPackageIfNeed unzip
-
-    nextStep 1 "Installing required packages... [java]"
+doInstallJava() {
+    nextStep 1
     installJava
 }
 
 doInstallImCli() {
-    nextStep 2 "Install the Codenvy installation manager..."
+    nextStep 2
     installIm
 }
 
 doDownloadBinaries() {
-    nextStep 3 "Downloading Codenvy binaries... "
+    nextStep 3
     OUTPUT=$(executeIMCommand im-download ${ARTIFACT} ${VERSION})
     EXIT_CODE=$?
     echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
@@ -850,9 +883,9 @@ doDownloadBinaries() {
 doInstallCodenvy() {
     for ((STEP=1; STEP<=9; STEP++));  do
         if [ ${STEP} == 9 ]; then
-            nextStep $(( $STEP+3 )) "Booting Codenvy... "
+            nextStep $(( $STEP+3 ))
         else
-            nextStep $(( $STEP+3 )) "Installing Codenvy... ~20 mins"
+            nextStep $(( $STEP+3 ))
         fi
 
         if [ ${CODENVY_TYPE} == "multi" ]; then
@@ -864,25 +897,18 @@ doInstallCodenvy() {
         fi
     done
 
-    nextStep 14 ""
+    nextStep 13
 
     sleep 2
-    pauseTimer
-    pausePuppetInfoPrinter
 }
 
 nextStep() {
-    pauseTimer
-    pausePuppetInfoPrinter
-
     CURRENT_STEP=$1
+    echo ${CURRENT_STEP} > /dev/shm/current_step
     shift
 
-    updateLine ${STEP_LINE} "$@"
+    updateLine ${STEP_LINE} ${INSTALLATION_STEPS[${CURRENT_STEP}]}
     updateProgress ${CURRENT_STEP}
-
-    continueTimer
-    continuePuppetInfoPrinter
 }
 
 initTimer() {
@@ -913,8 +939,6 @@ pauseTimer() {
 }
 
 updateTimer() {
-    pausePuppetInfoPrinter
-
     for ((;;)); do
         END_TIME=`date +%s`
         DURATION=$(( $END_TIME-$START_TIME))
@@ -925,23 +949,21 @@ updateTimer() {
 
         sleep 1
     done
-
-    continuePuppetInfoPrinter
 }
 
 updateProgress() {
-    CURRENT_STEP=$1
-    LAST_STEP=14
-    FACTOR=2
+    local current_step=$1
+    local last_step=13
+    local factor=2
 
-    local progress_number=$(( CURRENT_STEP*100/LAST_STEP ))
+    local progress_number=$(( ${current_step}*100/${last_step} ))
 
     local progress_field=
-    for ((i=1; i<=CURRENT_STEP*FACTOR; i++));  do
+    for ((i=1; i<=${current_step}*${factor}; i++));  do
        progress_field="${progress_field}="
     done
 
-    progress_field=$(printf "[%-$(( LAST_STEP*FACTOR ))s]" ${progress_field})
+    progress_field=$(printf "[%-$(( ${last_step}*${factor} ))s]" ${progress_field})
 
     local message="Full install ${progress_field} ${progress_number}%"
 
@@ -950,7 +972,7 @@ updateProgress() {
 
 runPuppetInfoPrinter() {
     updatePuppetInfo &
-    PRINTER_PID=$!
+    PRINTER_PID=$!    
 }
 
 killPuppetInfoPrinter() {
@@ -971,6 +993,29 @@ pausePuppetInfoPrinter() {
     fi
 }
 
+runFooterUpdater() {
+    updateFooter &
+    LINE_UPDATER_PID=$!    
+}
+
+killFooterUpdater() {
+    if [ -n "${LINE_UPDATER_PID}" ]; then
+        kill -KILL ${LINE_UPDATER_PID}
+    fi
+}
+
+continueFooterUpdater() {
+    if [ -n "${LINE_UPDATER_PID}" ]; then
+        kill -SIGCONT ${LINE_UPDATER_PID}
+    fi
+}
+
+pauseFooterUpdater() {
+    if [ -n "${LINE_UPDATER_PID}" ]; then
+        kill -SIGSTOP ${LINE_UPDATER_PID}
+    fi
+}
+
 # footer lines count descendently
 initFooterPosition() {
     println
@@ -982,11 +1027,14 @@ initFooterPosition() {
     PUPPET_LINE=3
     PROGRESS_LINE=2
     TIMER_LINE=1
+    
+    echo "" > /dev/shm/line_1
+    echo "" > /dev/shm/line_2
+    echo "" > /dev/shm/line_3
+    echo "" > /dev/shm/line_4
 }
 
 updatePuppetInfo() {
-    pauseTimer
-
     for ((;;)); do
         local line=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log 2>/dev/null)
         if [[ -n "$line" ]]; then
@@ -996,8 +1044,53 @@ updatePuppetInfo() {
         fi
         sleep 1
     done
+}
 
-    continueTimer
+runInternetAccessChecker() {
+    updateInternetAccessChecker &
+    INTERNET_CHECKER_PID=$!
+}
+
+killInternetAccessChecker() {
+    if [ -n "${INTERNET_CHECKER_PID}" ]; then
+        kill -KILL ${INTERNET_CHECKER_PID}
+    fi
+}
+
+continueInternetAccessChecker() {
+    if [ -n "${INTERNET_CHECKER_PID}" ]; then
+        kill -SIGCONT ${INTERNET_CHECKER_PID}
+    fi
+}
+
+pauseInternetAccessChecker() {
+    if [ -n "${INTERNET_CHECKER_PID}" ]; then
+        kill -SIGSTOP ${INTERNET_CHECKER_PID}
+    fi
+}
+
+updateInternetAccessChecker() {
+    local printStatus=false
+    for ((;;)); do
+        local checkFailed=0
+
+        for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
+            local isRequiredToCheck=`echo ${resource} | awk -F'|' '{print $3}'`;
+
+            if [[ ${isRequiredToCheck} == 1 ]]; then
+                doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
+            fi
+        done
+
+        CURRENT_STEP=`echo $(</dev/shm/current_step)`
+        if [[ ${checkFailed} == 1 ]]; then
+            updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]} $(printError " Internet connection lost")"
+        else
+            updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]}"
+        fi
+       
+        sleep 1m
+    done
 }
 
 printPostInstallInfo() {
@@ -1014,7 +1107,7 @@ printPostInstallInfo() {
     fi
 
     println
-    println "Codenvy is ready: $(printImportantLink "http://$HOST_NAME")."
+    println "Codenvy is ready: $(printImportantLink "http://$HOST_NAME")"
     println "Admin user name:  $(printImportantInfo "$SYSTEM_ADMIN_NAME")"
     println "Admin password:   $(printImportantInfo "$SYSTEM_ADMIN_PASSWORD")"
     println
@@ -1026,14 +1119,15 @@ setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
 
 initFooterPosition
-
 initTimer
-runTimer
 
+runFooterUpdater
+runTimer
 runPuppetInfoPrinter
+runInternetAccessChecker
 
 doConfigureSystem
-doInstallPackages
+doInstallJava
 doInstallImCli
 
 set +e
