@@ -19,6 +19,9 @@
 package com.codenvy.im.event;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import org.apache.commons.lang.StringUtils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -233,6 +236,17 @@ public class EventTest {
 
         assertNotEquals(event1, event2);
         assertNotEquals(event1.hashCode(), event2.hashCode());
+    }
 
+    @Test
+    public void testToJsonElement() throws Exception {
+        Event event = new Event(TEST_EVENT, ImmutableMap.of(ANY_PARAM, ANY_VALUE));
+        JsonElement jsonElement = event.toJsonElement();
+
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+        assertEquals(jsonObject.get("type").getAsString(), TEST_EVENT.name());
+
+        JsonObject parameters = jsonObject.get("parameters").getAsJsonObject();
+        assertEquals(parameters.get(ANY_PARAM).getAsString(), ANY_VALUE);
     }
 }

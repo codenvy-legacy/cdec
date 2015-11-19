@@ -19,13 +19,16 @@ package com.codenvy.im.event;
 
 import com.codenvy.im.utils.Commons;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.eclipse.che.dto.server.JsonSerializable;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 import org.eclipse.che.commons.annotation.Nullable;
+import org.eclipse.che.dto.server.JsonSerializable;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +46,7 @@ public class Event implements JsonSerializable {
     public static final String       VERSION_PARAM        = "VERSION";
     public static final String       USER_IP_PARAM        = "USER-IP";
     public static final String       ERROR_MESSAGE_PARAM  = "ERROR-MESSAGE";
-    public static final List<String> PARAMETERS_TO_ENCODE = Arrays.asList(ERROR_MESSAGE_PARAM);
+    public static final List<String> PARAMETERS_TO_ENCODE = Collections.singletonList(ERROR_MESSAGE_PARAM);
 
     public static final int MAX_EXTENDED_PARAMS_NUMBER  = 10;
     public static final int RESERVED_PARAMS_NUMBER      = 5;     // reserved for TIME_PARAM, USER_PARAM and USER_IP_PARAM
@@ -51,7 +54,7 @@ public class Event implements JsonSerializable {
     public static final int MAX_PARAM_VALUE_LENGTH      = 100;
     public static final int MAX_LONG_PARAM_VALUE_LENGTH = 1000;
 
-    public static final Collection NAMES_OF_LONG_PARAMETERS = Arrays.asList(ERROR_MESSAGE_PARAM);
+    public static final Collection NAMES_OF_LONG_PARAMETERS = Collections.singletonList(ERROR_MESSAGE_PARAM);
 
     private Type type;
 
@@ -64,6 +67,12 @@ public class Event implements JsonSerializable {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public JsonElement toJsonElement() {
+        JsonParser jsonParser = new JsonParser();
+        return jsonParser.parse(toJson());
     }
 
     public enum Type {
