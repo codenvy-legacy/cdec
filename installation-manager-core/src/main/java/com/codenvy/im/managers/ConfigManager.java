@@ -377,8 +377,8 @@ public class ConfigManager {
             if (section.getString("certname", "").isEmpty()) {
                 // try to obtain host name from codenvy config
                 Map<String, String> codenvyProperties = loadInstalledCodenvyConfig().getProperties();
-                if (codenvyProperties.containsKey(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)) {
-                    return codenvyProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY);
+                if (codenvyProperties.containsKey(Config.PUPPET_MASTER_HOST_NAME)) {
+                    return codenvyProperties.get(Config.PUPPET_MASTER_HOST_NAME);
                 }
 
                 throw new IllegalStateException("There is no puppet master host name in the configuration");
@@ -462,7 +462,7 @@ public class ConfigManager {
                     }
 
                     if (installType == InstallType.MULTI_SERVER) {
-                        properties.put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, fetchMasterHostName());  // set puppet master host name
+                        properties.put(Config.PUPPET_MASTER_HOST_NAME, fetchMasterHostName());  // set puppet master host name
                     }
                 }
 
@@ -498,8 +498,8 @@ public class ConfigManager {
         Path pathToIdRsa = Paths.get(System.getProperty("user.home")).resolve(".ssh").resolve("id_rsa");
         String sshKey = readSSHKey(pathToIdRsa);
 
-        properties.put(Config.NODE_SSH_USER_NAME_PROPERTY, userName);  // set name of user to access the nodes
-        properties.put(Config.NODE_SSH_USER_PRIVATE_KEY_PROPERTY, sshKey);  // set private key of ssh user
+        properties.put(Config.NODE_SSH_USER_NAME, userName);  // set name of user to access the nodes
+        properties.put(Config.NODE_SSH_USER_PRIVATE_KEY, sshKey);  // set private key of ssh user
     }
 
     protected String readSSHKey(Path pathToIdRsa) throws IOException {

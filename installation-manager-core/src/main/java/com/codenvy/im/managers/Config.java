@@ -24,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.OSUtils.getVersion;
 import static java.util.Collections.unmodifiableMap;
@@ -39,23 +41,36 @@ public class Config {
     public static final String MULTI_SERVER_BASE_PROPERTIES  = "manifests/nodes/multi_server/base_configurations.pp";
     public static final String MULTI_SERVER_NODES_PROPERTIES = "manifests/nodes/multi_server/nodes.pp";
 
+    public static final String  ENCLOSED_PROPERTY_NAME         = "\\$\\w+";
+    public static final Pattern ENCLOSED_PROPERTY_NAME_PATTERN =  Pattern.compile(ENCLOSED_PROPERTY_NAME);
+
     public static final String VERSION = "version";
 
     public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
     public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
     public static final String PUPPET_RESOURCE_URL   = "puppet_resource_url";
 
-    public static final String AIO_HOST_URL                       = "aio_host_url"; // 3.1.0
-    public static final String HOST_URL                           = "host_url";
-    public static final String NODE_HOST_PROPERTY_SUFFIX          = "_host_name";  // suffix of property like "builder_host_name"
-    public static final String PUPPET_MASTER_HOST_NAME_PROPERTY   = "puppet_master_host_name";
-    public static final String MONGO_ADMIN_USERNAME_PROPERTY      = "mongo_admin_user_name";
-    public static final String MONGO_ADMIN_PASSWORD_PROPERTY      = "mongo_admin_pass";
-    public static final String NODE_SSH_USER_NAME_PROPERTY        = "node_ssh_user_name";
-    public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY = "node_ssh_user_private_key";
-    public static final String ADMIN_LDAP_DN                      = "admin_ldap_dn";
-    public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
-    public static final String SYSTEM_LDAP_PASSWORD = "system_ldap_password";
+    public static final String AIO_HOST_URL              = "aio_host_url"; // 3.1.0
+    public static final String HOST_URL                  = "host_url";
+    public static final String NODE_HOST_PROPERTY_SUFFIX = "_host_name";  // suffix of property like "builder_host_name"
+
+    public static final String PUPPET_MASTER_HOST_NAME = "puppet_master_host_name";
+
+    public static final String MONGO_ADMIN_USERNAME      = "mongo_admin_user_name";
+    public static final String MONGO_ADMIN_PASSWORD      = "mongo_admin_pass";
+    public static final String NODE_SSH_USER_NAME        = "node_ssh_user_name";
+    public static final String NODE_SSH_USER_PRIVATE_KEY = "node_ssh_user_private_key";
+
+    public static final String ADMIN_LDAP_DN                       = "admin_ldap_dn";
+    public static final String ADMIN_LDAP_USER_NAME                = "admin_ldap_user_name";
+    public static final String SYSTEM_LDAP_PASSWORD                = "system_ldap_password";
+    public static final String USER_LDAP_USER_CONTAINER_DN         = "user_ldap_user_container_dn";
+    public static final String USER_LDAP_OBJECT_CLASSES            = "user_ldap_object_classes";
+    public static final String LDAP_HOST                           = "ldap_host";
+    public static final String LDAP_PORT                           = "ldap_port";
+    public static final String LDAP_PROTOCOL                       = "ldap_protocol";
+    public static final String JAVA_NAMING_SECURITY_AUTHENTICATION = "java_naming_security_authentication";
+    public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
@@ -73,6 +88,7 @@ public class Config {
     }};
 
     public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
+    public static final String      SYSTEM_LDAP_USER_BASE        = "system_ldap_user_base";
 
     private Map<String, String> properties;
 
@@ -80,13 +96,29 @@ public class Config {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
-    /** @return the property value */
+    /**
+     * @return the property value; substitute enclosed properties like user_ldap_dn in the value "ou=People,$user_ldap_dn"
+     */
     @Nullable
     public String getValue(String property) {
+        String value;
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
-            return PROPERTIES_BY_VERSION.get(property).get(getVersion());
+            value = PROPERTIES_BY_VERSION.get(property).get(getVersion());
+        } else {
+            value = properties.get(property);
         }
-        return properties.get(property);
+
+        if (value != null && value.matches(ENCLOSED_PROPERTY_NAME)) {
+            Matcher m = ENCLOSED_PROPERTY_NAME_PATTERN.matcher(value);
+            String enclosedProperty = null;
+            if (m.find()) {
+                enclosedProperty = m.group();
+            }
+
+            return properties.get(enclosedProperty);
+        }
+
+        return value;
     }
 
     /** @return list of values separated by comma */

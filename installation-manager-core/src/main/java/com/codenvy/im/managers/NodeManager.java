@@ -63,7 +63,7 @@ public class NodeManager {
         AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
         NodeConfig addingNode = nodesConfigUtil.recognizeNodeConfigFromDns(dns);
 
-        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
+        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME);
         addingNode.setUser(nodeSshUser);
 
         String property = nodesConfigUtil.getPropertyNameBy(addingNode.getType());
@@ -192,7 +192,7 @@ public class NodeManager {
             throw new IllegalArgumentException(format("Node type '%s' isn't supported", nodeType));
         }
 
-        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
+        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME);
         NodeConfig removingNode = new NodeConfig(nodeType, dns, nodeSshUser);
 
         Command command = getRemoveNodeCommand(removingNode, config, nodesConfigUtil, property);

@@ -135,7 +135,7 @@ public class NodeConfig {
     public static NodeConfig extractConfigFrom(Config config, NodeType type) {
         String nodeHostPropertyName = type.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
         String nodeHost = config.getValue(nodeHostPropertyName);
-        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME_PROPERTY);
+        String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME);
         if (nodeHost != null && !nodeHost.isEmpty()) {
             return new NodeConfig(type, nodeHost, nodeSshUser);
         }
