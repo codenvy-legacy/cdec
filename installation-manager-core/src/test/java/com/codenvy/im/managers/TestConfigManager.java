@@ -507,7 +507,7 @@ public class TestConfigManager extends BaseTest {
         assertEquals(actualProperties.size(), 3);
         assertEquals(actualProperties.get("a"), "1");
         assertEquals(actualProperties.get("b"), "2");
-        assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME_PROPERTY), "master");
+        assertEquals(actualProperties.get(Config.PUPPET_MASTER_HOST_NAME), "master");
     }
 
     @Test

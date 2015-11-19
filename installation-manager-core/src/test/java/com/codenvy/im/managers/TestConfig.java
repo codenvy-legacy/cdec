@@ -63,7 +63,7 @@ public class TestConfig {
         assertNotNull(config.getValue(Config.PUPPET_RESOURCE_URL));
     }
 
-    @Test(dataProvider = "GetValues")
+    @Test(dataProvider = "getValues")
     public void testGetValues(String propertyName, String propertyValue, String osVersion, List<String> expectedResult) {
         OSUtils.VERSION = osVersion;
         Config config = new Config(Collections.singletonMap(propertyName, propertyValue));
@@ -71,8 +71,8 @@ public class TestConfig {
         assertEquals(result, expectedResult);
     }
 
-    @DataProvider(name = "GetValues")
-    public static Object[][] GetValues() {
+    @DataProvider
+    public Object[][] getValues() {
         return new Object[][]{
                 {"property", null, "6", null},
                 {"property", "", "6", new ArrayList<String>()},
@@ -82,5 +82,25 @@ public class TestConfig {
                 {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
                 {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
+    }
+
+    @Test(dataProvider = "getEnclosedValue")
+    public void testGetValues(String propertyName, String osVersion, Config config, String expectedValue) {
+        OSUtils.VERSION = osVersion;
+        String result = config.getValue(propertyName);
+        assertEquals(result, expectedValue);
+    }
+
+    @DataProvider
+    public Object[][] getEnclosedValue() {
+        return new Object[][]{
+            {"property", null, "6", null},
+            {"property", "", "6", new ArrayList<String>()},
+            {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
+            {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+            {"property", "value1,value2,value3", "6", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
+            {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
+            {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+            };
     }
 }

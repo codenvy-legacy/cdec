@@ -166,7 +166,7 @@ public class BaseTest {
                 put("data_host_name", "data.example.com");
                 put("analytics_host_name", "analytics.example.com");
                 put("host_url", "hostname");
-                put(Config.PUPPET_MASTER_HOST_NAME_PROPERTY, "master.example.com");
+                put(Config.PUPPET_MASTER_HOST_NAME, "master.example.com");
                 put(Config.VERSION, TEST_VERSION_STR);
             }};
     }
