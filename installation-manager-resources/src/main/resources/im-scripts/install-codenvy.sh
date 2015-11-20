@@ -153,10 +153,7 @@ installPackageIfNeed() {
 preConfigureSystem() {
     sudo yum clean all &> /dev/null
     installPackageIfNeed curl
-    installPackageIfNeed net-tools
     installPackageIfNeed wget
-    installPackageIfNeed tar
-    installPackageIfNeed unzip
 
     if [[ ! -f ${CONFIG} ]]; then
         downloadConfig
@@ -220,7 +217,7 @@ cursorRestore() {
 updateLine() {
     local lineNumber=$1
     shift
-    echo "$@" | tr ' ' '_' > /dev/shm/line_${lineNumber}
+    echo "$@" | tr ' ' '_' > /dev/shm/im_line_${lineNumber}
 }
 
 updateFooter() {
@@ -231,9 +228,16 @@ updateFooter() {
         cursorUp
         
         for ((line=4; line>=1; line--));  do
-            clearLine
-            local text=`echo $(</dev/shm/line_${line}) | tr '_' ' '`
-            println "${text}"
+            local prev_text=`echo $(</dev/shm/im_prev_line_${line}) | tr '_' ' '`
+            local text=`echo $(</dev/shm/im_line_${line}) | tr '_' ' '`
+            
+            if [[ ! ${prev_text} == ${text} ]]; then
+                clearLine
+                println "${text}"
+                echo $(</dev/shm/im_line_${line}) > /dev/shm/im_prev_line_${line}
+            else
+                cursorDown
+            fi
         done
 
         sleep 1
@@ -315,7 +319,7 @@ askHostnameAndInsertProperty() {
         if [ "${OUTPUT}" == "success" ]; then
            break
         else
-            println $(printError "ERROR: The hostname '${VALUE}' isn't availabe or wrong. Please try again...")
+            println $(printError "ERROR: The hostname '${VALUE}' isn't available or wrong. Please try again...")
         fi
     done
 
@@ -461,9 +465,8 @@ printPreInstallInfo_single() {
     println "Checking system pre-requisites..."
     println
 
-    doCheckAvailableResourcesLocally 8000000 4 300000000
-
     preConfigureSystem
+    doCheckAvailableResourcesLocally 8000000 4 300000000
 
     println "Checking access to external dependencies..."
     println
@@ -656,8 +659,8 @@ printPreInstallInfo_multi() {
     println "Checking system pre-requisites..."
     println
 
-    doCheckAvailableResourcesLocally 1000000 1 14000000
     preConfigureSystem
+    doCheckAvailableResourcesLocally 1000000 1 14000000
 
     println "Configuring system properties with file://${CONFIG}..."
     println
@@ -853,24 +856,28 @@ doCheckAvailableResourcesOnNodes() {
 }
 
 doConfigureSystem() {
-    nextStep 0
+    performStep 0
 
     if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
     mkdir ${DIR}
+
+    installPackageIfNeed tar
+    installPackageIfNeed unzip
+    installPackageIfNeed net-tools
 }
 
 doInstallJava() {
-    nextStep 1
+    performStep 1
     installJava
 }
 
 doInstallImCli() {
-    nextStep 2
+    performStep 2
     installIm
 }
 
 doDownloadBinaries() {
-    nextStep 3
+    performStep 3
     OUTPUT=$(executeIMCommand im-download ${ARTIFACT} ${VERSION})
     EXIT_CODE=$?
     echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
@@ -883,9 +890,9 @@ doDownloadBinaries() {
 doInstallCodenvy() {
     for ((STEP=1; STEP<=9; STEP++));  do
         if [ ${STEP} == 9 ]; then
-            nextStep $(( $STEP+3 ))
+            performStep $(( $STEP+3 ))
         else
-            nextStep $(( $STEP+3 ))
+            performStep $(( $STEP+3 ))
         fi
 
         if [ ${CODENVY_TYPE} == "multi" ]; then
@@ -897,14 +904,14 @@ doInstallCodenvy() {
         fi
     done
 
-    nextStep 13
+    performStep 13
 
     sleep 2
 }
 
-nextStep() {
+performStep() {
     CURRENT_STEP=$1
-    echo ${CURRENT_STEP} > /dev/shm/current_step
+    echo ${CURRENT_STEP} > /dev/shm/im_current_step
     shift
 
     updateLine ${STEP_LINE} ${INSTALLATION_STEPS[${CURRENT_STEP}]}
@@ -1028,10 +1035,14 @@ initFooterPosition() {
     PROGRESS_LINE=2
     TIMER_LINE=1
     
-    echo "" > /dev/shm/line_1
-    echo "" > /dev/shm/line_2
-    echo "" > /dev/shm/line_3
-    echo "" > /dev/shm/line_4
+    echo "" > /dev/shm/im_line_1
+    echo "" > /dev/shm/im_line_2
+    echo "" > /dev/shm/im_line_3
+    echo "" > /dev/shm/im_line_4
+    echo "" > /dev/shm/im_prev_line_1
+    echo "" > /dev/shm/im_prev_line_2
+    echo "" > /dev/shm/im_prev_line_3
+    echo "" > /dev/shm/im_prev_line_4
 }
 
 updatePuppetInfo() {
@@ -1082,9 +1093,9 @@ updateInternetAccessChecker() {
             fi
         done
 
-        CURRENT_STEP=`echo $(</dev/shm/current_step)`
+        CURRENT_STEP=`echo $(</dev/shm/im_current_step)`
         if [[ ${checkFailed} == 1 ]]; then
-            updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]} $(printError " Internet connection lost")"
+            updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]} $(printError " Internet connection lost... reconnecting...")"
         else
             updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]}"
         fi
