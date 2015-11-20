@@ -145,10 +145,13 @@ public class LdapManager {
     private InitialDirContext connect(Config config) throws NamingException, IOException {
         Hashtable<String, String> ldapEnv = new Hashtable<>(5);
         ldapEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        ldapEnv.put(Context.PROVIDER_URL, format("%s://%s:%s", config.getValue(Config.LDAP_PROTOCOL), config.getValue(Config.LDAP_HOST), config.getValue(Config.LDAP_PORT)));
+        ldapEnv.put(Context.PROVIDER_URL, format("%s://%s:%s",
+                                                 config.getValue(Config.LDAP_PROTOCOL),
+                                                 config.getValue(Config.LDAP_HOST),
+                                                 config.getValue(Config.LDAP_PORT)));
         ldapEnv.put(Context.SECURITY_AUTHENTICATION, config.getValue(Config.JAVA_NAMING_SECURITY_AUTHENTICATION));
         ldapEnv.put(Context.SECURITY_PRINCIPAL, config.getValue(Config.JAVA_NAMING_SECURITY_PRINCIPAL));
-        ldapEnv.put(Context.SECURITY_CREDENTIALS, config.getValue(Config.SYSTEM_LDAP_PASSWORD));
+        ldapEnv.put(Context.SECURITY_CREDENTIALS, config.getValue(Config.USER_LDAP_PASSWORD));
         return new InitialDirContext(ldapEnv);
     }
 }

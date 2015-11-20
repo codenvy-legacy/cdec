@@ -61,16 +61,27 @@ public class Config {
     public static final String NODE_SSH_USER_NAME        = "node_ssh_user_name";
     public static final String NODE_SSH_USER_PRIVATE_KEY = "node_ssh_user_private_key";
 
-    public static final String ADMIN_LDAP_DN                       = "admin_ldap_dn";
-    public static final String ADMIN_LDAP_USER_NAME                = "admin_ldap_user_name";
-    public static final String SYSTEM_LDAP_PASSWORD                = "system_ldap_password";
-    public static final String USER_LDAP_USER_CONTAINER_DN         = "user_ldap_user_container_dn";
-    public static final String USER_LDAP_OBJECT_CLASSES            = "user_ldap_object_classes";
-    public static final String LDAP_HOST                           = "ldap_host";
-    public static final String LDAP_PORT                           = "ldap_port";
-    public static final String LDAP_PROTOCOL                       = "ldap_protocol";
+    /* ldap properties */
+    public static final String ADMIN_LDAP_PASSWORD   = "admin_ldap_password";
+    public static final String SYSTEM_LDAP_USER_BASE = "system_ldap_user_base";
+
+    public static final String ADMIN_LDAP_DN        = "admin_ldap_dn";
+    public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
+
+    public static final String USER_LDAP_USER_CONTAINER_DN = "user_ldap_user_container_dn";
+    public static final String USER_LDAP_OBJECT_CLASSES    = "user_ldap_object_classes";
+    public static final String USER_LDAP_PASSWORD          = "user_ldap_password";
+
+    public static final String LDAP_HOST     = "ldap_host";
+    public static final String LDAP_PORT     = "ldap_port";
+    public static final String LDAP_PROTOCOL = "ldap_protocol";
+
     public static final String JAVA_NAMING_SECURITY_AUTHENTICATION = "java_naming_security_authentication";
     public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
+
+
+
+
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
@@ -88,7 +99,6 @@ public class Config {
     }};
 
     public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
-    public static final String      SYSTEM_LDAP_USER_BASE        = "system_ldap_user_base";
 
     private Map<String, String> properties;
 
@@ -98,6 +108,11 @@ public class Config {
 
     /**
      * @return the property value; substitute enclosed properties like user_ldap_dn in the value "ou=People,$user_ldap_dn"
+     * It doesn't take into account:
+     * - qualified variable names,
+     * - names like ${foo},
+     * - second, ... enclosed variables in the same value
+     *
      */
     @Nullable
     public String getValue(String property) {
@@ -108,14 +123,16 @@ public class Config {
             value = properties.get(property);
         }
 
-        if (value != null && value.matches(ENCLOSED_PROPERTY_NAME)) {
+        if (value != null && value.contains("$")) {
             Matcher m = ENCLOSED_PROPERTY_NAME_PATTERN.matcher(value);
-            String enclosedProperty = null;
             if (m.find()) {
-                enclosedProperty = m.group();
-            }
+                String enclosedPropertyName = m.group();
+                String enclosedPropertyValue = getValue(enclosedPropertyName.replace("$", ""));
 
-            return properties.get(enclosedProperty);
+                if (enclosedPropertyValue != null) {
+                    value = value.replace(enclosedPropertyName, enclosedPropertyValue);
+                }
+            }
         }
 
         return value;

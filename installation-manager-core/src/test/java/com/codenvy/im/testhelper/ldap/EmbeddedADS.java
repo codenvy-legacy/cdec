@@ -17,10 +17,14 @@
  */
 package com.codenvy.im.testhelper.ldap;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
+import org.apache.directory.api.ldap.model.ldif.LdifEntry;
+import org.apache.directory.api.ldap.model.ldif.LdifReader;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
+import org.apache.directory.api.ldap.model.schema.registries.Registries;
 import org.apache.directory.api.ldap.model.schema.registries.SchemaLoader;
 import org.apache.directory.api.ldap.schema.extractor.SchemaLdifExtractor;
 import org.apache.directory.api.ldap.schema.extractor.impl.DefaultSchemaLdifExtractor;
@@ -30,6 +34,7 @@ import org.apache.directory.api.util.exception.Exceptions;
 import org.apache.directory.server.constants.ServerDNConstants;
 import org.apache.directory.server.core.DefaultDirectoryService;
 import org.apache.directory.server.core.api.CacheService;
+import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.DnFactory;
 import org.apache.directory.server.core.api.InstanceLayout;
@@ -40,9 +45,14 @@ import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.i18n.I18n;
 import org.apache.directory.server.ldap.LdapServer;
+import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -210,48 +220,70 @@ public class EmbeddedADS {
 
         // Now we can create as many partitions as we need
         // Create some new partitions named 'foo', 'bar' and 'apache'.
-        Partition fooPartition = addPartition("foo", "dc=department,dc=example,dc=com", service.getDnFactory());
-        Partition barPartition = addPartition("bar", "dc=bar,dc=com", service.getDnFactory());
-        Partition apachePartition = addPartition("apache", "dc=apache,dc=org", service.getDnFactory());
-
-        // Index some attributes on the apache partition
-//        addIndex(apachePartition, "objectClass", "ou", "uid");
+//        Partition fooPartition = addPartition("foo", "dc=department,dc=example,dc=com", service.getDnFactory());
+//        Partition barPartition = addPartition("bar", "dc=bar,dc=com", service.getDnFactory());
+//        Partition apachePartition = addPartition("apache", "dc=apache,dc=org", service.getDnFactory());
+        Partition codenvyPartition = addPartition("codenvy", "dc=codenvy-enterprise,dc=com", service.getDnFactory());
 
         // And start the service
         service.startup();
 
-        // Inject the context entry for dc=foo,dc=com partition if it does not already exist
-        try {
-            service.getAdminSession().lookup(fooPartition.getSuffixDn());
-        } catch (LdapException lnnfe) {
-            Dn dnFoo = new Dn("dc=department,dc=example,dc=com");
-            Entry entryFoo = service.newEntry(dnFoo);
-            entryFoo.add("objectClass", "top", "domain", "extensibleObject");
-            entryFoo.add("dc", "department");
-            service.getAdminSession().add(entryFoo);
-        }
+        Path ldif = Paths.get("target/test-classes/ldap/codenvy3.ldif");
+        importEntriesFromLdif(codenvyPartition, ldif);
 
-        // Inject the context entry for dc=bar,dc=com partition
-        try {
-            service.getAdminSession().lookup(barPartition.getSuffixDn());
-        } catch (LdapException lnnfe) {
-            Dn dnBar = new Dn("dc=bar,dc=com");
-            Entry entryBar = service.newEntry(dnBar);
-            entryBar.add("objectClass", "top", "domain", "extensibleObject");
-            entryBar.add("dc", "bar");
-            service.getAdminSession().add(entryBar);
-        }
+        // Index some attributes on the apache partition
+//        addIndex(apachePartition, "objectClass", "ou", "uid");
 
-        // Inject the context entry for dc=Apache,dc=Org partition
-        if (!service.getAdminSession().exists(apachePartition.getSuffixDn())) {
-            Dn dnApache = new Dn("dc=Apache,dc=Org");
-            Entry entryApache = service.newEntry(dnApache);
-            entryApache.add("objectClass", "top", "domain", "extensibleObject");
-            entryApache.add("dc", "Apache");
-            service.getAdminSession().add(entryApache);
-        }
+
+
+//        // Inject the context entry for dc=foo,dc=com partition if it does not already exist
+//        try {
+//            service.getAdminSession().lookup(fooPartition.getSuffixDn());
+//        } catch (LdapException lnnfe) {
+//            Dn dnFoo = new Dn("dc=department,dc=example,dc=com");
+//            Entry entryFoo = service.newEntry(dnFoo);
+//            entryFoo.add("objectClass", "top", "domain", "extensibleObject");
+//            entryFoo.add("dc", "department");
+//            service.getAdminSession().add(entryFoo);
+//        }
+//
+//        // Inject the context entry for dc=bar,dc=com partition
+//        try {
+//            service.getAdminSession().lookup(barPartition.getSuffixDn());
+//        } catch (LdapException lnnfe) {
+//            Dn dnBar = new Dn("dc=bar,dc=com");
+//            Entry entryBar = service.newEntry(dnBar);
+//            entryBar.add("objectClass", "top", "domain", "extensibleObject");
+//            entryBar.add("dc", "bar");
+//            service.getAdminSession().add(entryBar);
+//        }
+//
+//        // Inject the context entry for dc=Apache,dc=Org partition
+//        if (!service.getAdminSession().exists(apachePartition.getSuffixDn())) {
+//            Dn dnApache = new Dn("dc=Apache,dc=Org");
+//            Entry entryApache = service.newEntry(dnApache);
+//            entryApache.add("objectClass", "top", "domain", "extensibleObject");
+//            entryApache.add("dc", "Apache");
+//            service.getAdminSession().add(entryApache);
+//        }
 
         // We are all done !
+    }
+
+    private void importEntriesFromLdif(Partition partition, Path ldif) throws IOException, LdapException {
+        String ldifContent = FileUtils.readFileToString(ldif.toFile());
+
+//        LdifFileLoader ldifLoader = new LdifFileLoader(service.getAdminSession(), ldifContent);
+//        ldifLoader.execute();
+
+        try (java.io.InputStream is = new FileInputStream(ldif.toFile())) {
+            LdifReader entries = new LdifReader(is);
+
+            service.getAdminSession().lookup(partition.getSuffixDn());
+            for (LdifEntry ldifEntry : entries) {
+                service.getAdminSession().add(ldifEntry.getEntry());
+            }
+        }
     }
 
     /**

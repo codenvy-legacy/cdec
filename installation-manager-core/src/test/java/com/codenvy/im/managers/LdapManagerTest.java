@@ -17,18 +17,11 @@
  */
 package com.codenvy.im.managers;
 
-import com.codenvy.im.BaseTest;
 import com.codenvy.im.testhelper.ldap.BaseLdapTest;
-import com.codenvy.im.testhelper.ldap.EmbeddedADS;
 import com.codenvy.im.utils.HttpTransport;
-import org.apache.directory.api.ldap.model.entry.Entry;
-import org.apache.directory.api.ldap.model.name.Dn;
 import org.mockito.Mock;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -37,7 +30,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
 import static org.powermock.api.mockito.PowerMockito.spy;
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Anatoliy Bazko

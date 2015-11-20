@@ -126,7 +126,7 @@ public abstract class BaseTestPuppetErrorInterrupter {
         doReturn(new Config(ImmutableMap.of(
             Config.HOST_URL, "localhost",
             Config.ADMIN_LDAP_USER_NAME, "admin",
-            Config.SYSTEM_LDAP_PASSWORD, "password"
+            Config.ADMIN_LDAP_PASSWORD, "password"
         )))
             .when(mockConfigManager).loadInstalledCodenvyConfig();
     }
