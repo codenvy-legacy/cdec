@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -93,14 +94,20 @@ public class TestConfig {
 
     @DataProvider
     public Object[][] getEnclosedValue() {
+        Map<String, String> properties = ImmutableMap.of(
+            "prop_1", "value_1.1,$prop_2,value_1.2",
+            "prop_2", "value_2,$prop_3",
+            "prop_3", "value_3"
+        );
+
+        Config config = new Config(properties);
+
         return new Object[][]{
-            {"property", null, "6", null},
-            {"property", "", "6", new ArrayList<String>()},
-            {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
-            {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},
-            {"property", "value1,value2,value3", "6", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
-            {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
-            {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+            {"prop_1", null, config, "value_1.1,$prop_2,value_1.2"},
+            {"prop_1", "6", config, "value_1.1,value_2,value_3,value_1.2"},
+            {"prop_2", "6", config, "value_2,value_3"},
+            {"prop_2", "7", config, "value_2,value_3"},
+            {"prop_3", null, config, "value_3"},
             };
     }
 }

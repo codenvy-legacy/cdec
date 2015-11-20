@@ -42,6 +42,8 @@ import static java.util.Objects.requireNonNull;
 
 /**
  * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
+ * TODO [ndp] Codenvy OnPrem version 4.0 changes: https://github.com/codenvy/deployment/commit/462536daf6e969d169a381eb980fa344782692d1
  */
 @Singleton
 public class LdapManager {
