@@ -38,7 +38,6 @@ import java.util.Hashtable;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
-import static java.util.Objects.requireNonNull;
 
 /**
  * @author Alexander Reshetnyak
@@ -90,7 +89,7 @@ public class LdapManager {
                 ldapContext.close();
             }
         } catch (Exception e) {
-            throw new IOException("Error in changing an admin password", e);
+            throw new IOException(format("Error in changing an admin password: %s" , e.getMessage()), e);
         }
     }
 

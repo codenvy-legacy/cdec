@@ -51,7 +51,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,8 +63,12 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  */
 public class EmbeddedADS {
-    public static final String TEST_LDAP_ADMIN           = "ldap_admin";
-    public static final String TEST_SYSTEM_LDAP_PASSWORD = "system_ldap_password";
+    public static final String TEST_USER_LDAP_DN  = "dc=codenvy-enterprise,dc=com";
+    public static final String TEST_ADMIN_LDAP_DN = "dc=codenvycorp,dc=com";
+
+    public static final String TEST_JAVA_NAMING_SECURITY_PRINCIPAL = "uid=admin,ou=system";
+    public static final String TEST_LDAP_PASSWORD = "secret";
+
 
     /** The directory service */
     private DirectoryService service;
@@ -98,8 +101,6 @@ public class EmbeddedADS {
      *         The partition Id
      * @param partitionDn
      *         The partition DN
-     * @param dnFactory
-     *         the DN factory
      * @return The newly added partition
      * @throws Exception
      *         If the partition can't be added
@@ -252,6 +253,7 @@ public class EmbeddedADS {
         int serverPort = 10389;
         server.setTransports(new TcpTransport(serverPort));
         server.setDirectoryService(service);
+        server.setSaslPrincipal(TEST_JAVA_NAMING_SECURITY_PRINCIPAL);
 
         server.start();
     }
