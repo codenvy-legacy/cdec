@@ -18,6 +18,8 @@
 package com.codenvy.im.managers;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,10 +81,6 @@ public class Config {
     public static final String JAVA_NAMING_SECURITY_AUTHENTICATION = "java_naming_security_authentication";
     public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
 
-
-
-
-
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
             put("6", "puppet-3.4.3-1.el6.noarch");
@@ -107,15 +105,30 @@ public class Config {
     }
 
     /**
-     * @return the property value; substitute enclosed properties like user_ldap_dn in the value "ou=People,$user_ldap_dn"
-     * It doesn't take into account:
-     * - qualified variable names,
-     * - names like ${foo},
-     * - second, ... enclosed variables in the same value
-     *
+     * @return the property value.
      */
     @Nullable
     public String getValue(String property) {
+        return getValue(property, new ArrayList<>());
+    }
+
+    /**
+     * Recursively substitute properties which are enclosed into the requesting value. For example, value "ou=People,$user_ldap_dn" has enclosed property '$user_ldap_dn'.
+     * Algorithm doesn't take into account:
+     * - qualified variable names,
+     * - names like ${foo},
+     * - second, third, ... enclosed properties in the same value.
+     *
+     * Algorithm doesn't substitute cyclic property links.
+     */
+    @Nullable
+    private String getValue(String property, List<String> usedProperties) {
+        if (usedProperties.contains(property)) {
+            return null;
+        }
+
+        usedProperties.add(property);
+
         String value;
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
             value = PROPERTIES_BY_VERSION.get(property).get(getVersion());
@@ -127,7 +140,7 @@ public class Config {
             Matcher m = ENCLOSED_PROPERTY_NAME_PATTERN.matcher(value);
             if (m.find()) {
                 String enclosedPropertyName = m.group();
-                String enclosedPropertyValue = getValue(enclosedPropertyName.replace("$", ""));
+                String enclosedPropertyValue = getValue(enclosedPropertyName.replace("$", ""), usedProperties);
 
                 if (enclosedPropertyValue != null) {
                     value = value.replace(enclosedPropertyName, enclosedPropertyValue);

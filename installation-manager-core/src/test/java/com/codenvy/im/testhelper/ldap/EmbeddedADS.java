@@ -18,6 +18,7 @@
 package com.codenvy.im.testhelper.ldap;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
@@ -38,6 +39,7 @@ import org.apache.directory.server.core.api.CoreSession;
 import org.apache.directory.server.core.api.DirectoryService;
 import org.apache.directory.server.core.api.DnFactory;
 import org.apache.directory.server.core.api.InstanceLayout;
+import org.apache.directory.server.core.api.interceptor.context.AddOperationContext;
 import org.apache.directory.server.core.api.partition.Partition;
 import org.apache.directory.server.core.api.schema.SchemaPartition;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmIndex;
@@ -107,6 +109,7 @@ public class EmbeddedADS {
         partition.setId(partitionId);
         partition.setPartitionPath(new File(service.getInstanceLayout().getPartitionsDirectory(), partitionId).toURI());
         partition.setSuffixDn(new Dn(partitionDn));
+        partition.initialize();
         service.addPartition(partition);
 
         return partition;
@@ -225,6 +228,7 @@ public class EmbeddedADS {
 //        Partition apachePartition = addPartition("apache", "dc=apache,dc=org", service.getDnFactory());
         Partition codenvyPartition = addPartition("codenvy", "dc=codenvy-enterprise,dc=com", service.getDnFactory());
 
+
         // And start the service
         service.startup();
 
@@ -271,7 +275,7 @@ public class EmbeddedADS {
     }
 
     private void importEntriesFromLdif(Partition partition, Path ldif) throws IOException, LdapException {
-        String ldifContent = FileUtils.readFileToString(ldif.toFile());
+//        String ldifContent = FileUtils.readFileToString(ldif.toFile());
 
 //        LdifFileLoader ldifLoader = new LdifFileLoader(service.getAdminSession(), ldifContent);
 //        ldifLoader.execute();
@@ -279,9 +283,15 @@ public class EmbeddedADS {
         try (java.io.InputStream is = new FileInputStream(ldif.toFile())) {
             LdifReader entries = new LdifReader(is);
 
-            service.getAdminSession().lookup(partition.getSuffixDn());
+            CoreSession rootDSE = service.getAdminSession();
+            SchemaManager schemaManager = rootDSE.getDirectoryService().getSchemaManager();
+
             for (LdifEntry ldifEntry : entries) {
-                service.getAdminSession().add(ldifEntry.getEntry());
+
+                Entry entry = new DefaultEntry(schemaManager, ldifEntry.getEntry());
+
+                partition.add(new AddOperationContext(service.getAdminSession(), entry));
+//                rootDSE.add(entry);
             }
         }
     }

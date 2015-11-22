@@ -86,7 +86,7 @@ public class TestConfig {
     }
 
     @Test(dataProvider = "getEnclosedValue")
-    public void testGetValues(String propertyName, String osVersion, Config config, String expectedValue) {
+    public void testGetEnclosedValues(String propertyName, String osVersion, Config config, String expectedValue) {
         OSUtils.VERSION = osVersion;
         String result = config.getValue(propertyName);
         assertEquals(result, expectedValue);
@@ -111,4 +111,19 @@ public class TestConfig {
             {"prop_3", "6", config, "puppet-3.4.3-1.el6.noarch"},
             };
     }
+
+    @Test
+    public void testGetEnclosedCyclicValues() {
+        Map<String, String> properties = ImmutableMap.of(
+            "prop_1", "value_1.1,$prop_1,value_1.2",
+            "prop_2", "value_2,$prop_3",
+            "prop_3", "$prop_1"
+        );
+
+        Config config = new Config(properties);
+
+        String result = config.getValue("prop_1");
+        assertEquals(result, "value_1.1,$prop_1,value_1.2");
+    }
+
 }
