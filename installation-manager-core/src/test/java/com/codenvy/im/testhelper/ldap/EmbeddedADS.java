@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.testhelper.ldap;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -25,7 +24,6 @@ import org.apache.directory.api.ldap.model.ldif.LdifEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifReader;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.api.ldap.model.schema.SchemaManager;
-import org.apache.directory.api.ldap.model.schema.registries.Registries;
 import org.apache.directory.api.ldap.model.schema.registries.SchemaLoader;
 import org.apache.directory.api.ldap.schema.extractor.SchemaLdifExtractor;
 import org.apache.directory.api.ldap.schema.extractor.impl.DefaultSchemaLdifExtractor;
@@ -47,7 +45,6 @@ import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
 import org.apache.directory.server.i18n.I18n;
 import org.apache.directory.server.ldap.LdapServer;
-import org.apache.directory.server.protocol.shared.store.LdifFileLoader;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
 
 import java.io.File;
@@ -64,8 +61,12 @@ import java.util.Set;
  * into an application.
  *
  * @author <a href="mailto:dev@directory.apache.org">Apache Directory Project</a>
+ * @author Dmytro Nochevnov
  */
 public class EmbeddedADS {
+    public static final String TEST_LDAP_ADMIN           = "ldap_admin";
+    public static final String TEST_SYSTEM_LDAP_PASSWORD = "system_ldap_password";
+
     /** The directory service */
     private DirectoryService service;
 
@@ -103,13 +104,13 @@ public class EmbeddedADS {
      * @throws Exception
      *         If the partition can't be added
      */
-    private Partition addPartition(String partitionId, String partitionDn, DnFactory dnFactory) throws Exception {
+    public JdbmPartition addPartition(String partitionId, String partitionDn) throws Exception {
         // Create a new partition with the given partition id
+        DnFactory dnFactory = service.getDnFactory();
         JdbmPartition partition = new JdbmPartition(service.getSchemaManager(), dnFactory);
         partition.setId(partitionId);
         partition.setPartitionPath(new File(service.getInstanceLayout().getPartitionsDirectory(), partitionId).toURI());
         partition.setSuffixDn(new Dn(partitionDn));
-        partition.initialize();
         service.addPartition(partition);
 
         return partition;
@@ -221,65 +222,11 @@ public class EmbeddedADS {
         service.getChangeLog().setEnabled(false);
         service.setDenormalizeOpAttrsEnabled(true);
 
-        // Now we can create as many partitions as we need
-        // Create some new partitions named 'foo', 'bar' and 'apache'.
-//        Partition fooPartition = addPartition("foo", "dc=department,dc=example,dc=com", service.getDnFactory());
-//        Partition barPartition = addPartition("bar", "dc=bar,dc=com", service.getDnFactory());
-//        Partition apachePartition = addPartition("apache", "dc=apache,dc=org", service.getDnFactory());
-        Partition codenvyPartition = addPartition("codenvy", "dc=codenvy-enterprise,dc=com", service.getDnFactory());
-
-
         // And start the service
         service.startup();
-
-        Path ldif = Paths.get("target/test-classes/ldap/codenvy3.ldif");
-        importEntriesFromLdif(codenvyPartition, ldif);
-
-        // Index some attributes on the apache partition
-//        addIndex(apachePartition, "objectClass", "ou", "uid");
-
-
-
-//        // Inject the context entry for dc=foo,dc=com partition if it does not already exist
-//        try {
-//            service.getAdminSession().lookup(fooPartition.getSuffixDn());
-//        } catch (LdapException lnnfe) {
-//            Dn dnFoo = new Dn("dc=department,dc=example,dc=com");
-//            Entry entryFoo = service.newEntry(dnFoo);
-//            entryFoo.add("objectClass", "top", "domain", "extensibleObject");
-//            entryFoo.add("dc", "department");
-//            service.getAdminSession().add(entryFoo);
-//        }
-//
-//        // Inject the context entry for dc=bar,dc=com partition
-//        try {
-//            service.getAdminSession().lookup(barPartition.getSuffixDn());
-//        } catch (LdapException lnnfe) {
-//            Dn dnBar = new Dn("dc=bar,dc=com");
-//            Entry entryBar = service.newEntry(dnBar);
-//            entryBar.add("objectClass", "top", "domain", "extensibleObject");
-//            entryBar.add("dc", "bar");
-//            service.getAdminSession().add(entryBar);
-//        }
-//
-//        // Inject the context entry for dc=Apache,dc=Org partition
-//        if (!service.getAdminSession().exists(apachePartition.getSuffixDn())) {
-//            Dn dnApache = new Dn("dc=Apache,dc=Org");
-//            Entry entryApache = service.newEntry(dnApache);
-//            entryApache.add("objectClass", "top", "domain", "extensibleObject");
-//            entryApache.add("dc", "Apache");
-//            service.getAdminSession().add(entryApache);
-//        }
-
-        // We are all done !
     }
 
-    private void importEntriesFromLdif(Partition partition, Path ldif) throws IOException, LdapException {
-//        String ldifContent = FileUtils.readFileToString(ldif.toFile());
-
-//        LdifFileLoader ldifLoader = new LdifFileLoader(service.getAdminSession(), ldifContent);
-//        ldifLoader.execute();
-
+    public void importEntriesFromLdif(JdbmPartition partition, Path ldif) throws IOException, LdapException {
         try (java.io.InputStream is = new FileInputStream(ldif.toFile())) {
             LdifReader entries = new LdifReader(is);
 
@@ -287,11 +234,10 @@ public class EmbeddedADS {
             SchemaManager schemaManager = rootDSE.getDirectoryService().getSchemaManager();
 
             for (LdifEntry ldifEntry : entries) {
-
                 Entry entry = new DefaultEntry(schemaManager, ldifEntry.getEntry());
-
-                partition.add(new AddOperationContext(service.getAdminSession(), entry));
-//                rootDSE.add(entry);
+                AddOperationContext addContext = new AddOperationContext(service.getAdminSession(), entry);
+                partition.add(addContext);
+                partition.updateCache(addContext);
             }
         }
     }

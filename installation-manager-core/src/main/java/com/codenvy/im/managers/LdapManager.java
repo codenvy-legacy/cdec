@@ -48,6 +48,7 @@ import static java.util.Objects.requireNonNull;
 @Singleton
 public class LdapManager {
 
+    public static final String REALM = "sysldap";
     private final ConfigManager configManager;
     private final HttpTransport httpTransport;
 
@@ -81,7 +82,10 @@ public class LdapManager {
                     new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("userPassword", encryptedPwd))
                 };
 
-                ldapContext.modifyAttributes(format("cn=%s,%s", config.getValue(Config.ADMIN_LDAP_USER_NAME), config.getValue(Config.SYSTEM_LDAP_USER_BASE)), mods);
+                ldapContext.modifyAttributes(format("cn=%s,%s",
+                                                    config.getValue(Config.ADMIN_LDAP_USER_NAME),
+                                                    config.getValue(Config.SYSTEM_LDAP_USER_BASE)),
+                                             mods);
             } finally {
                 ldapContext.close();
             }
@@ -132,7 +136,7 @@ public class LdapManager {
         Credentials credentials = new DtoServerImpls.CredentialsImpl();
         credentials.setPassword(new String(currentPassword, "UTF-8"));
         credentials.setUsername(config.getValue(config.getValue(Config.ADMIN_LDAP_USER_NAME)));
-        credentials.setRealm("sysldap");
+        credentials.setRealm(REALM);
 
         String requestUrl = combinePaths(configManager.getApiEndpoint(), "/auth/login");
         try {
