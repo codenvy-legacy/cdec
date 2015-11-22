@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.13.2</version>
+        <version>3.13.3-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-cli-features</artifactId>
     <packaging>feature</packaging>
