@@ -61,35 +61,6 @@ public class BaseLdapTest extends BaseTest {
         ads.startServer();
     }
 
-    @Test
-    public void checkTestData() throws Exception {
-        // Read an user ldap entry
-        Entry result = ads.getService().getAdminSession().lookup(new Dn(EmbeddedADS.TEST_USER_LDAP_DN));
-
-        // Check test data
-        assertEquals(result.toString(), "Entry\n"
-                                        + "    dn[n]: dc=codenvy-enterprise,dc=com\n"
-                                        + "    objectclass: top\n"
-                                        + "    objectclass: dcObject\n"
-                                        + "    objectclass: organization\n"
-                                        + "    dc: codenvy-enterprise\n"
-                                        + "    o: codenvy\n"
-                                        + "    description: \"The Codenvy userdb\"\n");
-
-        // Read an admin ldap entry
-        result = ads.getService().getAdminSession().lookup(new Dn(EmbeddedADS.TEST_ADMIN_LDAP_DN));
-
-        // Check test data
-        assertEquals(result.toString(), "Entry\n"
-                                        + "    dn[n]: dc=codenvycorp,dc=com\n"
-                                        + "    objectclass: top\n"
-                                        + "    objectclass: dcObject\n"
-                                        + "    objectclass: organization\n"
-                                        + "    dc: codenvycorp\n"
-                                        + "    o: codenvycorp\n"
-                                        + "    description: \"Codenvy Inc.\"\n");
-    }
-
     protected Map<String, String> getTestSingleNodeProperties() {
         Map<String, String> properties = new HashMap<>(super.getTestSingleNodeProperties());
         properties.putAll(getLdapSpecificProperties());
@@ -97,29 +68,17 @@ public class BaseLdapTest extends BaseTest {
         return properties;
     }
 
-    protected Map<String, String> getTestMultiNodeProperties() {
-        Map<String, String> properties = new HashMap<>(super.getTestMultiNodeProperties());
-        properties.putAll(getLdapSpecificProperties());
-
-        properties.put("api_host_name", "api.example.com");
-        properties.put("data_host_name", "data.example.com");
-        properties.put("analytics_host_name", "analytics.example.com");
-        properties.put("host_url", "hostname");
-        
-        return properties;
-    }
-
     private Map<String, String> getLdapSpecificProperties() {
         return new HashMap<String, String>() {{
-            put(Config.LDAP_PROTOCOL, "ldap");
-            put(Config.LDAP_HOST, "localhost");
-            put(Config.LDAP_PORT, "10389");
+            put(Config.LDAP_PROTOCOL, EmbeddedADS.ADS_PROTOCOL);
+            put(Config.LDAP_HOST, EmbeddedADS.ADS_HOST);
+            put(Config.LDAP_PORT, EmbeddedADS.ADS_PORT);
 
-            put(Config.JAVA_NAMING_SECURITY_AUTHENTICATION, "simple");
-            put(Config.JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.TEST_JAVA_NAMING_SECURITY_PRINCIPAL);
+            put(Config.JAVA_NAMING_SECURITY_AUTHENTICATION, EmbeddedADS.ADS_SECURITY_AUTHENTICATION);
+            put(Config.JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.ADS_SECURITY_PRINCIPAL);
 
             put(Config.ADMIN_LDAP_USER_NAME, "admin");
-            put(Config.USER_LDAP_PASSWORD, EmbeddedADS.TEST_LDAP_PASSWORD);
+            put(Config.USER_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
 
             put(Config.USER_LDAP_USER_CONTAINER_DN, "ou=People,$user_ldap_dn");
             put(Config.USER_LDAP_OBJECT_CLASSES, "inetOrgPerson");

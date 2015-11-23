@@ -52,7 +52,7 @@ public class LdapManagerTest extends BaseLdapTest {
     }
 
     @Test
-    public void shouldChangeAdminPasswordOnSingleNode() throws Exception {
+    public void shouldChangeAdminPassword() throws Exception {
         prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         byte[] curPwd = "curPwd".getBytes("UTF-8");
@@ -61,21 +61,6 @@ public class LdapManagerTest extends BaseLdapTest {
 
         spyLdapManager.changeAdminPassword(curPwd, newPwd);
         // TODO [ndp] get admin password from ldap to verify it
-
-    }
-
-//    @Test  TODO [ndp] uncomment
-    public void shouldChangeAdminPasswordOnMultiNode() throws Exception {
-        prepareMultiNodeEnv(mockConfigManager, mockTransport);
-
-        byte[] curPwd = "curPwd".getBytes("UTF-8");
-        byte[] newPwd = "newPwd".getBytes("UTF-8");
-        doNothing().when(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
-
-        spyLdapManager.changeAdminPassword(curPwd, newPwd);
-
-        // TODO [ndp] get admin password from ldap to verify it
-
 
         verify(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
     }
@@ -90,17 +75,10 @@ public class LdapManagerTest extends BaseLdapTest {
     }
 
     @Test
-    public void shouldReturnNumberOfUsersOnSingleNode() throws Exception {
+    public void shouldReturnNumberOfUsers() throws Exception {
         prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
         assertEquals(spyLdapManager.getNumberOfUsers(), 2);
-    }
-
-    @Test
-    public void shouldReturnNumberOfUsersOnMultiNode() throws Exception {
-        prepareMultiNodeEnv(mockConfigManager, mockTransport);
-
-        // TODO [ndp]
     }
 
 }

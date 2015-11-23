@@ -66,9 +66,12 @@ public class EmbeddedADS {
     public static final String TEST_USER_LDAP_DN  = "dc=codenvy-enterprise,dc=com";
     public static final String TEST_ADMIN_LDAP_DN = "dc=codenvycorp,dc=com";
 
-    public static final String TEST_JAVA_NAMING_SECURITY_PRINCIPAL = "uid=admin,ou=system";
-    public static final String TEST_LDAP_PASSWORD = "secret";
-
+    public static final String ADS_PROTOCOL                = "ldap";
+    public static final String ADS_HOST                    = "localhost";
+    public static final String ADS_PORT                    = "10389";
+    public static final String ADS_SECURITY_PRINCIPAL      = "uid=admin,ou=system";
+    public static final String ADS_SECURITY_CREDENTIALS    = "secret";
+    public static final String ADS_SECURITY_AUTHENTICATION = "simple";
 
     /** The directory service */
     private DirectoryService service;
@@ -253,7 +256,7 @@ public class EmbeddedADS {
         int serverPort = 10389;
         server.setTransports(new TcpTransport(serverPort));
         server.setDirectoryService(service);
-        server.setSaslPrincipal(TEST_JAVA_NAMING_SECURITY_PRINCIPAL);
+        server.setSaslPrincipal(ADS_SECURITY_PRINCIPAL);
 
         server.start();
     }
