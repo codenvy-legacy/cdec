@@ -481,7 +481,11 @@ printPreInstallInfo_single() {
     fi
 
     if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        if [[ "${VERSION}" =~ 4.* ]]; then
+            insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        else
+            insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        fi
     fi
 
     if [ -n "${HOST_NAME}" ]; then
@@ -670,7 +674,11 @@ printPreInstallInfo_multi() {
     fi
 
     if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        if [[ "${VERSION}" =~ 4.* ]]; then
+            insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        else
+            insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
+        fi
     fi
 
     if [[ ${SILENT} == true ]]; then
@@ -1110,7 +1118,11 @@ printPostInstallInfo() {
     fi
 
     if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
-        SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
+        if [[ "${VERSION}" =~ 4.* ]]; then
+            SYSTEM_ADMIN_PASSWORD=`grep admin_ldap_password= ${CONFIG} | cut -d '=' -f2`
+        else
+            SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
+        fi
     fi
 
     if [ -z ${HOST_NAME} ]; then
