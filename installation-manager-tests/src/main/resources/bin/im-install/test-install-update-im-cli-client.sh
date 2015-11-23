@@ -26,7 +26,7 @@ vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 installImCliClient ${PREV_IM_CLI_CLIENT_VERSION}
 
 # test auto-update at the start of executing some command
-executeIMCommand "im-download" "-c"
+executeIMCommand "im-version"
 validateExpectedString ".*This.CLI.client.was.out-dated.so.automatic.update.has.being.started\..It.will.be.finished.at.the.next.launch.*"
 
 validateInstalledImCliClientVersion ${LATEST_IM_CLI_CLIENT_VERSION}
