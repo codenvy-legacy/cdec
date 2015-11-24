@@ -232,7 +232,7 @@ public class DownloadManager {
     protected void validateMd5Sum(Artifact artToDownload, Version verToDownload, Path pathToBinaries) throws IOException {
         String md5sum = artToDownload.getProperty(verToDownload, MD5_PROPERTY);
         if (!md5sum.equals(calculateMD5Sum(pathToBinaries))) {
-            throw new IOException("File corrupted. Please redownload artifact.");
+            throw new IOException("File corrupted. Redownload artifact.");
         }
     }
 

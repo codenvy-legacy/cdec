@@ -681,6 +681,6 @@ public class DownloadManagerTest extends BaseTest {
 
         assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
         assertEquals(info.getPercents(), 100);
-        assertEquals(info.getMessage(), "File corrupted. Please redownload artifact.");
+        assertTrue(info.getMessage().contains("File corrupted"));
     }
 }

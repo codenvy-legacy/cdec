@@ -80,15 +80,15 @@ cleanUp() {
 }
 
 validateExitCode() {
-    EXIT_CODE=$1
-    if [[ -n "${EXIT_CODE}" ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
+    local exitCode=$1
+    if [[ -n "${exitCode}" ]] && [[ ! ${exitCode} == "0" ]]; then
         pauseTimer
         pausePuppetInfoPrinter
         pauseInternetAccessChecker
         pauseFooterUpdater
         println
-        printError "Unexpected error occurred. See install.log for more details"
-        exit ${EXIT_CODE}
+        println $(printError "Unexpected error occurred. See install.log for more details")
+        exit ${exitCode}
     fi
 }
 
@@ -137,8 +137,8 @@ doEvalWaitReconnection() {
             doUpdateInternetAccessChecker
             local checkFailed=$?
 
-            if [[ ${checkFailed} == 0 ]]; then # Internet connection is OK, probably another error
-                validateExitCode ${exitCode}
+            if [[ ${checkFailed} == 0 ]]; then
+                return ${exitCode} # Internet connection is OK, probably another error
             else
                 sleep 1m # wait reconnection
             fi
@@ -153,24 +153,47 @@ doConfigureSystem() {
     mkdir ${DIR}
 
     doEvalWaitReconnection installPackageIfNeed tar
+    validateExitCode $?
+
     doEvalWaitReconnection installPackageIfNeed unzip
+    validateExitCode $?
+
     doEvalWaitReconnection installPackageIfNeed net-tools
+    validateExitCode $?
 }
 
 doInstallJava() {
     setStepIndicator 1
     doEvalWaitReconnection installJava
+    validateExitCode $?
 }
 
 doInstallImCli() {
     setStepIndicator 2
     doEvalWaitReconnection installIm
+    validateExitCode $?
 }
 
+# Download binaries. If file is corrupted due to unexpected errors then it will be redownloaded
 doDownloadBinaries() {
     setStepIndicator 3
 
-    doEvalWaitReconnection executeIMCommand im-download ${ARTIFACT} ${VERSION} >> install.log
+    for ((;;)); do
+        OUTPUT=$(doEvalWaitReconnection executeIMCommand im-download ${ARTIFACT} ${VERSION})
+        local exitCode=$?
+        echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
+
+        if [[ ${exitCode} == 0 ]]; then
+            break
+        fi
+
+        if [[ ${OUTPUT} =~ .*File.corrupted.* ]]; then
+            echo "Codenvy binaries will be redownloaded" >> install.log
+            continue
+        else
+            validateExitCode ${exitCode}
+        fi
+    done
 
     executeIMCommand im-download --list-local >> install.log
     validateExitCode $?
@@ -184,11 +207,26 @@ doInstallCodenvy() {
             setStepIndicator $(( $STEP+3 ))
         fi
 
-        if [ ${CODENVY_TYPE} == "multi" ]; then
-            doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
-        else
-            doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
-        fi
+        for ((;;)); do
+            local exitCode
+            if [ ${CODENVY_TYPE} == "multi" ]; then
+                doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
+                exitCode=$?
+            else
+                doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
+                exitCode=$?
+            fi
+
+            # if error occurred not because of internet access lost then break installation
+            # it prevents breaking installation due to a lot of puppet errors
+            local checkFailed=`echo $(</dev/shm/im_internet_access_lost)`
+            if [[ ! ${exitCode} == 0 ]] && [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
+                echo "Repeating installation step "${STEP} >> install.log
+                continue;
+            fi
+
+            break;
+        done
     done
 
     setStepIndicator 13
@@ -1090,6 +1128,7 @@ updatePuppetInfo() {
 }
 
 runInternetAccessChecker() {
+    echo 0 > /dev/shm/im_internet_access_lost
     updateInternetAccessChecker &
     INTERNET_CHECKER_PID=$!
 }
@@ -1137,6 +1176,10 @@ doUpdateInternetAccessChecker() {
 
         if [[ ${isRequiredToCheck} == 1 ]]; then
             doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
+        fi
+
+        if [[ ${checkFailed} == 1 ]]; then
+            echo ${checkFailed} > /dev/shm/im_internet_access_lost
         fi
     done
 
