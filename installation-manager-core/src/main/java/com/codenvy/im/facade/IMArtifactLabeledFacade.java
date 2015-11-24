@@ -19,7 +19,6 @@
 package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
@@ -31,6 +30,7 @@ import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BasicArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
+import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdatesArtifactInfo;
@@ -42,16 +42,15 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import javax.validation.constraints.NotNull;
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
@@ -137,7 +136,11 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
     @Override
     public DownloadProgressResponse getDownloadProgress() throws DownloadNotStartedException, IOException {
         DownloadProgressResponse response = super.getDownloadProgress();
-        setVersionLabel(response.getArtifacts());
+
+        // avoid requests if artifact hasn't been downloaded
+        if (response.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
+            setVersionLabel(response.getArtifacts());
+        }
         return response;
     }
 

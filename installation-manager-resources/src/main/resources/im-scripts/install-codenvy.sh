@@ -72,7 +72,7 @@ TIMER_LINE=
 
 DEPENDENCIES_STATUS_OFFSET=85  # fit screen width = 100 cols
 
-function cleanUp() {
+cleanUp() {
     killTimer
     killPuppetInfoPrinter
     killInternetAccessChecker
@@ -87,7 +87,7 @@ validateExitCode() {
         pauseInternetAccessChecker
         pauseFooterUpdater
         println
-        println "Unexpected error occurred. See install.log for more details"
+        printError "Unexpected error occurred. See install.log for more details"
         exit ${EXIT_CODE}
     fi
 }
@@ -121,6 +121,80 @@ setRunOptions() {
     fi
 }
 
+
+# run specific function and don't break installation if connection lost
+doEvalWaitReconnection() {
+    local func=$1
+    shift
+
+    for ((;;)); do
+        eval ${func} $@
+        local exitCode=$?
+
+        if [[ ${exitCode} == 0 ]]; then
+            break
+        else
+            doUpdateInternetAccessChecker
+            local checkFailed=$?
+
+            if [[ ${checkFailed} == 0 ]]; then # Internet connection is OK, probably another error
+                validateExitCode ${exitCode}
+            else
+                sleep 1m # wait reconnection
+            fi
+        fi
+    done
+}
+
+doConfigureSystem() {
+    setStepIndicator 0
+
+    if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
+    mkdir ${DIR}
+
+    doEvalWaitReconnection installPackageIfNeed tar
+    doEvalWaitReconnection installPackageIfNeed unzip
+    doEvalWaitReconnection installPackageIfNeed net-tools
+}
+
+doInstallJava() {
+    setStepIndicator 1
+    doEvalWaitReconnection installJava
+}
+
+doInstallImCli() {
+    setStepIndicator 2
+    doEvalWaitReconnection installIm
+}
+
+doDownloadBinaries() {
+    setStepIndicator 3
+
+    doEvalWaitReconnection executeIMCommand im-download ${ARTIFACT} ${VERSION} >> install.log
+
+    executeIMCommand im-download --list-local >> install.log
+    validateExitCode $?
+}
+
+doInstallCodenvy() {
+    for ((STEP=1; STEP<=9; STEP++));  do
+        if [ ${STEP} == 9 ]; then
+            setStepIndicator $(( $STEP+3 ))
+        else
+            setStepIndicator $(( $STEP+3 ))
+        fi
+
+        if [ ${CODENVY_TYPE} == "multi" ]; then
+            doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
+        else
+            doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
+        fi
+    done
+
+    setStepIndicator 13
+    sleep 2
+}
+
 downloadConfig() {
     url="https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
 
@@ -143,17 +217,23 @@ installPackageIfNeed() {
         echo -n "Install package '$1'... " >> install.log
 
         exitCode=$(sudo yum install $1 -y -q --errorlevel=0 >> install.log 2>&1; echo $?)
-
-        validateExitCode ${exitCode}
-
-        echo " [OK]" >> install.log
+        if [[ ! ${exitCode} == 0 ]]; then
+            echo " [FAILED]" >> install.log
+            return ${exitCode}
+        else
+            echo " [OK]" >> install.log
+        fi
     }
 }
 
 preConfigureSystem() {
     sudo yum clean all &> /dev/null
+
     installPackageIfNeed curl
+    validateExitCode $?
+
     installPackageIfNeed wget
+    validateExitCode $?
 
     if [[ ! -f ${CONFIG} ]]; then
         downloadConfig
@@ -161,14 +241,10 @@ preConfigureSystem() {
 }
 
 installJava() {
-    local exitCode
     echo -n "Install java package from '${JRE_URL}' into the directory '${DIR}/jre' ... " >> install.log
 
-    exitCode=$(wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz >> install.log 2>&1; echo $?)
-    validateExitCode ${exitCode}
-
-    exitCode=$(tar -xf jre.tar.gz -C ${DIR} >> install.log 2>&1; echo $?)
-    validateExitCode ${exitCode}
+    wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz >> install.log 2>&1 || return 1
+    tar -xf jre.tar.gz -C ${DIR} >> install.log 2>&1
 
     rm -fr ${DIR}/jre >> install.log 2>&1
     mv -f ${DIR}/jre1.8.0_45 ${DIR}/jre >> install.log 2>&1
@@ -180,14 +256,16 @@ installJava() {
 installIm() {
     IM_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
     IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
+    if [[ ! $? == 0 ]]; then
+        return 1
+    fi
 
-    curl -s -o ${IM_FILE} -L ${IM_URL}
+    curl -s -o ${IM_FILE} -L ${IM_URL} || return 1
 
     mkdir ${DIR}/codenvy-cli
     tar -xf ${IM_FILE} -C ${DIR}/codenvy-cli
 
     sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/codenvy
-
     echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
 }
 
@@ -863,61 +941,7 @@ doCheckAvailableResourcesOnNodes() {
     fi
 }
 
-doConfigureSystem() {
-    performStep 0
-
-    if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
-    mkdir ${DIR}
-
-    installPackageIfNeed tar
-    installPackageIfNeed unzip
-    installPackageIfNeed net-tools
-}
-
-doInstallJava() {
-    performStep 1
-    installJava
-}
-
-doInstallImCli() {
-    performStep 2
-    installIm
-}
-
-doDownloadBinaries() {
-    performStep 3
-    OUTPUT=$(executeIMCommand im-download ${ARTIFACT} ${VERSION})
-    EXIT_CODE=$?
-    echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
-    validateExitCode ${EXIT_CODE}
-
-    executeIMCommand im-download --list-local >> install.log
-    validateExitCode $?
-}
-
-doInstallCodenvy() {
-    for ((STEP=1; STEP<=9; STEP++));  do
-        if [ ${STEP} == 9 ]; then
-            performStep $(( $STEP+3 ))
-        else
-            performStep $(( $STEP+3 ))
-        fi
-
-        if [ ${CODENVY_TYPE} == "multi" ]; then
-            executeIMCommand im-install --step ${STEP} --forceInstall --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
-            validateExitCode $?
-        else
-            executeIMCommand im-install --step ${STEP} --forceInstall --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
-            validateExitCode $?
-        fi
-    done
-
-    performStep 13
-
-    sleep 2
-}
-
-performStep() {
+setStepIndicator() {
     CURRENT_STEP=$1
     echo ${CURRENT_STEP} > /dev/shm/im_current_step
     shift
@@ -1089,17 +1113,9 @@ pauseInternetAccessChecker() {
 }
 
 updateInternetAccessChecker() {
-    local printStatus=false
     for ((;;)); do
-        local checkFailed=0
-
-        for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
-            local isRequiredToCheck=`echo ${resource} | awk -F'|' '{print $3}'`;
-
-            if [[ ${isRequiredToCheck} == 1 ]]; then
-                doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
-            fi
-        done
+        doUpdateInternetAccessChecker
+        local checkFailed=$?
 
         CURRENT_STEP=`echo $(</dev/shm/im_current_step)`
         if [[ ${checkFailed} == 1 ]]; then
@@ -1110,6 +1126,21 @@ updateInternetAccessChecker() {
        
         sleep 1m
     done
+}
+
+doUpdateInternetAccessChecker() {
+    local printStatus=false
+    local checkFailed=0
+
+    for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
+        local isRequiredToCheck=`echo ${resource} | awk -F'|' '{print $3}'`;
+
+        if [[ ${isRequiredToCheck} == 1 ]]; then
+            doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
+        fi
+    done
+
+    return ${checkFailed}
 }
 
 printPostInstallInfo() {
@@ -1137,7 +1168,6 @@ printPostInstallInfo() {
     println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }
 
-set -e
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
 
@@ -1152,8 +1182,6 @@ runInternetAccessChecker
 doConfigureSystem
 doInstallJava
 doInstallImCli
-
-set +e
 
 doDownloadBinaries
 doInstallCodenvy

@@ -33,9 +33,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.inject.Named;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -195,6 +195,8 @@ public class DownloadManager {
 
                 try {
                     Path pathToBinaries = download(artToDownload, verToDownload);
+                    validateMd5Sum(artToDownload, verToDownload, pathToBinaries);
+
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
                                                                                          verToDownload,
                                                                                          pathToBinaries,
@@ -224,6 +226,13 @@ public class DownloadManager {
             if (latcher.getCount() == 1) {
                 latcher.countDown();
             }
+        }
+    }
+
+    protected void validateMd5Sum(Artifact artToDownload, Version verToDownload, Path pathToBinaries) throws IOException {
+        String md5sum = artToDownload.getProperty(verToDownload, MD5_PROPERTY);
+        if (!md5sum.equals(calculateMD5Sum(pathToBinaries))) {
+            throw new IOException("File corrupted. Please redownload artifact.");
         }
     }
 
@@ -504,21 +513,13 @@ public class DownloadManager {
     /** Save artifact properties into the ".properties" file in the artifact download directory */
     protected void saveArtifactProperties(Artifact artToDownload, Version verToDownload, Path pathToBinaries) throws IOException {
         Map<String, String> propertiesMap = artToDownload.getProperties(verToDownload);
-        String md5sum = propertiesMap.get(MD5_PROPERTY);
+        Path pathToPropertiesFile = pathToBinaries.getParent().resolve(Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
 
-        if (checkArtifactDownloadedProperly(pathToBinaries, md5sum)) {
-            Path pathToPropertiesFile = pathToBinaries.getParent().resolve(Artifact.ARTIFACT_PROPERTIES_FILE_NAME);
+        Properties properties = new Properties();
+        properties.putAll(propertiesMap);
 
-            Properties properties = new Properties();
-            properties.putAll(propertiesMap);
-
-            try (OutputStream out = newOutputStream(pathToPropertiesFile)) {
-                properties.store(out, null);
-            }
+        try (OutputStream out = newOutputStream(pathToPropertiesFile)) {
+            properties.store(out, null);
         }
-    }
-
-    private boolean checkArtifactDownloadedProperly(Path pathToBinaries, String md5sum) throws IOException {
-        return exists(pathToBinaries) && md5sum.equals(calculateMD5Sum(pathToBinaries));
     }
 }

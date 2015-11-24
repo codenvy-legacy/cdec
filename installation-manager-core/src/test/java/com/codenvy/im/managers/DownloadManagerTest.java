@@ -79,6 +79,8 @@ import static org.testng.Assert.assertTrue;
 public class DownloadManagerTest extends BaseTest {
 
     public static final String EMPTY_FILE_MD5 = "d41d8cd98f00b204e9800998ecf8427e";
+    public static final String ANY_FILE_MD5   = "asldfj345l4lkfjgs945jlkfjgs8945fgsd";
+
     @Mock
     private ConfigManager configManager;
     @Mock
@@ -337,6 +339,8 @@ public class DownloadManagerTest extends BaseTest {
         doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
         doReturn((long)imSize).when(downloadManager).getBinariesSize(installManagerArtifact, imVersion);
 
+        doNothing().when(downloadManager).validateMd5Sum(cdecArtifact, cdecVersion, pathCDEC);
+        doNothing().when(downloadManager).validateMd5Sum(installManagerArtifact, imVersion, pathIM);
         doNothing().when(downloadManager).saveArtifactProperties(cdecArtifact, cdecVersion, pathCDEC);
         doNothing().when(downloadManager).saveArtifactProperties(installManagerArtifact, imVersion, pathIM);
 
@@ -387,6 +391,7 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
         doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
 
+        doNothing().when(downloadManager).validateMd5Sum(cdecArtifact, cdecVersion, pathCDEC);
         doNothing().when(downloadManager).saveArtifactProperties(cdecArtifact, cdecVersion, pathCDEC);
 
         downloadManager.startDownload(cdecArtifact, null);
@@ -430,6 +435,7 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
         doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
 
+        doNothing().when(downloadManager).validateMd5Sum(cdecArtifact, cdecVersion, pathCDEC);
         doNothing().when(downloadManager).saveArtifactProperties(cdecArtifact, cdecVersion, pathCDEC);
 
         downloadManager.startDownload(cdecArtifact, cdecVersion);
@@ -519,7 +525,6 @@ public class DownloadManagerTest extends BaseTest {
     public void testGetDownloadStatusWhenDownloadNotStarted() throws Exception {
         downloadManager.getDownloadProgress();
     }
-
 
     @Test
     public void testDownloadErrorIfAuthenticationFailedOnGetUpdates() throws Exception {
@@ -638,5 +643,44 @@ public class DownloadManagerTest extends BaseTest {
         assertTrue(Files.exists(propertiesFile));
         assertTrue(FileUtils.readFileToString(propertiesFile.toFile()).endsWith("file=file1\n"
                                                                                 + "md5=d41d8cd98f00b204e9800998ecf8427e\n"));
+    }
+
+    @Test
+    public void testDownloadErrorIfFileCorrupted() throws Exception {
+        final Version cdecVersion = Version.valueOf("2.0.0");
+        final int cdecSize = 100;
+
+        doReturn(new LinkedHashMap<Artifact, Version>() {
+            {
+                put(cdecArtifact, cdecVersion);
+            }
+        }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, null);
+
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+                return pathCDEC;
+            }
+        }).when(downloadManager).download(cdecArtifact, cdecVersion);
+
+        doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
+        doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
+
+        String propertiesFileContent = String.format("{\"%s\":\"%s\"}", ArtifactProperties.MD5_PROPERTY, ANY_FILE_MD5);
+        when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + cdecVersion.toString())))
+                .thenReturn(propertiesFileContent);
+
+        downloadManager.startDownload(cdecArtifact, null);
+
+        DownloadProgressResponse info;
+        do {
+            sleep(100); // due to async request, wait a bit to get proper download status
+            info = downloadManager.getDownloadProgress();
+        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+
+        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+        assertEquals(info.getPercents(), 100);
+        assertEquals(info.getMessage(), "File corrupted. Please redownload artifact.");
     }
 }
