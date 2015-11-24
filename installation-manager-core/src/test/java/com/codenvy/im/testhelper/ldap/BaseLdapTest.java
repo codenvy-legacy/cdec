@@ -79,6 +79,7 @@ public class BaseLdapTest extends BaseTest {
 
             put(Config.ADMIN_LDAP_USER_NAME, "admin");
             put(Config.USER_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
+            put(Config.ADMIN_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
 
             put(Config.USER_LDAP_USER_CONTAINER_DN, "ou=People,$user_ldap_dn");
             put(Config.USER_LDAP_OBJECT_CLASSES, "inetOrgPerson");
@@ -86,6 +87,7 @@ public class BaseLdapTest extends BaseTest {
             put(Config.USER_LDAP_DN, EmbeddedADS.TEST_USER_LDAP_DN);
             put(Config.ADMIN_LDAP_DN, EmbeddedADS.TEST_ADMIN_LDAP_DN);
             put(Config.SYSTEM_LDAP_USER_BASE, "ou=users,$admin_ldap_dn");
+            put(Config.SYSTEM_LDAP_JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.ADS_SECURITY_PRINCIPAL);
         }};
     }
 }

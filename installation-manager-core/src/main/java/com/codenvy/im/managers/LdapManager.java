@@ -71,7 +71,8 @@ public class LdapManager {
         validateCurrentPassword(currentPassword, config);
 
         try {
-            InitialDirContext ldapContext = connect(config);
+            String ldapAdminDbRootPrincipal = format("cn=root,%s", config.getValue(Config.ADMIN_LDAP_DN));  // only 'cn=root' has rights to change admin password
+            InitialDirContext ldapContext = connect(config, ldapAdminDbRootPrincipal, config.getValue(Config.ADMIN_LDAP_PASSWORD));
 
             try {
                 SSHAPasswordEncryptor sshaPasswordEncryptor = new SSHAPasswordEncryptor();
@@ -108,7 +109,7 @@ public class LdapManager {
         long resultCounter = 0;
 
         try {
-            InitialDirContext ldapContext = connect(config);
+            InitialDirContext ldapContext = connect(config, config.getValue(Config.JAVA_NAMING_SECURITY_PRINCIPAL), config.getValue(Config.USER_LDAP_PASSWORD));
             String ldapSearchBase = config.getValue(Config.USER_LDAP_USER_CONTAINER_DN);
             String ldapSearchFilter = format("(objectclass=%s)", config.getValue(Config.USER_LDAP_OBJECT_CLASSES));
 
@@ -134,7 +135,7 @@ public class LdapManager {
     protected void validateCurrentPassword(byte[] currentPassword, Config config) throws IOException {
         Credentials credentials = new DtoServerImpls.CredentialsImpl();
         credentials.setPassword(new String(currentPassword, "UTF-8"));
-        credentials.setUsername(config.getValue(config.getValue(Config.ADMIN_LDAP_USER_NAME)));
+        credentials.setUsername(config.getValue(Config.ADMIN_LDAP_USER_NAME));
         credentials.setRealm(REALM);
 
         String requestUrl = combinePaths(configManager.getApiEndpoint(), "/auth/login");
@@ -145,7 +146,7 @@ public class LdapManager {
         }
     }
 
-    private InitialDirContext connect(Config config) throws NamingException, IOException {
+    private InitialDirContext connect(Config config, String secutiryPrincipal, String securityCredentials) throws NamingException, IOException {
         Hashtable<String, String> ldapEnv = new Hashtable<>(5);
         ldapEnv.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         ldapEnv.put(Context.PROVIDER_URL, format("%s://%s:%s",
@@ -153,8 +154,8 @@ public class LdapManager {
                                                  config.getValue(Config.LDAP_HOST),
                                                  config.getValue(Config.LDAP_PORT)));
         ldapEnv.put(Context.SECURITY_AUTHENTICATION, config.getValue(Config.JAVA_NAMING_SECURITY_AUTHENTICATION));
-        ldapEnv.put(Context.SECURITY_PRINCIPAL, config.getValue(Config.JAVA_NAMING_SECURITY_PRINCIPAL));
-        ldapEnv.put(Context.SECURITY_CREDENTIALS, config.getValue(Config.USER_LDAP_PASSWORD));
+        ldapEnv.put(Context.SECURITY_PRINCIPAL, secutiryPrincipal);
+        ldapEnv.put(Context.SECURITY_CREDENTIALS, securityCredentials);
         return new InitialDirContext(ldapEnv);
     }
 }

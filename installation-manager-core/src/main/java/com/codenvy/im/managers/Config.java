@@ -64,11 +64,12 @@ public class Config {
     public static final String NODE_SSH_USER_PRIVATE_KEY = "node_ssh_user_private_key";
 
     /* ldap properties */
-    public static final String ADMIN_LDAP_PASSWORD   = "admin_ldap_password";
-    public static final String SYSTEM_LDAP_USER_BASE = "system_ldap_user_base";
+    public static final String SYSTEM_LDAP_USER_BASE                      = "system_ldap_user_base";
+    public static final String SYSTEM_LDAP_JAVA_NAMING_SECURITY_PRINCIPAL = "system_ldap_java_naming_security_principal";
 
     public static final String ADMIN_LDAP_DN        = "admin_ldap_dn";
     public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
+    public static final String ADMIN_LDAP_PASSWORD  = "admin_ldap_password";
 
     public static final String USER_LDAP_USER_CONTAINER_DN = "user_ldap_user_container_dn";
     public static final String USER_LDAP_OBJECT_CLASSES    = "user_ldap_object_classes";
@@ -97,7 +98,7 @@ public class Config {
         }});
     }};
 
-    public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
+    public static final Set<String> PROPERTIES_DEPEND_ON_VERSION       = PROPERTIES_BY_VERSION.keySet();
 
     private Map<String, String> properties;
 
