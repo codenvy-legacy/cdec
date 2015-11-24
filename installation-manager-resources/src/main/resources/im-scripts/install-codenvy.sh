@@ -97,12 +97,13 @@ setRunOptions() {
     ARTIFACT="codenvy"
     CODENVY_TYPE="single"
     SILENT=false
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT}?label=stable | sed 's/.*"version":"\([^"]*\)".*/\1/'`
     for var in "$@"; do
         if [[ "$var" == "--multi" ]]; then
             CODENVY_TYPE="multi"
         elif [[ "$var" == "--silent" ]]; then
             SILENT=true
+        elif [[ "$var" == "--im-cli" ]]; then
+            ARTIFACT="installation-manager-cli"
         elif [[ "$var" =~ --version=.* ]]; then
             VERSION=`echo "$var" | sed -e "s/--version=//g"`
         elif [[ "$var" =~ --hostname=.* ]]; then
@@ -113,6 +114,26 @@ setRunOptions() {
             SYSTEM_ADMIN_PASSWORD=`echo "$var" | sed -e "s/--systemAdminPassword=//g"`
         fi
     done
+
+    if [[ ${ARTIFACT} == "codenvy" ]]; then
+        LAST_INSTALLATION_STEP=13
+        ARTIFACT_DISPLAY="Codenvy"
+        if [[ -z ${VERSION} ]]; then
+            VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT}?label=stable | sed 's/.*"version":"\([^"]*\)".*/\1/'`
+        fi
+    else
+        LAST_INSTALLATION_STEP=3
+        ARTIFACT_DISPLAY="Installation Manager CLI"
+        CODENVY_TYPE="single"
+        INSTALLATION_STEPS=("Configuring system..."
+                            "Installing required packages... [java]"
+                            "Install the Codenvy installation manager..."
+                            "");
+        if [[ -z ${VERSION} ]]; then
+            VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*"version":"\([^"]*\)".*/\1/'`
+        fi
+    fi
+
     CONFIG="codenvy.properties"
     EXTERNAL_DEPENDENCIES[0]="https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION}||0"
 
@@ -228,9 +249,6 @@ doInstallCodenvy() {
             break;
         done
     done
-
-    setStepIndicator 13
-    sleep 2
 }
 
 downloadConfig() {
@@ -273,7 +291,7 @@ preConfigureSystem() {
     installPackageIfNeed wget
     validateExitCode $?
 
-    if [[ ! -f ${CONFIG} ]]; then
+    if [[ ! -f ${CONFIG} ]] && [[ ${ARTIFACT} == "codenvy" ]]; then
         downloadConfig
     fi
 }
@@ -576,7 +594,7 @@ doCheckAvailablePorts_multi() {
 printPreInstallInfo_single() {
     clear
 
-    println "Welcome. This program installs Codenvy ${VERSION}."
+    println "Welcome. This program installs ${ARTIFACT_DISPLAY} ${VERSION}."
     println
     println "Checking system pre-requisites..."
     println
@@ -589,8 +607,10 @@ printPreInstallInfo_single() {
 
     checkResourceAccess
 
-    println "Configuring system properties with file://${CONFIG}..."
-    println
+    if [[ ${ARTIFACT} == "codenvy" ]]; then
+        println "Configuring system properties with file://${CONFIG}..."
+        println
+    fi
 
     if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
@@ -774,7 +794,7 @@ doCheckResourceAccess() {
 printPreInstallInfo_multi() {
     clear
 
-    println "Welcome. This program installs Codenvy ${VERSION}."
+    println "Welcome. This program installs ${ARTIFACT_DISPLAY} ${VERSION}."
     println
     println "Checking system pre-requisites..."
     println
@@ -782,8 +802,11 @@ printPreInstallInfo_multi() {
     preConfigureSystem
     doCheckAvailableResourcesLocally 1000000 1 14000000
 
-    println "Configuring system properties with file://${CONFIG}..."
-    println
+
+    if [[ ${ARTIFACT} == "codenvy" ]]; then
+        println "Configuring system properties with file://${CONFIG}..."
+        println
+    fi
 
     if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
@@ -1030,7 +1053,7 @@ updateTimer() {
 
 updateProgress() {
     local current_step=$1
-    local last_step=13
+    local last_step=${LAST_INSTALLATION_STEP}
     local factor=2
 
     local progress_number=$(( ${current_step}*100/${last_step} ))
@@ -1186,7 +1209,7 @@ doUpdateInternetAccessChecker() {
     return ${checkFailed}
 }
 
-printPostInstallInfo() {
+printPostInstallInfo_codenvy() {
     if [ -z ${SYSTEM_ADMIN_NAME} ]; then
         SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
     fi
@@ -1211,6 +1234,11 @@ printPostInstallInfo() {
     println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }
 
+printPostInstallInfo_installation-manager-cli() {
+    println
+    println "Codenvy Installation Manager is installed into ${DIR}/codenvy-cli directory"
+}
+
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
 
@@ -1226,7 +1254,14 @@ doConfigureSystem
 doInstallJava
 doInstallImCli
 
-doDownloadBinaries
-doInstallCodenvy
+if [[ ${ARTIFACT} == "codenvy" ]]; then
+    doDownloadBinaries
+    doInstallCodenvy
+fi
 
-printPostInstallInfo
+setStepIndicator ${LAST_INSTALLATION_STEP}
+sleep 2
+
+printPostInstallInfo_${ARTIFACT}
+
+
