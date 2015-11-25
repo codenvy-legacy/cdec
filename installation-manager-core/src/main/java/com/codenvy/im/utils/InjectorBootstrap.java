@@ -76,6 +76,7 @@ public class InjectorBootstrap {
         bindFileProperties("codenvy/update-server.properties");
         bindFileProperties("codenvy/installation-manager.properties");
         bindFileProperties("codenvy/installation-manager-server.properties");
+        bindFileProperties("codenvy/report.properties");
 
         String confDir = System.getenv("CHE_LOCAL_CONF_DIR");
         if (confDir != null) {

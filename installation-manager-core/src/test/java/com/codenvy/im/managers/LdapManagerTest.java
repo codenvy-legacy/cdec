@@ -18,7 +18,9 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.testhelper.ldap.BaseLdapTest;
+import com.codenvy.im.testhelper.ldap.EmbeddedADS;
 import com.codenvy.im.utils.HttpTransport;
+import com.google.common.collect.ImmutableMap;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -26,6 +28,7 @@ import org.testng.annotations.Test;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.doThrow;
@@ -55,6 +58,8 @@ public class LdapManagerTest extends BaseLdapTest {
     public void shouldChangeAdminPassword() throws Exception {
         prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
+        doReturn(EmbeddedADS.ADS_SECURITY_PRINCIPAL).when(spyLdapManager).getRootPrincipal(any());
+
         byte[] curPwd = "curPwd".getBytes("UTF-8");
         byte[] newPwd = "newPwd".getBytes("UTF-8");
         doNothing().when(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
@@ -72,6 +77,12 @@ public class LdapManagerTest extends BaseLdapTest {
         doThrow(new IllegalStateException()).when(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
 
         spyLdapManager.changeAdminPassword(curPwd, newPwd);
+    }
+
+    @Test
+    public void shouldReturnRootPrincipal() throws Exception {
+        Config config = new Config(ImmutableMap.of(Config.ADMIN_LDAP_DN, EmbeddedADS.TEST_ADMIN_LDAP_DN));
+        assertEquals(spyLdapManager.getRootPrincipal(config), "cn=root,dc=codenvycorp,dc=com");
     }
 
     @Test

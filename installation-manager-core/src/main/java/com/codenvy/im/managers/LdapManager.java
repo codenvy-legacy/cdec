@@ -71,7 +71,7 @@ public class LdapManager {
         validateCurrentPassword(currentPassword, config);
 
         try {
-            String ldapAdminDbRootPrincipal = format("cn=root,%s", config.getValue(Config.ADMIN_LDAP_DN));  // only 'cn=root' has rights to change admin password
+            String ldapAdminDbRootPrincipal = getRootPrincipal(config);
             InitialDirContext ldapContext = connect(config, ldapAdminDbRootPrincipal, config.getValue(Config.ADMIN_LDAP_PASSWORD));
 
             try {
@@ -157,5 +157,10 @@ public class LdapManager {
         ldapEnv.put(Context.SECURITY_PRINCIPAL, secutiryPrincipal);
         ldapEnv.put(Context.SECURITY_CREDENTIALS, securityCredentials);
         return new InitialDirContext(ldapEnv);
+    }
+
+    /** only 'cn=root' has rights to change admin password in default Codenvy ldap */
+    protected String getRootPrincipal(Config config) {
+        return format("cn=root,%s", config.getValue(Config.ADMIN_LDAP_DN));
     }
 }

@@ -23,14 +23,53 @@ package com.codenvy.im.report;
 public class ReportParameters {
     private String  title;
     private String  sender;
-    private String  receivers;
-    private boolean send;
+    private String  receiver;
+    private boolean active;
 
-    public ReportParameters(String title, String sender, String receivers, boolean send) {
+    public ReportParameters() {
+    }
+
+    @Override public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        ReportParameters that = (ReportParameters)o;
+
+        if (active != that.active)
+            return false;
+        if (title != null ? !title.equals(that.title) : that.title != null)
+            return false;
+        if (sender != null ? !sender.equals(that.sender) : that.sender != null)
+            return false;
+        return !(receiver != null ? !receiver.equals(that.receiver) : that.receiver != null);
+
+    }
+
+    @Override public int hashCode() {
+        int result = title != null ? title.hashCode() : 0;
+        result = 31 * result + (sender != null ? sender.hashCode() : 0);
+        result = 31 * result + (receiver != null ? receiver.hashCode() : 0);
+        result = 31 * result + (active ? 1 : 0);
+        return result;
+    }
+
+    @Override public String toString() {
+        return "ReportParameters{" +
+               "title='" + title + '\'' +
+               ", sender='" + sender + '\'' +
+               ", receiver='" + receiver + '\'' +
+               ", active=" + active +
+               '}';
+
+    }
+
+    public ReportParameters(String title, String sender, String receivers, boolean active) {
         this.title = title;
         this.sender = sender;
-        this.receivers = receivers;
-        this.send = send;
+        this.receiver = receivers;
+        this.active = active;
     }
 
     public String getTitle() {
@@ -49,19 +88,19 @@ public class ReportParameters {
         this.sender = sender;
     }
 
-    public String getReceivers() {
-        return receivers;
+    public String getReceiver() {
+        return receiver;
     }
 
-    public void setReceivers(String receivers) {
-        this.receivers = receivers;
+    public void setReceiver(String receiver) {
+        this.receiver = receiver;
     }
 
-    public boolean isSend() {
-        return send;
+    public boolean isActive() {
+        return active;
     }
 
-    public void setSend(boolean send) {
-        this.send = send;
+    public void setActive(boolean active) {
+        this.active = active;
     }
 }

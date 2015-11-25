@@ -17,7 +17,6 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.LdapManager;
@@ -35,9 +34,6 @@ import javax.inject.Named;
 import javax.mail.MessagingException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 
@@ -76,22 +72,27 @@ public class ReportSender {
 
     private void sendNumberOfUsers() throws IOException, MessagingException, JsonParseException {
         ReportParameters parameters = obtainReportParameters(ReportType.CODENVY_ONPREM_USER_NUMBER_REPORT);
+
+        if (! parameters.isActive()) {
+            return;
+        }
+
         String externalIP = obtainExternalIP();
 
         StringBuilder msg = new StringBuilder();
         msg.append(String.format("External IP address: %s\n", externalIP));
         msg.append(String.format("Hostname: %s\n", configManager.loadInstalledCodenvyConfig().getValue(Config.HOST_URL)));
-        msg.append(String.format("Number of users: %s\n\n", ldapManager.getNumberOfUsers()));
+        msg.append(String.format("Number of users: %s\n", ldapManager.getNumberOfUsers()));
 
-        mailClient.sendMail(parameters.getSender(), parameters.getReceivers(), null, parameters.getTitle(), MediaType.TEXT_PLAIN, msg.toString());
+        mailClient.sendMail(parameters.getSender(), parameters.getReceiver(), null, parameters.getTitle(), MediaType.TEXT_PLAIN, msg.toString());
     }
 
-    public String obtainExternalIP() throws IOException {
+    private String obtainExternalIP() throws IOException {
         String requestUrl = combinePaths(updateServerEndpoint, "/util/client-ip");
         return httpTransport.doGet(requestUrl);
     }
 
-    public ReportParameters obtainReportParameters(ReportType reportType) throws IOException, JsonParseException {
+    private ReportParameters obtainReportParameters(ReportType reportType) throws IOException, JsonParseException {
         String requestUrl = combinePaths(updateServerEndpoint, "/parameters/" + reportType.name().toLowerCase());
 
         String response = httpTransport.doPost(requestUrl, null);

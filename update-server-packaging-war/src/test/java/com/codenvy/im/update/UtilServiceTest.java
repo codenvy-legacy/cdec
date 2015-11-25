@@ -1,0 +1,46 @@
+package com.codenvy.im.update;
+
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Response;
+
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.testng.Assert.assertEquals;
+
+/**
+ * @author Dmytro Nochevnov
+ */
+public class UtilServiceTest {
+    private UtilService testUtilService;
+
+    @BeforeMethod
+    public void setup() {
+        testUtilService = new UtilService();
+    }
+
+    @Test
+    public void shouldReturnClientIp() {
+        HttpServletRequest mockRequestContext = mock(HttpServletRequest.class);
+        String testUserIp = "10.20.30.40";
+        doReturn(testUserIp).when(mockRequestContext).getRemoteAddr();
+
+        Response response = testUtilService.getClientIp(mockRequestContext);
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(response.getEntity(), "10.20.30.40");
+    }
+
+    @Test
+    public void shouldReturnErrorWhenGettingClientIpFailed() {
+        HttpServletRequest mockRequestContext = mock(HttpServletRequest.class);
+        doThrow(new RuntimeException("error")).when(mockRequestContext).getRemoteAddr();
+
+        Response response = testUtilService.getClientIp(mockRequestContext);
+        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(response.getEntity(), "Unexpected error. error");
+    }
+
+}

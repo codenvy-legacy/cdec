@@ -24,12 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -52,9 +50,13 @@ public class ReportService {
     @GET
     @Path("/parameters/{report_type}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getReportParameters(@Context HttpServletRequest requestContext, @PathParam("report_type") ReportType reportType) {
+    public Response getReportParameters(@PathParam("report_type") String reportType) {
         try {
-            ReportParameters parameters = ReportType.valueOf(reportType.name()).getParameters();
+            if (reportType == null || ReportType.valueOf(reportType.toUpperCase()) == null) {
+                throw new RuntimeException("Report type is unknown.");
+            }
+
+            ReportParameters parameters = ReportType.valueOf(reportType.toUpperCase()).getParameters();
             return Response.ok(parameters).build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
