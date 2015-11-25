@@ -283,6 +283,15 @@ installPackageIfNeed() {
 }
 
 preConfigureSystem() {
+    # valid sudo rights
+    sudo -n true 2> /dev/null
+    if [[ ! $? == 0 ]]; then
+        println $(printError "ERROR: User '${USER}' doesn't have sudo rights")
+        println
+        println $(printWarning "NOTE: Grant sudo privileges to '${USER}' user and restart installation")
+        exit 1
+    fi
+
     sudo yum clean all &> /dev/null
 
     installPackageIfNeed curl
@@ -423,9 +432,7 @@ insertProperty() {
 
 validateHostname() {
     DNS=$1
-
     OUTPUT=$(ping -c 1 ${DNS} &> /dev/null && echo success || echo fail)
-
     echo ${OUTPUT}
 }
 
@@ -877,15 +884,41 @@ doCheckAvailableResourcesOnNodes() {
 
     doGetHostsVariables
 
-    for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+    local output=$(validateHostname ${PUPPET_MASTER_HOST_NAME})
+    if [ "${output}" != "success" ]; then
+        println $(printError "ERROR: The hostname '${PUPPET_MASTER_HOST_NAME}' isn't available or wrong.")
+        exit 1
+    fi
+    println "$(printf "%-43s" "${PUPPET_MASTER_HOST_NAME}" && printSuccess "[OK]")"
+
+    for HOST in ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
         # check if host available
-        local OUTPUT=$(validateHostname ${HOST})
-        if [ "${OUTPUT}" != "success" ]; then
+        local output=$(validateHostname ${HOST})
+        if [ "${output}" != "success" ]; then
             println $(printError "ERROR: The hostname '${HOST}' isn't available or wrong.")
             exit 1
         fi
 
-        local SSH_PREFIX="ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
+        local sshPrefix="ssh -o BatchMode=yes -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
+
+        # validate ssh access
+        ${sshPrefix} "exit"
+        if [[ ! $? == 0 ]]; then
+            println $(printError "ERROR: There is no ssh access to '${HOST}'")
+            println
+            println $(printWarning "NOTE: Put public part of ssh key (id_rsa.pub) onto '${HOST}' node")
+            println $(printWarning "NOTE: into ~/.ssh folder of '${USER}' user and restart installation")
+            exit 1
+        fi
+
+        # valid sudo rights
+        ${sshPrefix} "sudo -n true 2> /dev/null"
+        if [[ ! $? == 0 ]]; then
+            println $(printError "ERROR: User '${USER}' doesn't have sudo rights on '${HOST}'")
+            println
+            println $(printWarning "NOTE: Grant sudo privileges to '${USER}' user and restart installation")
+            exit 1
+        fi
 
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
             MIN_RAM_KB=1500000
@@ -901,29 +934,29 @@ doCheckAvailableResourcesOnNodes() {
         local osVersion=""
         local osInfo=""
 
-        case `${SSH_PREFIX} "uname" | sed 's/\r//'` in
+        case `${sshPrefix} "uname" | sed 's/\r//'` in
             Linux )
-                if [[ `${SSH_PREFIX} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                if [[ `${sshPrefix} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
                     osType="CentOS";
-                    osVersion=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
-                    osInfo=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
+                    osVersion=`${sshPrefix} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+                    osInfo=`${sshPrefix} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
 
                 # SuSE
-                elif [[ `${SSH_PREFIX} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                elif [[ `${sshPrefix} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
                     osInfo="SuSE"
 
                 # debian
-                elif [[ `${SSH_PREFIX} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osInfo=`${SSH_PREFIX} "cat /etc/issue.net" | sed 's/\r//'`
+                elif [[ `${sshPrefix} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osInfo=`${sshPrefix} "cat /etc/issue.net" | sed 's/\r//'`
 
                 # other linux OS
-                elif [[ `${SSH_PREFIX} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osInfo=`${SSH_PREFIX} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
+                elif [[ `${sshPrefix} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osInfo=`${sshPrefix} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
                 fi
                 ;;
 
             * )
-                osInfo=`${SSH_PREFIX} "uname" | sed 's/\r//'`;
+                osInfo=`${sshPrefix} "uname" | sed 's/\r//'`;
                 ;;
         esac
 
@@ -933,10 +966,10 @@ doCheckAvailableResourcesOnNodes() {
             globalOsIssueFound=true
         fi
 
-        local availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        local availableRAM=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
         local availableRAMIssue=false
 
-        local availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        local availableDiskSpace=`${sshPrefix} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
         local availableDiskSpaceIssue=false
 
         if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
@@ -964,7 +997,7 @@ doCheckAvailableResourcesOnNodes() {
 
                 if [[ ${availableRAMIssue} == true ]]; then
                     local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
-                    local availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+                    local availableRAMToDisplay=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
                     local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
 
                     println "> RAM             $minRAMToDisplay $availableRAMToDisplay $(printWarning "[WARNING]")"
