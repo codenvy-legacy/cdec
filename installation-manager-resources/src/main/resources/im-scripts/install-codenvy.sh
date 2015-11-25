@@ -64,6 +64,7 @@ INTERNET_CHECKER_PID=
 TIMER_PID=
 PRINTER_PID=
 LINE_UPDATER_PID=
+DOWNLOAD_PROGRESS_UPDATER_PID=
 
 STEP_LINE=
 PUPPET_LINE=
@@ -71,12 +72,14 @@ PROGRESS_LINE=
 TIMER_LINE=
 
 DEPENDENCIES_STATUS_OFFSET=85  # fit screen width = 100 cols
+PROGRESS_FACTOR=2
 
 cleanUp() {
     killTimer
     killPuppetInfoPrinter
     killInternetAccessChecker
     killFooterUpdater
+    killDownloadProgressUpdater
 }
 
 validateExitCode() {
@@ -86,6 +89,7 @@ validateExitCode() {
         pausePuppetInfoPrinter
         pauseInternetAccessChecker
         pauseFooterUpdater
+        pauseDownloadProgressUpdater
         println
         println $(printError "Unexpected error occurred. See install.log for more details")
         exit ${exitCode}
@@ -119,7 +123,7 @@ setRunOptions() {
         LAST_INSTALLATION_STEP=13
         ARTIFACT_DISPLAY="Codenvy"
         if [[ -z ${VERSION} ]]; then
-            VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT}?label=stable | sed 's/.*"version":"\([^"]*\)".*/\1/'`
+            VERSION=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}?label=stable" "version")
         fi
     else
         LAST_INSTALLATION_STEP=3
@@ -130,7 +134,7 @@ setRunOptions() {
                             "Install the Codenvy installation manager..."
                             "");
         if [[ -z ${VERSION} ]]; then
-            VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT} | sed 's/.*"version":"\([^"]*\)".*/\1/'`
+            VERSION=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}" "version")
         fi
     fi
 
@@ -142,6 +146,13 @@ setRunOptions() {
     fi
 }
 
+
+fetchProperty() {
+    local url=$1
+    local property=$2
+    local seq="s/.*\"${property}\":\"\([^\"]*\)\".*/\1/"
+    echo `curl -s ${url} | sed ${seq}`
+}
 
 # run specific function and don't break installation if connection lost
 doEvalWaitReconnection() {
@@ -215,9 +226,59 @@ doDownloadBinaries() {
             validateExitCode ${exitCode}
         fi
     done
+    doUpdateDownloadProgress 100
 
     executeIMCommand im-download --list-local >> install.log
     validateExitCode $?
+}
+
+runDownloadProgressUpdater() {
+    updateDownloadProgress &
+    DOWNLOAD_PROGRESS_UPDATER_PID=$!
+}
+
+killDownloadProgressUpdater() {
+    if [ -n "${DOWNLOAD_PROGRESS_UPDATER_PID}" ]; then
+        kill -KILL ${DOWNLOAD_PROGRESS_UPDATER_PID}
+    fi
+}
+
+continueDownloadProgressUpdater() {
+    if [ -n "${DOWNLOAD_PROGRESS_UPDATER_PID}" ]; then
+        kill -SIGCONT ${DOWNLOAD_PROGRESS_UPDATER_PID}
+    fi
+}
+
+pauseDownloadProgressUpdater() {
+    if [ -n "${DOWNLOAD_PROGRESS_UPDATER_PID}" ]; then
+        kill -SIGSTOP ${DOWNLOAD_PROGRESS_UPDATER_PID}
+    fi
+}
+
+updateDownloadProgress() {
+    local totalSize=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}/${VERSION}" "size")
+    local file=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}/${VERSION}" "file")
+
+    for ((;;)); do
+        local size=`du -b ~/codenvy-im-data/updates/${ARTIFACT}/${VERSION}/${file} | cut -f1`
+        local percent=$(( ${size}*100/${totalSize} ))
+
+        doUpdateDownloadProgress ${percent}
+        sleep 1
+    done
+}
+
+doUpdateDownloadProgress() {
+    local percent=$1
+    local bars=$(( ${LAST_INSTALLATION_STEP}*${PROGRESS_FACTOR} ))
+    local progress_field=
+    for ((i=1; i<=$(( ${bars}*${percent}/100 )); i++));  do
+       progress_field="${progress_field}="
+    done
+    progress_field=$(printf "[%-${bars}s]" ${progress_field})
+    local message="Downloading  ${progress_field} ${percent}%"
+
+    updateLine ${PUPPET_LINE} "${message}"
 }
 
 doInstallCodenvy() {
@@ -1087,16 +1148,15 @@ updateTimer() {
 updateProgress() {
     local current_step=$1
     local last_step=${LAST_INSTALLATION_STEP}
-    local factor=2
 
     local progress_number=$(( ${current_step}*100/${last_step} ))
 
     local progress_field=
-    for ((i=1; i<=${current_step}*${factor}; i++));  do
+    for ((i=1; i<=${current_step}*${PROGRESS_FACTOR}; i++));  do
        progress_field="${progress_field}="
     done
 
-    progress_field=$(printf "[%-$(( ${last_step}*${factor} ))s]" ${progress_field})
+    progress_field=$(printf "[%-$(( ${last_step}*${PROGRESS_FACTOR} ))s]" ${progress_field})
 
     local message="Full install ${progress_field} ${progress_number}%"
 
@@ -1280,7 +1340,6 @@ initTimer
 
 runFooterUpdater
 runTimer
-runPuppetInfoPrinter
 runInternetAccessChecker
 
 doConfigureSystem
@@ -1288,7 +1347,11 @@ doInstallJava
 doInstallImCli
 
 if [[ ${ARTIFACT} == "codenvy" ]]; then
+    runDownloadProgressUpdater
     doDownloadBinaries
+    pauseDownloadProgressUpdater
+
+    runPuppetInfoPrinter
     doInstallCodenvy
 fi
 
