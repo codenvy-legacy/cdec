@@ -313,13 +313,24 @@ doInstallCodenvy() {
 }
 
 downloadConfig() {
-    url="https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
+    local url="https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
 
     # check url to config on http error
     http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
     if [[ ! ${http_code} -eq 200 ]]; then    # if response code != "200 OK"
-        # print response from update server
-        println $(curl --silent ${url})
+        local updates=`curl --silent "https://codenvy.com/update/repository/updates/${ARTIFACT}"`
+        println $(printError "ERROR: The version '${VERSION}' is being installed not available")
+        println
+        if [[ -n ${VERSION} ]] && [[ ! ${updates} =~ .*${VERSION}.* ]]; then
+            println $(printWarning "NOTE: You've used '--version' flag to install specific Codenvy version")
+            println $(printWarning "NOTE: that isn't available in the repository. Choose version among:")
+            println $(printWarning "NOTE: ${updates}")
+            println $(printWarning "NOTE: and restart installation. You also can start installation without '--version' flag.")
+            println $(printWarning "NOTE: In this case the latest available version will be installed.")
+        else
+            println $(printWarning "NOTE: Please contact support@codenvy.com")
+        fi
+
         exit 1
     fi
 
@@ -360,6 +371,14 @@ preConfigureSystem() {
 
     installPackageIfNeed wget
     validateExitCode $?
+    
+    installPackageIfNeed lsof
+    validateExitCode $?
+
+    # back up file to prevent installation with wrong configuration
+    if [[ -f ${CONFIG} ]] && [[ ! `cat ${CONFIG}` =~ .*${VERSION}.* ]]; then
+        mv ${CONFIG} ${CONFIG}.back
+    fi
 
     if [[ ! -f ${CONFIG} ]] && [[ ${ARTIFACT} == "codenvy" ]]; then
         downloadConfig
@@ -564,43 +583,54 @@ pressYKeyToContinue() {
 }
 
 doCheckPortRemote() {
-    PROTOCOL=$1
-    PORT=$2
-    HOST=$3
-    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
+    local protocol=$1
+    local port=$2
+    local host=$33
+    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${host} "netstat -ano | egrep LISTEN | egrep ${protocol} | egrep ':${host}\s'")
     echo ${OUTPUT}
 }
 
 doCheckPortLocal() {
-    PROTOCOL=$1
-    PORT=$2
-    OUTPUT=$(netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ":${PORT}\s")
+    local protocol=$1
+    local port=$2
+    OUTPUT=$(netstat -ano | egrep LISTEN | egrep ${protocol} | egrep ":${port}\s")
     echo ${OUTPUT}
 }
 
 validatePortLocal() {
-    PROTOCOL=$1
-    PORT=$2
-    OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
-
-    if [ "${OUTPUT}" != "" ]; then
-        println $(printError "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
-        println $(printError "ERROR: TThe installation cannot proceed.")
-        exit 1
-    fi
+    local protocol=$1
+    local port=$2
+    local host="localhost"
+    doValidatePort doCheckPortLocal ${protocol} ${port} ${host}
 }
 
 validatePortRemote() {
-    PROTOCOL=$1
-    PORT=$2
-    HOST=$3
-    OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
+    local protocol=$1
+    local port=$2
+    local host=$3
+    doValidatePort doCheckPortRemote ${protocol} ${port} ${host}
+}
 
-    if [ "${OUTPUT}" != "" ]; then
-        println $(printError "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
+doValidatePort() {
+    local func=$1
+    local protocol=$2
+    local port=$3
+    local host=$4
+    local output=$(eval ${func} ${protocol} ${port} ${host})
+
+    if [ "${output}" != "" ]; then
+        println $(printError "ERROR: The port ${protocol}:${port} on '${host}' is busy.")
         println $(printError "ERROR: The installation cannot proceed.")
+        println
+        println $(printWarning "NOTE: Codenvy uses the port in question for internal needs. All required ports")
+        println $(printWarning "NOTE: are described here: http://docs.codenvy.com/onprem/installation-multi-node/#ports")
+        println $(printWarning "NOTE: The problem might occur when some services are required by Codenvy already")
+        println $(printWarning "NOTE: had been run before installation was started.")
+        println $(printWarning "NOTE: Run 'lsof -i ${protocol}:${port} | grep LISTEN' on '${host}' to identify")
+        println $(printWarning "NOTE: the running process. It is recommended to prepare bare system and restart installation.")
+        println $(printWarning "NOTE: The installer will download and configure all dependencies, software and services.")
         exit 1
-    fi
+    fi  
 }
 
 doGetHostsVariables() {
@@ -616,7 +646,7 @@ doGetHostsVariables() {
 }
 
 doCheckAvailablePorts_single() {
-    for PORT in ${PUPPET_MASTER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]} ${ANALYTICS_PORTS[@]}; do
+    for PORT in ${PUPPET_MASTER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]}; do
         PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
         PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
 
@@ -717,7 +747,7 @@ doCheckAvailableResourcesLocally() {
             # CentOS
             if [ -f /etc/redhat-release ] ; then
                 osType="CentOS"
-                osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+                osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/'`
                 osInfo=`cat /etc/redhat-release | sed 's/Linux release //'`
 
             # SuSE
@@ -740,7 +770,7 @@ doCheckAvailableResourcesLocally() {
     esac
 
     # check on OS CentOS 7
-    if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
+    if [[ ${osType} != "CentOS" ||  "7.1" > "${osVersion}" ]]; then
         osIssueFound=true
     fi
 
@@ -797,7 +827,9 @@ doCheckAvailableResourcesLocally() {
 
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
         if [[ ${osIssueFound} == true ]]; then
-            println $(printError "!!! The OS version or config do not match requirements.")
+            println $(printError "ERROR: The OS version doesn't match requirements.")
+            println
+            println $(printWarning "NOTE: You need a CentOS 7.1 node.")
             exit 1;
         fi
 
@@ -825,16 +857,12 @@ checkResourceAccess() {
     println
 
     if [[ ${resourceIssueFound} == true ]]; then
-        println $(printError "!!! Some repositories are not accessible. The installation will fail.")
-        println $(printError "!!! Consider setting up a proxy server.")
+        println $(printError "ERROR: Some repositories are not accessible.")
         println
-
-        if [[ ${SILENT} == true ]]; then
-            exit 1;
-        fi
-
-        pressYKeyToContinue "Proceed?"
-        println
+        println $(printWarning "NOTE: Consider setting up a proxy server. Probably it is temporary occurrence")
+        println $(printWarning "NOTE: and will be fixed soon automatically. Run 'wget --spider <url>' to check")
+        println $(printWarning "NOTE: if repository became accessible and restart installation after it.")
+        exit 1
     fi
 }
 
@@ -948,6 +976,10 @@ doCheckAvailableResourcesOnNodes() {
     local output=$(validateHostname ${PUPPET_MASTER_HOST_NAME})
     if [ "${output}" != "success" ]; then
         println $(printError "ERROR: The hostname '${PUPPET_MASTER_HOST_NAME}' isn't available or wrong.")
+        println
+        println $(printWarning "NOTE: This might happen when node is down or isn't accessible")
+        println $(printWarning "NOTE: by a pre-configured DNS name. Make sure you have appropriate entry")
+        println $(printWarning "NOTE: in '/etc/hosts' file")
         exit 1
     fi
     println "$(printf "%-43s" "${PUPPET_MASTER_HOST_NAME}" && printSuccess "[OK]")"
@@ -957,6 +989,10 @@ doCheckAvailableResourcesOnNodes() {
         local output=$(validateHostname ${HOST})
         if [ "${output}" != "success" ]; then
             println $(printError "ERROR: The hostname '${HOST}' isn't available or wrong.")
+            println
+            println $(printWarning "NOTE: This might happen when node is down or isn't accessible")
+            println $(printWarning "NOTE: by a pre-configured DNS name. Make sure you have appropriate entry")
+            println $(printWarning "NOTE: in '/etc/hosts' file")
             exit 1
         fi
 
@@ -999,7 +1035,7 @@ doCheckAvailableResourcesOnNodes() {
             Linux )
                 if [[ `${sshPrefix} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
                     osType="CentOS";
-                    osVersion=`${sshPrefix} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+                    osVersion=`${sshPrefix} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/'`
                     osInfo=`${sshPrefix} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
 
                 # SuSE
@@ -1022,7 +1058,7 @@ doCheckAvailableResourcesOnNodes() {
         esac
 
         # check on OS CentOS 7
-        if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
+        if [[ ${osType} != "CentOS" || "7.1" > "${osVersion}" ]]; then
             osIssueFound=true
             globalOsIssueFound=true
         fi
@@ -1082,13 +1118,15 @@ doCheckAvailableResourcesOnNodes() {
     println
 
     if [[ ${globalNodeIssueFound} == true ]]; then
-        println $(printWarning "!!! Some nodes do not match recommended.")
-        println
-
-        if [[ ${SILENT} == true && ${globalOsIssueFound} == true ]]; then
+        if [[ ${globalOsIssueFound} == true ]]; then
+            println $(printError "ERROR: The OS version doesn't match requirements.")
+            println
+            println $(printWarning "NOTE: You need a CentOS 7.1 node")
             exit 1;
         fi
 
+        println $(printWarning "!!! Some nodes do not match recommended.")
+        println
         if [[ ${SILENT} != true ]]; then
             pressYKeyToContinue "Proceed?"
             println
