@@ -400,6 +400,11 @@ installJava() {
 
 installIm() {
     IM_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
+    if [[ "${ARTIFACT}" == "installation-manager-cli" ]]; then
+        IM_URL=${IM_URL}"/"${VERSION}
+    fi
+    echo ${IM_URL} >> install.log
+
     IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
     if [[ ! $? == 0 ]]; then
         return 1
