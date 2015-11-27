@@ -21,9 +21,14 @@ import com.codenvy.im.testhelper.ldap.BaseLdapTest;
 import com.codenvy.im.testhelper.ldap.EmbeddedADS;
 import com.codenvy.im.utils.HttpTransport;
 import com.google.common.collect.ImmutableMap;
+import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -39,7 +44,9 @@ import static org.testng.Assert.assertEquals;
  * @author Anatoliy Bazko
  * @author Dmytro Nochevnov
  */
-public class LdapManagerTest extends BaseLdapTest {
+public class LdapManagerCodenvy4Test extends BaseLdapTest {
+
+    public static final String TEST_USER_LDAP_DN  = "dc=codenvy-enterprise,dc=com";
 
     @Mock
     private HttpTransport mockTransport;
@@ -51,18 +58,17 @@ public class LdapManagerTest extends BaseLdapTest {
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
+
+        prepareSingleNodeEnv(mockConfigManager, mockTransport);
+
         spyLdapManager = spy(new LdapManager(mockConfigManager, mockTransport));
+        doReturn(EmbeddedADS.ADS_SECURITY_PRINCIPAL).when(spyLdapManager).getRootPrincipal();
     }
 
     @Test
     public void shouldChangeAdminPassword() throws Exception {
-        prepareSingleNodeEnv(mockConfigManager, mockTransport);
-
-        doReturn(EmbeddedADS.ADS_SECURITY_PRINCIPAL).when(spyLdapManager).getRootPrincipal(any());
-
         byte[] curPwd = "curPwd".getBytes("UTF-8");
         byte[] newPwd = "newPwd".getBytes("UTF-8");
-        doNothing().when(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
 
         spyLdapManager.changeAdminPassword(curPwd, newPwd);
         // TODO [ndp] get admin password from ldap to verify it
@@ -81,15 +87,40 @@ public class LdapManagerTest extends BaseLdapTest {
 
     @Test
     public void shouldReturnRootPrincipal() throws Exception {
-        Config config = new Config(ImmutableMap.of(Config.ADMIN_LDAP_DN, EmbeddedADS.TEST_ADMIN_LDAP_DN));
-        assertEquals(spyLdapManager.getRootPrincipal(config), "cn=root,dc=codenvycorp,dc=com");
+        assertEquals(spyLdapManager.getRootPrincipal(), "uid=admin,ou=system");
     }
 
     @Test
     public void shouldReturnNumberOfUsers() throws Exception {
-        prepareSingleNodeEnv(mockConfigManager, mockTransport);
-
-        assertEquals(spyLdapManager.getNumberOfUsers(), 2);
+        assertEquals(spyLdapManager.getNumberOfUsers(), 3);
     }
 
+    protected void importLdapData(EmbeddedADS ads) throws Exception {
+        // Import codenvy 4 ldap user db
+        JdbmPartition codenvyUserPartition = ads.addPartition("codenvy-user", TEST_USER_LDAP_DN);
+        // use command "sudo slapcat -b 'dc=codenvy-enterprise,dc=com'" to obtain it
+        ads.importEntriesFromLdif(codenvyUserPartition, Paths.get("target/test-classes/ldap/codenvy4-user-db.ldif"));
+    }
+
+    protected Map<String, String> getLdapSpecificProperties() {
+        return new HashMap<String, String>() {{
+            put(Config.VERSION, "4.0.0-M5-SNAPSHOT");
+            put(Config.LDAP_PROTOCOL, EmbeddedADS.ADS_PROTOCOL);
+            put(Config.LDAP_HOST, EmbeddedADS.ADS_HOST);
+            put(Config.LDAP_PORT, EmbeddedADS.ADS_PORT);
+
+            put(Config.JAVA_NAMING_SECURITY_AUTHENTICATION, EmbeddedADS.ADS_SECURITY_AUTHENTICATION);
+            put(Config.JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.ADS_SECURITY_PRINCIPAL);
+
+            put(Config.ADMIN_LDAP_USER_NAME, "admin");
+            put(Config.USER_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
+            put(Config.ADMIN_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
+
+            put(Config.USER_LDAP_USERS_OU, "users");
+            put(Config.USER_LDAP_USER_CONTAINER_DN, "ou=$user_ldap_users_ou,$user_ldap_dn");
+            put(Config.USER_LDAP_OBJECT_CLASSES, "inetOrgPerson");
+
+            put(Config.USER_LDAP_DN, TEST_USER_LDAP_DN);
+        }};
+    }
 }

@@ -63,9 +63,6 @@ import java.util.Set;
  * @author Dmytro Nochevnov
  */
 public class EmbeddedADS {
-    public static final String TEST_USER_LDAP_DN  = "dc=codenvy-enterprise,dc=com";
-    public static final String TEST_ADMIN_LDAP_DN = "dc=codenvycorp,dc=com";
-
     public static final String ADS_PROTOCOL                = "ldap";
     public static final String ADS_HOST                    = "localhost";
     public static final String ADS_PORT                    = "10389";

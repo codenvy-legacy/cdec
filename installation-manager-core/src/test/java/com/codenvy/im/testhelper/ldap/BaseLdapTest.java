@@ -35,9 +35,9 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Alexander Reshetnyak
  */
-public class BaseLdapTest extends BaseTest {
+abstract public class BaseLdapTest extends BaseTest {
 
-    public EmbeddedADS ads;
+    private EmbeddedADS ads;
 
     @BeforeClass
     public void initializationDirectoryService() throws Exception {
@@ -46,20 +46,13 @@ public class BaseLdapTest extends BaseTest {
 
         // Create the server
         ads = new EmbeddedADS(workDir);
-
-        // Import codenvy 3 ldap user db
-        JdbmPartition codenvyUserPartition = ads.addPartition("codenvy-user", EmbeddedADS.TEST_USER_LDAP_DN);
-        // use command "sudo slapcat -b 'dc=codenvy-enterprise,dc=com'" to obtain it
-        ads.importEntriesFromLdif(codenvyUserPartition, Paths.get("target/test-classes/ldap/codenvy3-user-db.ldif"));
-
-        // Import codenvy 3 ldap admin db
-        // use command "sudo slapcat -b 'dc=codenvycorp,dc=com'" to obtain it
-        JdbmPartition codenvyAdminPartition = ads.addPartition("codenvy-admin", EmbeddedADS.TEST_ADMIN_LDAP_DN);
-        ads.importEntriesFromLdif(codenvyAdminPartition, Paths.get("target/test-classes/ldap/codenvy3-admin-db.ldif"));
+        importLdapData(ads);
 
         // optionally we can start a server too
         ads.startServer();
     }
+
+    abstract protected void importLdapData(EmbeddedADS ads) throws Exception;
 
     protected Map<String, String> getTestSingleNodeProperties() {
         Map<String, String> properties = new HashMap<>(super.getTestSingleNodeProperties());
@@ -68,26 +61,5 @@ public class BaseLdapTest extends BaseTest {
         return properties;
     }
 
-    private Map<String, String> getLdapSpecificProperties() {
-        return new HashMap<String, String>() {{
-            put(Config.LDAP_PROTOCOL, EmbeddedADS.ADS_PROTOCOL);
-            put(Config.LDAP_HOST, EmbeddedADS.ADS_HOST);
-            put(Config.LDAP_PORT, EmbeddedADS.ADS_PORT);
-
-            put(Config.JAVA_NAMING_SECURITY_AUTHENTICATION, EmbeddedADS.ADS_SECURITY_AUTHENTICATION);
-            put(Config.JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.ADS_SECURITY_PRINCIPAL);
-
-            put(Config.ADMIN_LDAP_USER_NAME, "admin");
-            put(Config.USER_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
-            put(Config.ADMIN_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
-
-            put(Config.USER_LDAP_USER_CONTAINER_DN, "ou=People,$user_ldap_dn");
-            put(Config.USER_LDAP_OBJECT_CLASSES, "inetOrgPerson");
-
-            put(Config.USER_LDAP_DN, EmbeddedADS.TEST_USER_LDAP_DN);
-            put(Config.ADMIN_LDAP_DN, EmbeddedADS.TEST_ADMIN_LDAP_DN);
-            put(Config.SYSTEM_LDAP_USER_BASE, "ou=users,$admin_ldap_dn");
-            put(Config.SYSTEM_LDAP_JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.ADS_SECURITY_PRINCIPAL);
-        }};
-    }
+    abstract protected Map<String, String> getLdapSpecificProperties();
 }

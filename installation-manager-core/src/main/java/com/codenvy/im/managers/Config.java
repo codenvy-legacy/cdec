@@ -43,8 +43,7 @@ public class Config {
     public static final String MULTI_SERVER_BASE_PROPERTIES  = "manifests/nodes/multi_server/base_configurations.pp";
     public static final String MULTI_SERVER_NODES_PROPERTIES = "manifests/nodes/multi_server/nodes.pp";
 
-    public static final String  ENCLOSED_PROPERTY_NAME         = "\\$\\w+";
-    public static final Pattern ENCLOSED_PROPERTY_NAME_PATTERN =  Pattern.compile(ENCLOSED_PROPERTY_NAME);
+    public static final Pattern ENCLOSED_PROPERTY_NAME_PATTERN =  Pattern.compile("\\$\\w+");
 
     public static final String VERSION = "version";
 
@@ -65,7 +64,6 @@ public class Config {
 
     /* ldap properties */
     public static final String SYSTEM_LDAP_USER_BASE                      = "system_ldap_user_base";
-    public static final String SYSTEM_LDAP_JAVA_NAMING_SECURITY_PRINCIPAL = "system_ldap_java_naming_security_principal";
 
     public static final String ADMIN_LDAP_DN        = "admin_ldap_dn";
     public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
@@ -75,6 +73,7 @@ public class Config {
     public static final String USER_LDAP_OBJECT_CLASSES    = "user_ldap_object_classes";
     public static final String USER_LDAP_DN                = "user_ldap_dn";
     public static final String USER_LDAP_PASSWORD          = "user_ldap_password";
+    public static final String USER_LDAP_USERS_OU          = "user_ldap_users_ou";
 
     public static final String LDAP_HOST     = "ldap_host";
     public static final String LDAP_PORT     = "ldap_port";
@@ -119,7 +118,7 @@ public class Config {
      * Algorithm doesn't take into account:
      * - qualified variable names,
      * - names like ${foo},
-     * - second, third, ... enclosed properties in the same value.
+     * - second, third, ... enclosed properties in the same value.  // TODO [ndp] substitute several variables in the same value
      *
      * Algorithm doesn't substitute cyclic property links.
      */
@@ -138,9 +137,9 @@ public class Config {
             value = properties.get(property);
         }
 
-        if (value != null && value.contains("$")) {
+        if (value != null) {
             Matcher m = ENCLOSED_PROPERTY_NAME_PATTERN.matcher(value);
-            if (m.find()) {
+            while (m.find()) {
                 String enclosedPropertyName = m.group();
                 String enclosedPropertyValue = getValue(enclosedPropertyName.replace("$", ""), usedProperties);
 

@@ -18,7 +18,11 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.api.dao.authentication.SSHAPasswordEncryptor;
+import com.codenvy.im.managers.helper.LdapManagerHelper;
+import com.codenvy.im.managers.helper.LdapManagerHelperCodenvy3Impl;
+import com.codenvy.im.managers.helper.LdapManagerHelperCodenvy4Impl;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
@@ -42,19 +46,30 @@ import static java.lang.String.format;
 /**
  * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
- * TODO [ndp] Codenvy OnPrem version 4.0 changes: https://github.com/codenvy/deployment/commit/462536daf6e969d169a381eb980fa344782692d1
  */
 @Singleton
 public class LdapManager {
 
-    public static final String REALM = "sysldap";
+    private final String REALM;
     private final ConfigManager configManager;
     private final HttpTransport httpTransport;
+
+    private final LdapManagerHelper helper;
 
     @Inject
     public LdapManager(ConfigManager configManager, HttpTransport httpTransport) throws IOException {
         this.configManager = configManager;
         this.httpTransport = httpTransport;
+
+        Config config = configManager.loadInstalledCodenvyConfig();
+        Version codenvyVersion = Version.valueOf(config.getValue(Config.VERSION));
+        if (codenvyVersion.compareToMajor(4) < 0) {
+            helper = new LdapManagerHelperCodenvy3Impl(config);
+            REALM = "sysldap";
+        } else {
+            helper = new LdapManagerHelperCodenvy4Impl(config);
+            REALM = null;
+        }
     }
 
     /**
@@ -71,8 +86,7 @@ public class LdapManager {
         validateCurrentPassword(currentPassword, config);
 
         try {
-            String ldapAdminDbRootPrincipal = getRootPrincipal(config);
-            InitialDirContext ldapContext = connect(config, ldapAdminDbRootPrincipal, config.getValue(Config.ADMIN_LDAP_PASSWORD));
+            InitialDirContext ldapContext = connect(config, getRootPrincipal(), config.getValue(Config.ADMIN_LDAP_PASSWORD));
 
             try {
                 SSHAPasswordEncryptor sshaPasswordEncryptor = new SSHAPasswordEncryptor();
@@ -82,10 +96,7 @@ public class LdapManager {
                     new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("userPassword", encryptedPwd))
                 };
 
-                ldapContext.modifyAttributes(format("cn=%s,%s",
-                                                    config.getValue(Config.ADMIN_LDAP_USER_NAME),
-                                                    config.getValue(Config.SYSTEM_LDAP_USER_BASE)),
-                                             mods);
+                ldapContext.modifyAttributes(helper.getNameOfObjectToChangePassword(), mods);
             } finally {
                 ldapContext.close();
             }
@@ -136,7 +147,7 @@ public class LdapManager {
         Credentials credentials = new DtoServerImpls.CredentialsImpl();
         credentials.setPassword(new String(currentPassword, "UTF-8"));
         credentials.setUsername(config.getValue(Config.ADMIN_LDAP_USER_NAME));
-        credentials.setRealm(REALM);
+        credentials.setRealm(REALM);   // TODO [ndp] don't set realm in Codenvy 4.0
 
         String requestUrl = combinePaths(configManager.getApiEndpoint(), "/auth/login");
         try {
@@ -160,7 +171,7 @@ public class LdapManager {
     }
 
     /** only 'cn=root' has rights to change admin password in default Codenvy ldap */
-    protected String getRootPrincipal(Config config) {
-        return format("cn=root,%s", config.getValue(Config.ADMIN_LDAP_DN));
+    protected String getRootPrincipal() {
+        return helper.getRootPrincipal();
     }
 }

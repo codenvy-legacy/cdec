@@ -96,19 +96,19 @@ public class TestConfig {
     public Object[][] getEnclosedValue() {
         Map<String, String> properties = ImmutableMap.of(
             "prop_1", "value_1.1,$prop_2,value_1.2",
-            "prop_2", "value_2,$prop_3",
-            "prop_3", "$" + Config.PUPPET_AGENT_VERSION  // Config.PUPPET_AGENT_VERSION depends on version
+            "prop_2", "$prop_3,$prop_4",                  // check on several variables enclosed into one value
+            "prop_3", "$" + Config.PUPPET_AGENT_VERSION,  // Config.PUPPET_AGENT_VERSION depends on version
+            "prop_4", "value_4"
         );
 
         Config config = new Config(properties);
 
         return new Object[][]{
-            {"prop_1", null, config, String.format("value_1.1,value_2,$%s,value_1.2", Config.PUPPET_AGENT_VERSION)},  // enclosed value stayed as it because of osVersion = null
-            {"prop_1", "6", config, "value_1.1,value_2,puppet-3.4.3-1.el6.noarch,value_1.2"},
-            {"prop_1", "7", config, "value_1.1,value_2,puppet-3.5.1-1.el7.noarch,value_1.2"},
-            {"prop_2", "6", config, "value_2,puppet-3.4.3-1.el6.noarch"},
-            {"prop_2", "7", config, "value_2,puppet-3.5.1-1.el7.noarch"},
-            {"prop_3", "6", config, "puppet-3.4.3-1.el6.noarch"},
+            {"prop_1", null, config, String.format("value_1.1,$%s,value_4,value_1.2", Config.PUPPET_AGENT_VERSION)},  // enclosed variable remained as it because of osVersion = null
+            {"prop_1", "6", config, "value_1.1,puppet-3.4.3-1.el6.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_1", "7", config, "value_1.1,puppet-3.5.1-1.el7.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_2", "6", config, "puppet-3.4.3-1.el6.noarch,value_4"},                     // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_2", "7", config, "puppet-3.5.1-1.el7.noarch,value_4"}                      // Config.PUPPET_AGENT_VERSION depends on version
             };
     }
 
