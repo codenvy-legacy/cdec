@@ -75,12 +75,12 @@ DEPENDENCIES_STATUS_OFFSET=85  # fit screen width = 100 cols
 PROGRESS_FACTOR=2
 
 cleanUp() {
+    setterm -cursor on
     killTimer
     killPuppetInfoPrinter
     killInternetAccessChecker
     killFooterUpdater
     killDownloadProgressUpdater
-    setterm -cursor on
 }
 
 validateExitCode() {
