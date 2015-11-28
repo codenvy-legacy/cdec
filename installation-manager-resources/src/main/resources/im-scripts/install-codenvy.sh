@@ -80,6 +80,7 @@ cleanUp() {
     killInternetAccessChecker
     killFooterUpdater
     killDownloadProgressUpdater
+    setterm -cursor on
 }
 
 validateExitCode() {
@@ -1377,6 +1378,8 @@ printPostInstallInfo_installation-manager-cli() {
 
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
+
+setterm -cursor off
 
 initFooterPosition
 initTimer
