@@ -261,7 +261,13 @@ updateDownloadProgress() {
     local file=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}/${VERSION}" "file")
 
     for ((;;)); do
-        local size=`du -b ~/codenvy-im-data/updates/${ARTIFACT}/${VERSION}/${file} | cut -f1`
+        local size
+        local localFile="${HOME}/codenvy-im-data/updates/${ARTIFACT}/${VERSION}/${file}"
+        if [[ -f ${localFile} ]]; then
+            size=`du -b ${localFile} | cut -f1`
+        else
+            size=0
+        fi
         local percent=$(( ${size}*100/${totalSize} ))
 
         doUpdateDownloadProgress ${percent}
