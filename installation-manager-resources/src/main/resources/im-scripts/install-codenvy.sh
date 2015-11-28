@@ -625,10 +625,9 @@ doValidatePort() {
     local port=$3
     local host=$4
     local output=$(eval ${func} ${protocol} ${port} ${host})
-    
-    installPackageIfNeed lsof
 
     if [ "${output}" != "" ]; then
+        installPackageIfNeed lsof
         println $(printError "ERROR: The port ${protocol}:${port} on '${host}' is busy.")
         println $(printError "ERROR: The installation cannot proceed.")
         println
