@@ -726,7 +726,7 @@ printPreInstallInfo_single() {
     fi
 
     if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        if [[ "${VERSION}" =~ 4.* ]]; then
+        if [[ "${VERSION}" =~ ^(4).* ]]; then
             insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         else
             insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -920,7 +920,7 @@ printPreInstallInfo_multi() {
     fi
 
     if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        if [[ "${VERSION}" =~ 4.* ]]; then
+        if [[ "${VERSION}" =~ ^(4).* ]]; then
             insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         else
             insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -1357,7 +1357,7 @@ printPostInstallInfo_codenvy() {
     fi
 
     if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
-        if [[ "${VERSION}" =~ 4.* ]]; then
+        if [[ "${VERSION}" =~ ^(4).* ]]; then
             SYSTEM_ADMIN_PASSWORD=`grep admin_ldap_password= ${CONFIG} | cut -d '=' -f2`
         else
             SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
