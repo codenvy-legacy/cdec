@@ -326,16 +326,15 @@ downloadConfig() {
     http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
     if [[ ! ${http_code} -eq 200 ]]; then    # if response code != "200 OK"
         local updates=`curl --silent "https://codenvy.com/update/repository/updates/${ARTIFACT}"`
-        println $(printError "ERROR: The version '${VERSION}' is being installed not available")
+        println $(printError "ERROR: Version '${VERSION}' is not available")
         println
         if [[ -n ${VERSION} ]] && [[ ! ${updates} =~ .*${VERSION}.* ]]; then
-            println $(printWarning "NOTE: You've used '--version' flag to install specific Codenvy version")
-            println $(printWarning "NOTE: that isn't available in the repository. Choose version among:")
+            println $(printWarning "NOTE: You've used '--version' flag to install a specific version.")
+            println $(printWarning "NOTE: We could not find this version in the repository. Versions found:")
             println $(printWarning "NOTE: ${updates}")
-            println $(printWarning "NOTE: and restart installation. You also can start installation without '--version' flag.")
-            println $(printWarning "NOTE: In this case the latest available version will be installed.")
+            println $(printWarning "NOTE: Installing without '--version' will use latest version.")
         else
-            println $(printWarning "NOTE: Please contact support@codenvy.com")
+            println $(printWarning "NOTE: codenvy.properties not found or downloadable.")
         fi
 
         exit 1
@@ -633,13 +632,10 @@ doValidatePort() {
         println $(printError "ERROR: The port ${protocol}:${port} on '${host}' is busy.")
         println $(printError "ERROR: The installation cannot proceed.")
         println
-        println $(printWarning "NOTE: Codenvy uses the port in question for internal needs. All required ports")
-        println $(printWarning "NOTE: are described here: http://docs.codenvy.com/onprem/installation-multi-node/#ports")
-        println $(printWarning "NOTE: The problem might occur when some services are required by Codenvy already")
-        println $(printWarning "NOTE: had been run before installation was started.")
-        println $(printWarning "NOTE: Run 'lsof -i ${protocol}:${port} | grep LISTEN' on '${host}' to identify")
-        println $(printWarning "NOTE: the running process. It is recommended to prepare bare system and restart installation.")
-        println $(printWarning "NOTE: The installer will download and configure all dependencies, software and services.")
+        println $(printWarning "NOTE: Codenvy uses this port internally. All required ports are listed in docs.")
+        println $(printWarning "NOTE: The problem might occur if some services required by Codenvy are")
+        println $(printWarning "NOTE: already running. Run 'sudo lsof -i ${protocol}:${port} | grep LISTEN' on '${host}' to identify")
+        println $(printWarning "NOTE: the running process. We recommend restarting installation on a bare system.")
         exit 1
     fi  
 }
@@ -868,11 +864,12 @@ checkResourceAccess() {
     println
 
     if [[ ${resourceIssueFound} == true ]]; then
-        println $(printError "ERROR: Some repositories are not accessible.")
+        println $(printError "ERROR: Some external repositories are not accessible.")
         println
-        println $(printWarning "NOTE: Consider setting up a proxy server. Probably it is temporary occurrence")
-        println $(printWarning "NOTE: and will be fixed soon automatically. Run 'wget --spider <url>' to check")
-        println $(printWarning "NOTE: if repository became accessible and restart installation after it.")
+        println $(printWarning "NOTE: This is probably a temporary issue.")
+        println $(printWarning "NOTE: Run 'wget --spider <url>' to check for access.")
+        println $(printWarning "NOTE: Restart installation once access is restored.")
+        println $(printWarning "NOTE: You may consider setting up a proxy server if access is blocked.")
         exit 1
     fi
 }
@@ -986,11 +983,11 @@ doCheckAvailableResourcesOnNodes() {
 
     local output=$(validateHostname ${PUPPET_MASTER_HOST_NAME})
     if [ "${output}" != "success" ]; then
-        println $(printError "ERROR: The hostname '${PUPPET_MASTER_HOST_NAME}' isn't available or wrong.")
+        println $(printError "ERROR: The hostname '${PUPPET_MASTER_HOST_NAME}' is not available.")
         println
-        println $(printWarning "NOTE: This might happen when node is down or isn't accessible")
-        println $(printWarning "NOTE: by a pre-configured DNS name. Make sure you have appropriate entry")
-        println $(printWarning "NOTE: in '/etc/hosts' file")
+        println $(printWarning "NOTE: This might happen when the node is down or not accessible")
+        println $(printWarning "NOTE: by a pre-configured DNS host name. Make sure you have")
+        println $(printWarning "NOTE: an appropriate entry in '/etc/hosts' file.")
         exit 1
     fi
     println "$(printf "%-43s" "${PUPPET_MASTER_HOST_NAME}" && printSuccess "[OK]")"
@@ -999,11 +996,11 @@ doCheckAvailableResourcesOnNodes() {
         # check if host available
         local output=$(validateHostname ${HOST})
         if [ "${output}" != "success" ]; then
-            println $(printError "ERROR: The hostname '${HOST}' isn't available or wrong.")
+            println $(printError "ERROR: The hostname '${HOST}' is not available.")
             println
-            println $(printWarning "NOTE: This might happen when node is down or isn't accessible")
-            println $(printWarning "NOTE: by a pre-configured DNS name. Make sure you have appropriate entry")
-            println $(printWarning "NOTE: in '/etc/hosts' file")
+            println $(printWarning "NOTE: This might happen when the node is down or not accessible")
+            println $(printWarning "NOTE: by a pre-configured DNS host name. Make sure you have")
+            println $(printWarning "NOTE: an appropriate entry in '/etc/hosts' file.")
             exit 1
         fi
 
