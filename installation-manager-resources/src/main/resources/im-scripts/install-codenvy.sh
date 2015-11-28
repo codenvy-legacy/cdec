@@ -379,9 +379,6 @@ preConfigureSystem() {
     installPackageIfNeed wget
     validateExitCode $?
     
-    installPackageIfNeed lsof
-    validateExitCode $?
-
     # back up file to prevent installation with wrong configuration
     if [[ -f ${CONFIG} ]] && [[ ! `cat ${CONFIG}` =~ .*${VERSION}.* ]]; then
         mv ${CONFIG} ${CONFIG}.back
@@ -629,6 +626,8 @@ doValidatePort() {
     local port=$3
     local host=$4
     local output=$(eval ${func} ${protocol} ${port} ${host})
+    
+    installPackageIfNeed lsof
 
     if [ "${output}" != "" ]; then
         println $(printError "ERROR: The port ${protocol}:${port} on '${host}' is busy.")
