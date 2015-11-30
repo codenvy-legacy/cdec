@@ -166,10 +166,11 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency><!-- TODO [ndp] move to the depmgt -->
+        <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
-            <version>2.0.0-M20</version>
+            <version>2.0.0-M20</version>  <!-- TODO [ndp] remove after org.apache.apacheds.version = 2.0.0-M20 in codenvy-depmgt.
+             There is https://github.com/codenvy/hosted-infrastructure/codenvy-hosted-platform-api-impl/ test build error after upgrading version from 1.5.7 -->
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -211,7 +212,7 @@
             </activation>
             <build>
                 <plugins>
-                    <!-- TODO [ndp] remove next plugin skip after adding apacheds-all into the che-depmgt -->
+                    <!-- TODO [ndp] remove after org.apache.directory.server <version>2.0.0-M20</version> be removed -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
@@ -274,7 +275,7 @@
             <id>stg</id>
             <build>
                 <plugins>
-                    <!-- TODO [ndp] remove next plugin skip after adding apacheds-all into the che-depmgt -->
+                    <!-- TODO [ndp] remove after org.apache.directory.server <version>2.0.0-M20</version> be removed -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
@@ -350,7 +351,7 @@
             <id>ngt</id>
             <build>
                 <plugins>
-                    <!-- TODO [ndp] remove next plugin skip after adding apacheds-all into the che-depmgt -->
+                    <!-- TODO [ndp] remove after org.apache.directory.server <version>2.0.0-M20</version> be removed -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>

@@ -260,11 +260,9 @@ public class EmbeddedADS {
     }
     
      /**
-     * stop the LdapServer
-     *
-     * @throws Exception
+     * Stop and cleanup test Ldap Server
      */
-    public void stopAndCleanupServer() throws Exception {
+    public void stopAndCleanupServer() {
         server.stop();
         FileUtils.deleteQuietly(service.getInstanceLayout().getPartitionsDirectory());
     }

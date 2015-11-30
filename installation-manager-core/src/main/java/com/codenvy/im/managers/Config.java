@@ -63,7 +63,7 @@ public class Config {
     public static final String NODE_SSH_USER_PRIVATE_KEY = "node_ssh_user_private_key";
 
     /* ldap properties */
-    public static final String SYSTEM_LDAP_USER_BASE                      = "system_ldap_user_base";
+    public static final String SYSTEM_LDAP_USER_BASE     = "system_ldap_user_base";
 
     public static final String ADMIN_LDAP_DN        = "admin_ldap_dn";
     public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
@@ -98,7 +98,7 @@ public class Config {
         }});
     }};
 
-    public static final Set<String> PROPERTIES_DEPEND_ON_VERSION       = PROPERTIES_BY_VERSION.keySet();
+    public static final Set<String> PROPERTIES_DEPEND_ON_VERSION = PROPERTIES_BY_VERSION.keySet();
 
     private Map<String, String> properties;
 
@@ -107,22 +107,19 @@ public class Config {
     }
 
     /**
-     * @return the property value.
+     * Recursively substitute properties which are enclosed into the requesting value.
+     * For example, value "ou=$user_ldap_users_ou,$user_ldap_dn" has enclosed properties '$user_ldap_users_ou', '$user_ldap_dn'.
+     * Algorithm doesn't take into account:
+     * - qualified variable names,
+     * - names like ${foo}.
+     *
+     * Algorithm doesn't substitute cyclic property links.
      */
     @Nullable
     public String getValue(String property) {
         return getValue(property, new ArrayList<>());
     }
 
-    /**
-     * Recursively substitute properties which are enclosed into the requesting value. For example, value "ou=People,$user_ldap_dn" has enclosed property '$user_ldap_dn'.
-     * Algorithm doesn't take into account:
-     * - qualified variable names,
-     * - names like ${foo},
-     * - second, third, ... enclosed properties in the same value.  // TODO [ndp] substitute several variables in the same value
-     *
-     * Algorithm doesn't substitute cyclic property links.
-     */
     @Nullable
     private String getValue(String property, List<String> usedProperties) {
         if (usedProperties.contains(property)) {
@@ -178,7 +175,6 @@ public class Config {
 
         return result;
     }
-
 
     /** Getter for #properties. Unmodifiable map will be returned */
     public Map<String, String> getProperties() {

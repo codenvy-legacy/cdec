@@ -72,7 +72,6 @@ public class LdapManagerCodenvy3Test extends BaseLdapTest {
         doNothing().when(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
 
         spyLdapManager.changeAdminPassword(curPwd, newPwd);
-        // TODO [ndp] get admin password from ldap to verify it
 
         verify(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
     }

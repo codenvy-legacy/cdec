@@ -36,6 +36,7 @@ import static org.testng.Assert.assertEquals;
 
 /**
  * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
 abstract public class BaseLdapTest extends BaseTest {
 

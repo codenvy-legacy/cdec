@@ -71,7 +71,6 @@ public class LdapManagerCodenvy4Test extends BaseLdapTest {
         byte[] newPwd = "newPwd".getBytes("UTF-8");
 
         spyLdapManager.changeAdminPassword(curPwd, newPwd);
-        // TODO [ndp] get admin password from ldap to verify it
 
         verify(spyLdapManager).validateCurrentPassword(eq(curPwd), any(Config.class));
     }

@@ -42,6 +42,7 @@ import static com.codenvy.im.utils.Commons.combinePaths;
  * <li>to Codenvy with number of users.</li>
  *
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 @Singleton
 public class ReportSender {
@@ -64,7 +65,7 @@ public class ReportSender {
         this.configManager = configManager;
     }
 
-    @ScheduleCron(cron = "0 0 1 ? * SUN *")
+//    @ScheduleCron(cron = "0 0 1 ? * SUN *")  // TODO [ndp] CDEC-376
     // @ScheduleCron(cron = "0 0/1 * 1/1 * ? *")  // send every 1 minute
     public void sendWeeklyReports() throws IOException, MessagingException, JsonParseException {
         sendNumberOfUsers();
