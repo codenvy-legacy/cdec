@@ -147,8 +147,11 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                         + "if [ $? -ne 0 ]; "
                         + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
                         + "; fi"));
+                    // install puppet master
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
-
+                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants ]; then" +
+                                      " sudo mkdir /etc/systemd/system/multi-user.target.wants;" +
+                                      "fi"));
                     add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
                                       " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
                                       ".wants/puppetmaster.service'" +
@@ -158,12 +161,6 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
 
                     // install puppet agent
-                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
-                                      " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user" +
-                                      ".target" +
-                                      ".wants/puppetmaster.service'" +
-                                      "; fi"));
-                    add(createCommand("sudo systemctl enable puppetmaster"));
                     add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
                                       " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
                                       ".wants/puppet.service'" +
@@ -178,9 +175,11 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                         + "; fi", nodeConfigs));
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));  // -q here is needed to avoid hung up of ssh
 
+                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants ]; then" +
+                                      " sudo mkdir /etc/systemd/system/multi-user.target.wants;" +
+                                      "fi", nodeConfigs));
                     add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                      ".wants/puppet.service'" +
+                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target.wants/puppet.service'" +
                                       "; fi", nodeConfigs));
                     add(createCommand("sudo systemctl enable puppet", nodeConfigs));
                 }}, "Install puppet binaries");

@@ -122,9 +122,11 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                         add(createCommand("sudo chkconfig --add puppet"));
                         add(createCommand("sudo chkconfig puppet on"));
                     } else {
+                        add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants ]; then" +
+                                          " sudo mkdir /etc/systemd/system/multi-user.target.wants;" +
+                                          "fi"));
                         add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
-                                          " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user" +
-                                          ".target" +
+                                          " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
                                           ".wants/puppetmaster.service'" +
                                           "; fi"));
                         add(createCommand("sudo systemctl enable puppetmaster"));
