@@ -147,7 +147,7 @@ public class LdapManager {
         Credentials credentials = new DtoServerImpls.CredentialsImpl();
         credentials.setPassword(new String(currentPassword, "UTF-8"));
         credentials.setUsername(config.getValue(Config.ADMIN_LDAP_USER_NAME));
-        credentials.setRealm(REALM);   // TODO [ndp] don't set realm in Codenvy 4.0
+        credentials.setRealm(REALM);
 
         String requestUrl = combinePaths(configManager.getApiEndpoint(), "/auth/login");
         try {

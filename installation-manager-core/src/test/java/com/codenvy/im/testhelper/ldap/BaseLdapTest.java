@@ -19,9 +19,11 @@ package com.codenvy.im.testhelper.ldap;
 
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.managers.Config;
+
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.name.Dn;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -50,6 +52,11 @@ abstract public class BaseLdapTest extends BaseTest {
 
         // optionally we can start a server too
         ads.startServer();
+    }
+
+    @AfterClass
+    public void clearLdap() {
+        ads.stopAndCleanupServer();
     }
 
     abstract protected void importLdapData(EmbeddedADS ads) throws Exception;

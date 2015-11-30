@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.testhelper.ldap;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.entry.Entry;
 import org.apache.directory.api.ldap.model.exception.LdapException;
@@ -256,5 +257,15 @@ public class EmbeddedADS {
         server.setSaslPrincipal(ADS_SECURITY_PRINCIPAL);
 
         server.start();
+    }
+    
+     /**
+     * stop the LdapServer
+     *
+     * @throws Exception
+     */
+    public void stopAndCleanupServer() throws Exception {
+        server.stop();
+        FileUtils.deleteQuietly(service.getInstanceLayout().getPartitionsDirectory());
     }
 }

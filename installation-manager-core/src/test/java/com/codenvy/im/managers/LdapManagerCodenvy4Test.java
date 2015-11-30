@@ -112,7 +112,7 @@ public class LdapManagerCodenvy4Test extends BaseLdapTest {
             put(Config.JAVA_NAMING_SECURITY_AUTHENTICATION, EmbeddedADS.ADS_SECURITY_AUTHENTICATION);
             put(Config.JAVA_NAMING_SECURITY_PRINCIPAL, EmbeddedADS.ADS_SECURITY_PRINCIPAL);
 
-            put(Config.ADMIN_LDAP_USER_NAME, "admin");
+            put(Config.ADMIN_LDAP_USER_NAME, "admin@codenvy.onprem");
             put(Config.USER_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
             put(Config.ADMIN_LDAP_PASSWORD, EmbeddedADS.ADS_SECURITY_CREDENTIALS);
 
@@ -121,6 +121,8 @@ public class LdapManagerCodenvy4Test extends BaseLdapTest {
             put(Config.USER_LDAP_OBJECT_CLASSES, "inetOrgPerson");
 
             put(Config.USER_LDAP_DN, TEST_USER_LDAP_DN);
+            
+            put(Config.USER_LDAP_USER_DN, "uid");
         }};
     }
 }

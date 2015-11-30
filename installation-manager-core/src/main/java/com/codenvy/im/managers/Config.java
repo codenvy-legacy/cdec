@@ -74,6 +74,7 @@ public class Config {
     public static final String USER_LDAP_DN                = "user_ldap_dn";
     public static final String USER_LDAP_PASSWORD          = "user_ldap_password";
     public static final String USER_LDAP_USERS_OU          = "user_ldap_users_ou";
+    public static final String USER_LDAP_USER_DN           = "user_ldap_user_dn";
 
     public static final String LDAP_HOST     = "ldap_host";
     public static final String LDAP_PORT     = "ldap_port";

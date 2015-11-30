@@ -32,11 +32,14 @@ public class LdapManagerHelperCodenvy4Impl extends LdapManagerHelper {
 
     @Override
     public String getRootPrincipal() {
-        return format("cn=root,%s", config.getValue(Config.USER_LDAP_DN));  // TODO [ndp] verify
+        return config.getValue(Config.JAVA_NAMING_SECURITY_PRINCIPAL);
     }
 
     @Override
     public String getNameOfObjectToChangePassword() {
-        return config.getValue(Config.USER_LDAP_USER_CONTAINER_DN);  // TODO [ndp] verify
+        return format("%s=%s,%s",
+               config.getValue(Config.USER_LDAP_USER_DN),
+               config.getValue(Config.ADMIN_LDAP_USER_NAME),
+               config.getValue(Config.USER_LDAP_USER_CONTAINER_DN));
     }
 }
