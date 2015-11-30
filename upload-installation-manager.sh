@@ -73,7 +73,7 @@ uploadCodenvyServerInstallMultiScript() {
     [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
 }
 
-uploadCodenvyServerInstallInstalationManagerScript() {
+uploadCodenvyServerInstallInstallationManagerScript() {
     ARTIFACT=install-im-cli
     FILENAME=install-im-cli.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
@@ -81,7 +81,7 @@ uploadCodenvyServerInstallInstalationManagerScript() {
     doUpload
 
     [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com/g' ${DESTINATION}/${FILENAME}"
+    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/start.codenvy.com\/install-single/http:\/\/updater-nightly.codenvy-dev.com\/update\/repository\/public\/download\/install-codenvy/g' ${DESTINATION}/${FILENAME}"
 }
 
 uploadCodenvySingleServerInstallProperties() {
@@ -128,7 +128,7 @@ doUpload() {
 
 uploadInstallationManagerCli
 uploadCodenvyServerInstallMultiScript
-uploadCodenvyServerInstallInstalationManagerScript
+uploadCodenvyServerInstallInstallationManagerScript
 uploadCodenvyServerInstallScript
 
 for DIR in installation-manager-resources/src/main/resources/codenvy-properties/*; do

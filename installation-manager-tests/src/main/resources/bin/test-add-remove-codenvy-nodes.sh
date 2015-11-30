@@ -62,6 +62,7 @@ validateErrorString ".*http://runner2.codenvy:8080/runner/internal/runner.*"
 
 # remove builder
 executeIMCommand "im-remove-node" "builder2.codenvy"
+sleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/builder/server?token=${TOKEN}"

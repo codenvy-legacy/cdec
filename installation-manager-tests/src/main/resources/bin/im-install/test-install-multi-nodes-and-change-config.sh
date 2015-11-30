@@ -36,6 +36,9 @@ executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
 executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
 
 # verify changes on api node
+executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties"  "api.codenvy"  # TODO [ndp] remove
+sleep 2m                                                                                        # TODO [ndp] remove
+executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties"  "api.codenvy"  # TODO [ndp] remove
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service

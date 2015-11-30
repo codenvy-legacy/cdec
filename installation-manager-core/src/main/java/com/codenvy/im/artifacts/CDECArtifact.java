@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 
 import javax.inject.Named;
@@ -272,6 +273,5 @@ public class CDECArtifact extends AbstractArtifact {
         } catch (IOException e) {
             return false;  // API server is down
         }
-
     }
 }

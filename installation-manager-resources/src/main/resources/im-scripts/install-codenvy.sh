@@ -64,6 +64,7 @@ INTERNET_CHECKER_PID=
 TIMER_PID=
 PRINTER_PID=
 LINE_UPDATER_PID=
+DOWNLOAD_PROGRESS_UPDATER_PID=
 
 STEP_LINE=
 PUPPET_LINE=
@@ -71,24 +72,28 @@ PROGRESS_LINE=
 TIMER_LINE=
 
 DEPENDENCIES_STATUS_OFFSET=85  # fit screen width = 100 cols
+PROGRESS_FACTOR=2
 
-function cleanUp() {
+cleanUp() {
+    setterm -cursor on
     killTimer
     killPuppetInfoPrinter
     killInternetAccessChecker
     killFooterUpdater
+    killDownloadProgressUpdater
 }
 
 validateExitCode() {
-    EXIT_CODE=$1
-    if [[ -n "${EXIT_CODE}" ]] && [[ ! ${EXIT_CODE} == "0" ]]; then
+    local exitCode=$1
+    if [[ -n "${exitCode}" ]] && [[ ! ${exitCode} == "0" ]]; then
         pauseTimer
         pausePuppetInfoPrinter
         pauseInternetAccessChecker
         pauseFooterUpdater
+        pauseDownloadProgressUpdater
         println
-        println "Unexpected error occurred. See install.log for more details"
-        exit ${EXIT_CODE}
+        println $(printError "Unexpected error occurred. See install.log for more details")
+        exit ${exitCode}
     fi
 }
 
@@ -97,12 +102,13 @@ setRunOptions() {
     ARTIFACT="codenvy"
     CODENVY_TYPE="single"
     SILENT=false
-    VERSION=`curl -s https://codenvy.com/update/repository/properties/${ARTIFACT}?label=stable | sed 's/.*"version":"\([^"]*\)".*/\1/'`
     for var in "$@"; do
         if [[ "$var" == "--multi" ]]; then
             CODENVY_TYPE="multi"
         elif [[ "$var" == "--silent" ]]; then
             SILENT=true
+        elif [[ "$var" == "--im-cli" ]]; then
+            ARTIFACT="installation-manager-cli"
         elif [[ "$var" =~ --version=.* ]]; then
             VERSION=`echo "$var" | sed -e "s/--version=//g"`
         elif [[ "$var" =~ --hostname=.* ]]; then
@@ -113,6 +119,26 @@ setRunOptions() {
             SYSTEM_ADMIN_PASSWORD=`echo "$var" | sed -e "s/--systemAdminPassword=//g"`
         fi
     done
+
+    if [[ ${ARTIFACT} == "codenvy" ]]; then
+        LAST_INSTALLATION_STEP=13
+        ARTIFACT_DISPLAY="Codenvy"
+        if [[ -z ${VERSION} ]]; then
+            VERSION=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}?label=stable" "version")
+        fi
+    else
+        LAST_INSTALLATION_STEP=3
+        ARTIFACT_DISPLAY="Installation Manager CLI"
+        CODENVY_TYPE="single"
+        INSTALLATION_STEPS=("Configuring system..."
+                            "Installing required packages... [java]"
+                            "Install the Codenvy installation manager..."
+                            "");
+        if [[ -z ${VERSION} ]]; then
+            VERSION=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}" "version")
+        fi
+    fi
+
     CONFIG="codenvy.properties"
     EXTERNAL_DEPENDENCIES[0]="https://codenvy.com/update/repository/public/download/${ARTIFACT}/${VERSION}||0"
 
@@ -121,14 +147,196 @@ setRunOptions() {
     fi
 }
 
+
+fetchProperty() {
+    local url=$1
+    local property=$2
+    local seq="s/.*\"${property}\":\"\([^\"]*\)\".*/\1/"
+    echo `curl -s ${url} | sed ${seq}`
+}
+
+# run specific function and don't break installation if connection lost
+doEvalWaitReconnection() {
+    local func=$1
+    shift
+
+    for ((;;)); do
+        eval ${func} $@
+        local exitCode=$?
+
+        if [[ ${exitCode} == 0 ]]; then
+            break
+        else
+            doUpdateInternetAccessChecker
+            local checkFailed=$?
+
+            if [[ ${checkFailed} == 0 ]]; then
+                return ${exitCode} # Internet connection is OK, probably another error
+            else
+                sleep 1m # wait reconnection
+            fi
+        fi
+    done
+}
+
+doConfigureSystem() {
+    setStepIndicator 0
+
+    if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
+    mkdir ${DIR}
+
+    doEvalWaitReconnection installPackageIfNeed tar
+    validateExitCode $?
+
+    doEvalWaitReconnection installPackageIfNeed unzip
+    validateExitCode $?
+
+    doEvalWaitReconnection installPackageIfNeed net-tools
+    validateExitCode $?
+}
+
+doInstallJava() {
+    setStepIndicator 1
+    doEvalWaitReconnection installJava
+    validateExitCode $?
+}
+
+doInstallImCli() {
+    setStepIndicator 2
+    doEvalWaitReconnection installIm
+    validateExitCode $?
+}
+
+# Download binaries. If file is corrupted due to unexpected errors then it will be redownloaded
+doDownloadBinaries() {
+    setStepIndicator 3
+
+    for ((;;)); do
+        OUTPUT=$(doEvalWaitReconnection executeIMCommand im-download ${ARTIFACT} ${VERSION})
+        local exitCode=$?
+        echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
+
+        if [[ ${exitCode} == 0 ]]; then
+            break
+        fi
+
+        if [[ ${OUTPUT} =~ .*File.corrupted.* ]]; then
+            echo "Codenvy binaries will be redownloaded" >> install.log
+            continue
+        else
+            validateExitCode ${exitCode}
+        fi
+    done
+    doUpdateDownloadProgress 100
+
+    executeIMCommand im-download --list-local >> install.log
+    validateExitCode $?
+}
+
+runDownloadProgressUpdater() {
+    updateDownloadProgress &
+    DOWNLOAD_PROGRESS_UPDATER_PID=$!
+}
+
+killDownloadProgressUpdater() {
+    if [ -n "${DOWNLOAD_PROGRESS_UPDATER_PID}" ]; then
+        kill -KILL ${DOWNLOAD_PROGRESS_UPDATER_PID}
+    fi
+}
+
+continueDownloadProgressUpdater() {
+    if [ -n "${DOWNLOAD_PROGRESS_UPDATER_PID}" ]; then
+        kill -SIGCONT ${DOWNLOAD_PROGRESS_UPDATER_PID}
+    fi
+}
+
+pauseDownloadProgressUpdater() {
+    if [ -n "${DOWNLOAD_PROGRESS_UPDATER_PID}" ]; then
+        kill -SIGSTOP ${DOWNLOAD_PROGRESS_UPDATER_PID}
+    fi
+}
+
+updateDownloadProgress() {
+    local totalSize=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}/${VERSION}" "size")
+    local file=$(fetchProperty "https://codenvy.com/update/repository/properties/${ARTIFACT}/${VERSION}" "file")
+
+    for ((;;)); do
+        local size
+        local localFile="${HOME}/codenvy-im-data/updates/${ARTIFACT}/${VERSION}/${file}"
+        if [[ -f ${localFile} ]]; then
+            size=`du -b ${localFile} | cut -f1`
+        else
+            size=0
+        fi
+        local percent=$(( ${size}*100/${totalSize} ))
+
+        doUpdateDownloadProgress ${percent}
+        sleep 1
+    done
+}
+
+doUpdateDownloadProgress() {
+    local percent=$1
+    local bars=$(( ${LAST_INSTALLATION_STEP}*${PROGRESS_FACTOR} ))
+    local progress_field=
+    for ((i=1; i<=$(( ${bars}*${percent}/100 )); i++));  do
+       progress_field="${progress_field}="
+    done
+    progress_field=$(printf "[%-${bars}s]" ${progress_field})
+    local message="Downloading  ${progress_field} ${percent}%"
+
+    updateLine ${PUPPET_LINE} "${message}"
+}
+
+doInstallCodenvy() {
+    for ((STEP=1; STEP<=9; STEP++));  do
+        if [ ${STEP} == 9 ]; then
+            setStepIndicator $(( $STEP+3 ))
+        else
+            setStepIndicator $(( $STEP+3 ))
+        fi
+
+        for ((;;)); do
+            local exitCode
+            if [ ${CODENVY_TYPE} == "multi" ]; then
+                doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
+                exitCode=$?
+            else
+                doEvalWaitReconnection executeIMCommand im-install --step ${STEP} --forceInstall --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
+                exitCode=$?
+            fi
+
+            # if error occurred not because of internet access lost then break installation
+            # it prevents breaking installation due to a lot of puppet errors
+            local checkFailed=`echo $(</dev/shm/im_internet_access_lost)`
+            if [[ ! ${exitCode} == 0 ]] && [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
+                echo "Repeating installation step "${STEP} >> install.log
+                continue;
+            fi
+
+            break;
+        done
+    done
+}
+
 downloadConfig() {
-    url="https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
+    local url="https://codenvy.com/update/repository/public/download/codenvy-${CODENVY_TYPE}-server-properties/${VERSION}"
 
     # check url to config on http error
     http_code=$(curl --silent --write-out '%{http_code}' --output /dev/null ${url})
     if [[ ! ${http_code} -eq 200 ]]; then    # if response code != "200 OK"
-        # print response from update server
-        println $(curl --silent ${url})
+        local updates=`curl --silent "https://codenvy.com/update/repository/updates/${ARTIFACT}"`
+        println $(printError "ERROR: Version '${VERSION}' is not available")
+        println
+        if [[ -n ${VERSION} ]] && [[ ! ${updates} =~ .*${VERSION}.* ]]; then
+            println $(printWarning "NOTE: You've used '--version' flag to install a specific version.")
+            println $(printWarning "NOTE: We could not find this version in the repository. Versions found:")
+            println $(printWarning "NOTE: ${updates}")
+            println $(printWarning "NOTE: Installing without '--version' will use latest version.")
+        else
+            println $(printWarning "NOTE: codenvy.properties not found or downloadable.")
+        fi
+
         exit 1
     fi
 
@@ -143,32 +351,48 @@ installPackageIfNeed() {
         echo -n "Install package '$1'... " >> install.log
 
         exitCode=$(sudo yum install $1 -y -q --errorlevel=0 >> install.log 2>&1; echo $?)
-
-        validateExitCode ${exitCode}
-
-        echo " [OK]" >> install.log
+        if [[ ! ${exitCode} == 0 ]]; then
+            echo " [FAILED]" >> install.log
+            return ${exitCode}
+        else
+            echo " [OK]" >> install.log
+        fi
     }
 }
 
 preConfigureSystem() {
-    sudo yum clean all &> /dev/null
-    installPackageIfNeed curl
-    installPackageIfNeed wget
+    # valid sudo rights
+    sudo -n true 2> /dev/null
+    if [[ ! $? == 0 ]]; then
+        println $(printError "ERROR: User '${USER}' doesn't have sudo rights")
+        println
+        println $(printWarning "NOTE: Grant sudo privileges to '${USER}' user and restart installation")
+        exit 1
+    fi
 
-    if [[ ! -f ${CONFIG} ]]; then
+    sudo yum clean all &> /dev/null
+
+    installPackageIfNeed curl
+    validateExitCode $?
+
+    installPackageIfNeed wget
+    validateExitCode $?
+    
+    # back up file to prevent installation with wrong configuration
+    if [[ -f ${CONFIG} ]] && [[ ! `cat ${CONFIG}` =~ .*${VERSION}.* ]]; then
+        mv ${CONFIG} ${CONFIG}.back
+    fi
+
+    if [[ ! -f ${CONFIG} ]] && [[ ${ARTIFACT} == "codenvy" ]]; then
         downloadConfig
     fi
 }
 
 installJava() {
-    local exitCode
     echo -n "Install java package from '${JRE_URL}' into the directory '${DIR}/jre' ... " >> install.log
 
-    exitCode=$(wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz >> install.log 2>&1; echo $?)
-    validateExitCode ${exitCode}
-
-    exitCode=$(tar -xf jre.tar.gz -C ${DIR} >> install.log 2>&1; echo $?)
-    validateExitCode ${exitCode}
+    wget -q --no-cookies --no-check-certificate --header "Cookie: oraclelicense=accept-securebackup-cookie" "${JRE_URL}" --output-document=jre.tar.gz >> install.log 2>&1 || return 1
+    tar -xf jre.tar.gz -C ${DIR} >> install.log 2>&1
 
     rm -fr ${DIR}/jre >> install.log 2>&1
     mv -f ${DIR}/jre1.8.0_45 ${DIR}/jre >> install.log 2>&1
@@ -179,15 +403,22 @@ installJava() {
 
 installIm() {
     IM_URL="https://codenvy.com/update/repository/public/download/installation-manager-cli"
-    IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
+    if [[ "${ARTIFACT}" == "installation-manager-cli" ]]; then
+        IM_URL=${IM_URL}"/"${VERSION}
+    fi
+    echo ${IM_URL} >> install.log
 
-    curl -s -o ${IM_FILE} -L ${IM_URL}
+    IM_FILE=$(curl -sI  ${IM_URL} | grep -o -E 'filename=(.*)[.]tar.gz' | sed -e 's/filename=//')
+    if [[ ! $? == 0 ]]; then
+        return 1
+    fi
+
+    curl -s -o ${IM_FILE} -L ${IM_URL} || return 1
 
     mkdir ${DIR}/codenvy-cli
     tar -xf ${IM_FILE} -C ${DIR}/codenvy-cli
 
     sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/codenvy
-
     echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
 }
 
@@ -289,9 +520,7 @@ insertProperty() {
 
 validateHostname() {
     DNS=$1
-
     OUTPUT=$(ping -c 1 ${DNS} &> /dev/null && echo success || echo fail)
-
     echo ${OUTPUT}
 }
 
@@ -362,43 +591,52 @@ pressYKeyToContinue() {
 }
 
 doCheckPortRemote() {
-    PROTOCOL=$1
-    PORT=$2
-    HOST=$3
-    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST} "netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ':${PORT}\s'")
+    local protocol=$1
+    local port=$2
+    local host=$33
+    OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${host} "netstat -ano | egrep LISTEN | egrep ${protocol} | egrep ':${host}\s'")
     echo ${OUTPUT}
 }
 
 doCheckPortLocal() {
-    PROTOCOL=$1
-    PORT=$2
-    OUTPUT=$(netstat -ano | egrep LISTEN | egrep ${PROTOCOL} | egrep ":${PORT}\s")
+    local protocol=$1
+    local port=$2
+    OUTPUT=$(netstat -ano | egrep LISTEN | egrep ${protocol} | egrep ":${port}\s")
     echo ${OUTPUT}
 }
 
 validatePortLocal() {
-    PROTOCOL=$1
-    PORT=$2
-    OUTPUT=$(doCheckPortLocal ${PROTOCOL} ${PORT})
-
-    if [ "${OUTPUT}" != "" ]; then
-        println $(printError "ERROR: The port ${PROTOCOL}:${PORT} is busy.")
-        println $(printError "ERROR: TThe installation cannot proceed.")
-        exit 1
-    fi
+    local protocol=$1
+    local port=$2
+    local host="localhost"
+    doValidatePort doCheckPortLocal ${protocol} ${port} ${host}
 }
 
 validatePortRemote() {
-    PROTOCOL=$1
-    PORT=$2
-    HOST=$3
-    OUTPUT=$(doCheckPortRemote ${PROTOCOL} ${PORT} ${HOST})
+    local protocol=$1
+    local port=$2
+    local host=$3
+    doValidatePort doCheckPortRemote ${protocol} ${port} ${host}
+}
 
-    if [ "${OUTPUT}" != "" ]; then
-        println $(printError "ERROR: The port ${PROTOCOL}:${PORT} on host ${HOST} is busy.")
+doValidatePort() {
+    local func=$1
+    local protocol=$2
+    local port=$3
+    local host=$4
+    local output=$(eval ${func} ${protocol} ${port} ${host})
+
+    if [ "${output}" != "" ]; then
+        installPackageIfNeed lsof
+        println $(printError "ERROR: The port ${protocol}:${port} on '${host}' is busy.")
         println $(printError "ERROR: The installation cannot proceed.")
+        println
+        println $(printWarning "NOTE: Codenvy uses this port internally. All required ports are listed in docs.")
+        println $(printWarning "NOTE: The problem might occur if some services required by Codenvy are")
+        println $(printWarning "NOTE: already running. Run 'sudo lsof -i ${protocol}:${port} | grep LISTEN' on '${host}' to identify")
+        println $(printWarning "NOTE: the running process. We recommend restarting installation on a bare system.")
         exit 1
-    fi
+    fi  
 }
 
 doGetHostsVariables() {
@@ -414,7 +652,7 @@ doGetHostsVariables() {
 }
 
 doCheckAvailablePorts_single() {
-    for PORT in ${PUPPET_MASTER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]} ${ANALYTICS_PORTS[@]}; do
+    for PORT in ${PUPPET_MASTER_PORTS[@]} ${SITE_PORTS[@]} ${API_PORTS[@]} ${DATA_PORTS[@]} ${DATASOURCE_PORTS[@]} ${RUNNER_PORTS[@]} ${BUILDER_PORTS[@]}; do
         PROTOCOL=`echo ${PORT}|awk -F':' '{print $1}'`;
         PORT_ONLY=`echo ${PORT}|awk -F':' '{print $2}'`;
 
@@ -460,7 +698,7 @@ doCheckAvailablePorts_multi() {
 printPreInstallInfo_single() {
     clear
 
-    println "Welcome. This program installs Codenvy ${VERSION}."
+    println "Welcome. This program installs ${ARTIFACT_DISPLAY} ${VERSION}."
     println
     println "Checking system pre-requisites..."
     println
@@ -473,15 +711,17 @@ printPreInstallInfo_single() {
 
     checkResourceAccess
 
-    println "Configuring system properties with file://${CONFIG}..."
-    println
+    if [[ ${ARTIFACT} == "codenvy" ]]; then
+        println "Configuring system properties with file://${CONFIG}..."
+        println
+    fi
 
     if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     fi
 
     if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        if [[ "${VERSION}" =~ 4.* ]]; then
+        if [[ "${VERSION}" =~ ^(4).* ]]; then
             insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         else
             insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -513,7 +753,7 @@ doCheckAvailableResourcesLocally() {
             # CentOS
             if [ -f /etc/redhat-release ] ; then
                 osType="CentOS"
-                osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
+                osVersion=`cat /etc/redhat-release | sed 's/.* \([0-9.]*\) .*/\1/'`
                 osInfo=`cat /etc/redhat-release | sed 's/Linux release //'`
 
             # SuSE
@@ -536,7 +776,7 @@ doCheckAvailableResourcesLocally() {
     esac
 
     # check on OS CentOS 7
-    if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
+    if [[ ${osType} != "CentOS" ||  "7.1" > "${osVersion}" ]]; then
         osIssueFound=true
     fi
 
@@ -593,7 +833,9 @@ doCheckAvailableResourcesLocally() {
 
     if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
         if [[ ${osIssueFound} == true ]]; then
-            println $(printError "!!! The OS version or config do not match requirements.")
+            println $(printError "ERROR: The OS version doesn't match requirements.")
+            println
+            println $(printWarning "NOTE: You need a CentOS 7.1 node.")
             exit 1;
         fi
 
@@ -621,16 +863,13 @@ checkResourceAccess() {
     println
 
     if [[ ${resourceIssueFound} == true ]]; then
-        println $(printError "!!! Some repositories are not accessible. The installation will fail.")
-        println $(printError "!!! Consider setting up a proxy server.")
+        println $(printError "ERROR: Some external repositories are not accessible.")
         println
-
-        if [[ ${SILENT} == true ]]; then
-            exit 1;
-        fi
-
-        pressYKeyToContinue "Proceed?"
-        println
+        println $(printWarning "NOTE: This is probably a temporary issue.")
+        println $(printWarning "NOTE: Run 'wget --spider <url>' to check for access.")
+        println $(printWarning "NOTE: Restart installation once access is restored.")
+        println $(printWarning "NOTE: You may consider setting up a proxy server if access is blocked.")
+        exit 1
     fi
 }
 
@@ -658,7 +897,7 @@ doCheckResourceAccess() {
 printPreInstallInfo_multi() {
     clear
 
-    println "Welcome. This program installs Codenvy ${VERSION}."
+    println "Welcome. This program installs ${ARTIFACT_DISPLAY} ${VERSION}."
     println
     println "Checking system pre-requisites..."
     println
@@ -666,15 +905,18 @@ printPreInstallInfo_multi() {
     preConfigureSystem
     doCheckAvailableResourcesLocally 1000000 1 14000000
 
-    println "Configuring system properties with file://${CONFIG}..."
-    println
+
+    if [[ ${ARTIFACT} == "codenvy" ]]; then
+        println "Configuring system properties with file://${CONFIG}..."
+        println
+    fi
 
     if [ -n "${SYSTEM_ADMIN_NAME}" ]; then
         insertProperty "admin_ldap_user_name" ${SYSTEM_ADMIN_NAME}
     fi
 
     if [ -n "${SYSTEM_ADMIN_PASSWORD}" ]; then
-        if [[ "${VERSION}" =~ 4.* ]]; then
+        if [[ "${VERSION}" =~ ^(4).* ]]; then
             insertProperty "admin_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
         else
             insertProperty "system_ldap_password" ${SYSTEM_ADMIN_PASSWORD}
@@ -738,15 +980,49 @@ doCheckAvailableResourcesOnNodes() {
 
     doGetHostsVariables
 
-    for HOST in ${PUPPET_MASTER_HOST_NAME} ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
+    local output=$(validateHostname ${PUPPET_MASTER_HOST_NAME})
+    if [ "${output}" != "success" ]; then
+        println $(printError "ERROR: The hostname '${PUPPET_MASTER_HOST_NAME}' is not available.")
+        println
+        println $(printWarning "NOTE: This might happen when the node is down or not accessible")
+        println $(printWarning "NOTE: by a pre-configured DNS host name. Make sure you have")
+        println $(printWarning "NOTE: an appropriate entry in '/etc/hosts' file.")
+        exit 1
+    fi
+    println "$(printf "%-43s" "${PUPPET_MASTER_HOST_NAME}" && printSuccess "[OK]")"
+
+    for HOST in ${DATA_HOST_NAME} ${API_HOST_NAME} ${BUILDER_HOST_NAME} ${DATASOURCE_HOST_NAME} ${ANALYTICS_HOST_NAME} ${SITE_HOST_NAME} ${RUNNER_HOST_NAME}; do
         # check if host available
-        local OUTPUT=$(validateHostname ${HOST})
-        if [ "${OUTPUT}" != "success" ]; then
-            println $(printError "ERROR: The hostname '${HOST}' isn't available or wrong.")
+        local output=$(validateHostname ${HOST})
+        if [ "${output}" != "success" ]; then
+            println $(printError "ERROR: The hostname '${HOST}' is not available.")
+            println
+            println $(printWarning "NOTE: This might happen when the node is down or not accessible")
+            println $(printWarning "NOTE: by a pre-configured DNS host name. Make sure you have")
+            println $(printWarning "NOTE: an appropriate entry in '/etc/hosts' file.")
             exit 1
         fi
 
-        local SSH_PREFIX="ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
+        local sshPrefix="ssh -o BatchMode=yes -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${HOST}"
+
+        # validate ssh access
+        ${sshPrefix} "exit"
+        if [[ ! $? == 0 ]]; then
+            println $(printError "ERROR: There is no ssh access to '${HOST}'")
+            println
+            println $(printWarning "NOTE: Put public part of ssh key (id_rsa.pub) onto '${HOST}' node")
+            println $(printWarning "NOTE: into ~/.ssh folder of '${USER}' user and restart installation")
+            exit 1
+        fi
+
+        # valid sudo rights
+        ${sshPrefix} "sudo -n true 2> /dev/null"
+        if [[ ! $? == 0 ]]; then
+            println $(printError "ERROR: User '${USER}' doesn't have sudo rights on '${HOST}'")
+            println
+            println $(printWarning "NOTE: Grant sudo privileges to '${USER}' user and restart installation")
+            exit 1
+        fi
 
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
             MIN_RAM_KB=1500000
@@ -762,42 +1038,42 @@ doCheckAvailableResourcesOnNodes() {
         local osVersion=""
         local osInfo=""
 
-        case `${SSH_PREFIX} "uname" | sed 's/\r//'` in
+        case `${sshPrefix} "uname" | sed 's/\r//'` in
             Linux )
-                if [[ `${SSH_PREFIX} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                if [[ `${sshPrefix} "if [[ -f /etc/redhat-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
                     osType="CentOS";
-                    osVersion=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/' | cut -f1 -d '.'`
-                    osInfo=`${SSH_PREFIX} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
+                    osVersion=`${sshPrefix} "cat /etc/redhat-release" | sed 's/.* \([0-9.]*\) .*/\1/'`
+                    osInfo=`${sshPrefix} "cat /etc/redhat-release" | sed 's/Linux release //' | sed 's/\r//'`
 
                 # SuSE
-                elif [[ `${SSH_PREFIX} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                elif [[ `${sshPrefix} "if [[ -f /etc/SuSE-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
                     osInfo="SuSE"
 
                 # debian
-                elif [[ `${SSH_PREFIX} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osInfo=`${SSH_PREFIX} "cat /etc/issue.net" | sed 's/\r//'`
+                elif [[ `${sshPrefix} "if [[ -f /etc/debian_version ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osInfo=`${sshPrefix} "cat /etc/issue.net" | sed 's/\r//'`
 
                 # other linux OS
-                elif [[ `${SSH_PREFIX} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
-                    osInfo=`${SSH_PREFIX} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
+                elif [[ `${sshPrefix} "if [[ -f /etc/lsb-release ]]; then echo 1; fi" | sed 's/\r//'` == 1 ]]; then
+                    osInfo=`${sshPrefix} "$(cat /etc/lsb-release | grep '^DISTRIB_ID' | awk -F=  '{ print $2 }')" | sed 's/\r//'`
                 fi
                 ;;
 
             * )
-                osInfo=`${SSH_PREFIX} "uname" | sed 's/\r//'`;
+                osInfo=`${sshPrefix} "uname" | sed 's/\r//'`;
                 ;;
         esac
 
         # check on OS CentOS 7
-        if [[ ${osType} != "CentOS" || ${osVersion} != "7" ]]; then
+        if [[ ${osType} != "CentOS" || "7.1" > "${osVersion}" ]]; then
             osIssueFound=true
             globalOsIssueFound=true
         fi
 
-        local availableRAM=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
+        local availableRAM=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
         local availableRAMIssue=false
 
-        local availableDiskSpace=`${SSH_PREFIX} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        local availableDiskSpace=`${sshPrefix} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
         local availableDiskSpaceIssue=false
 
         if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
@@ -825,7 +1101,7 @@ doCheckAvailableResourcesOnNodes() {
 
                 if [[ ${availableRAMIssue} == true ]]; then
                     local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
-                    local availableRAMToDisplay=`${SSH_PREFIX} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
+                    local availableRAMToDisplay=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
                     local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
 
                     println "> RAM             $minRAMToDisplay $availableRAMToDisplay $(printWarning "[WARNING]")"
@@ -849,13 +1125,15 @@ doCheckAvailableResourcesOnNodes() {
     println
 
     if [[ ${globalNodeIssueFound} == true ]]; then
-        println $(printWarning "!!! Some nodes do not match recommended.")
-        println
-
-        if [[ ${SILENT} == true && ${globalOsIssueFound} == true ]]; then
+        if [[ ${globalOsIssueFound} == true ]]; then
+            println $(printError "ERROR: The OS version doesn't match requirements.")
+            println
+            println $(printWarning "NOTE: You need a CentOS 7.1 node")
             exit 1;
         fi
 
+        println $(printWarning "!!! Some nodes do not match recommended.")
+        println
         if [[ ${SILENT} != true ]]; then
             pressYKeyToContinue "Proceed?"
             println
@@ -863,61 +1141,7 @@ doCheckAvailableResourcesOnNodes() {
     fi
 }
 
-doConfigureSystem() {
-    performStep 0
-
-    if [ -d ${DIR} ]; then rm -rf ${DIR}; fi
-    mkdir ${DIR}
-
-    installPackageIfNeed tar
-    installPackageIfNeed unzip
-    installPackageIfNeed net-tools
-}
-
-doInstallJava() {
-    performStep 1
-    installJava
-}
-
-doInstallImCli() {
-    performStep 2
-    installIm
-}
-
-doDownloadBinaries() {
-    performStep 3
-    OUTPUT=$(executeIMCommand im-download ${ARTIFACT} ${VERSION})
-    EXIT_CODE=$?
-    echo ${OUTPUT} | sed 's/\[[=> ]*\]//g'  >> install.log
-    validateExitCode ${EXIT_CODE}
-
-    executeIMCommand im-download --list-local >> install.log
-    validateExitCode $?
-}
-
-doInstallCodenvy() {
-    for ((STEP=1; STEP<=9; STEP++));  do
-        if [ ${STEP} == 9 ]; then
-            performStep $(( $STEP+3 ))
-        else
-            performStep $(( $STEP+3 ))
-        fi
-
-        if [ ${CODENVY_TYPE} == "multi" ]; then
-            executeIMCommand im-install --step ${STEP} --forceInstall --multi --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
-            validateExitCode $?
-        else
-            executeIMCommand im-install --step ${STEP} --forceInstall --config ${CONFIG} ${ARTIFACT} ${VERSION} >> install.log
-            validateExitCode $?
-        fi
-    done
-
-    performStep 13
-
-    sleep 2
-}
-
-performStep() {
+setStepIndicator() {
     CURRENT_STEP=$1
     echo ${CURRENT_STEP} > /dev/shm/im_current_step
     shift
@@ -968,17 +1192,16 @@ updateTimer() {
 
 updateProgress() {
     local current_step=$1
-    local last_step=13
-    local factor=2
+    local last_step=${LAST_INSTALLATION_STEP}
 
     local progress_number=$(( ${current_step}*100/${last_step} ))
 
     local progress_field=
-    for ((i=1; i<=${current_step}*${factor}; i++));  do
+    for ((i=1; i<=${current_step}*${PROGRESS_FACTOR}; i++));  do
        progress_field="${progress_field}="
     done
 
-    progress_field=$(printf "[%-$(( ${last_step}*${factor} ))s]" ${progress_field})
+    progress_field=$(printf "[%-$(( ${last_step}*${PROGRESS_FACTOR} ))s]" ${progress_field})
 
     local message="Full install ${progress_field} ${progress_number}%"
 
@@ -1066,6 +1289,7 @@ updatePuppetInfo() {
 }
 
 runInternetAccessChecker() {
+    echo 0 > /dev/shm/im_internet_access_lost
     updateInternetAccessChecker &
     INTERNET_CHECKER_PID=$!
 }
@@ -1089,17 +1313,9 @@ pauseInternetAccessChecker() {
 }
 
 updateInternetAccessChecker() {
-    local printStatus=false
     for ((;;)); do
-        local checkFailed=0
-
-        for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
-            local isRequiredToCheck=`echo ${resource} | awk -F'|' '{print $3}'`;
-
-            if [[ ${isRequiredToCheck} == 1 ]]; then
-                doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
-            fi
-        done
+        doUpdateInternetAccessChecker
+        local checkFailed=$?
 
         CURRENT_STEP=`echo $(</dev/shm/im_current_step)`
         if [[ ${checkFailed} == 1 ]]; then
@@ -1112,13 +1328,32 @@ updateInternetAccessChecker() {
     done
 }
 
-printPostInstallInfo() {
+doUpdateInternetAccessChecker() {
+    local printStatus=false
+    local checkFailed=0
+
+    for resource in ${EXTERNAL_DEPENDENCIES[@]}; do
+        local isRequiredToCheck=`echo ${resource} | awk -F'|' '{print $3}'`;
+
+        if [[ ${isRequiredToCheck} == 1 ]]; then
+            doCheckResourceAccess ${resource} ${printStatus} || checkFailed=1
+        fi
+
+        if [[ ${checkFailed} == 1 ]]; then
+            echo ${checkFailed} > /dev/shm/im_internet_access_lost
+        fi
+    done
+
+    return ${checkFailed}
+}
+
+printPostInstallInfo_codenvy() {
     if [ -z ${SYSTEM_ADMIN_NAME} ]; then
         SYSTEM_ADMIN_NAME=`grep admin_ldap_user_name= ${CONFIG} | cut -d '=' -f2`
     fi
 
     if [ -z ${SYSTEM_ADMIN_PASSWORD} ]; then
-        if [[ "${VERSION}" =~ 4.* ]]; then
+        if [[ "${VERSION}" =~ ^(4).* ]]; then
             SYSTEM_ADMIN_PASSWORD=`grep admin_ldap_password= ${CONFIG} | cut -d '=' -f2`
         else
             SYSTEM_ADMIN_PASSWORD=`grep system_ldap_password= ${CONFIG} | cut -d '=' -f2`
@@ -1137,25 +1372,39 @@ printPostInstallInfo() {
     println "$(printWarning "!!! Set up DNS or add a hosts rule on your clients to reach this hostname.")"
 }
 
-set -e
+printPostInstallInfo_installation-manager-cli() {
+    println
+    println "Codenvy Installation Manager is installed into ${DIR}/codenvy-cli directory"
+}
+
 setRunOptions "$@"
 printPreInstallInfo_${CODENVY_TYPE}
+
+setterm -cursor off
 
 initFooterPosition
 initTimer
 
 runFooterUpdater
 runTimer
-runPuppetInfoPrinter
 runInternetAccessChecker
 
 doConfigureSystem
 doInstallJava
 doInstallImCli
 
-set +e
+if [[ ${ARTIFACT} == "codenvy" ]]; then
+    runDownloadProgressUpdater
+    doDownloadBinaries
+    pauseDownloadProgressUpdater
 
-doDownloadBinaries
-doInstallCodenvy
+    runPuppetInfoPrinter
+    doInstallCodenvy
+fi
 
-printPostInstallInfo
+setStepIndicator ${LAST_INSTALLATION_STEP}
+sleep 2
+
+printPostInstallInfo_${ARTIFACT}
+
+

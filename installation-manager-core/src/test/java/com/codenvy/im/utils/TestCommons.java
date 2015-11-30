@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Thread.currentThread;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
@@ -268,16 +267,6 @@ public class TestCommons {
 
         TreeSet<Version> versions = Commons.getVersionsList(baseDir.resolve("fake"));
         assertTrue(versions.isEmpty());
-    }
-
-    @Test
-    public void testHostIsReachable() throws Exception {
-        assertTrue(Commons.isReachable("localhost"));
-    }
-
-    @Test
-    public void testHostIsUnReachable() throws Exception {
-        assertFalse(Commons.isReachable("bla-bla-bla"));
     }
 
     @Test
