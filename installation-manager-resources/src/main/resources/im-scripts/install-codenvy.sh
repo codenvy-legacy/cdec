@@ -328,7 +328,7 @@ downloadConfig() {
         local updates=`curl --silent "https://codenvy.com/update/repository/updates/${ARTIFACT}"`
         println $(printError "ERROR: Version '${VERSION}' is not available")
         println
-        if [[ -n ${VERSION} ]] && [[ ! ${updates} =~ .*${VERSION}.* ]]; then
+        if [[ -n ${VERSION} ]] && [[ ! ${updates} =~ .*\"${VERSION}\".* ]]; then
             println $(printWarning "NOTE: You've used '--version' flag to install a specific version.")
             println $(printWarning "NOTE: We could not find this version in the repository. Versions found:")
             println $(printWarning "NOTE: ${updates}")
@@ -704,7 +704,7 @@ printPreInstallInfo_single() {
     println
 
     preConfigureSystem
-    doCheckAvailableResourcesLocally 8000000 4 300000000
+    doCheckAvailableResourcesLocally 2500000 1 50000000 8000000 4 300000000
 
     println "Checking access to external dependencies..."
     println
@@ -742,6 +742,10 @@ doCheckAvailableResourcesLocally() {
     local MIN_RAM_KB=$1
     local MIN_CORES=$2
     local MIN_DISK_SPACE_KB=$3
+    local REC_RAM_KB=$4
+    local REC_CORES=$5
+    local REC_DISK_SPACE_KB=$6
+
 
     local osIssueFound=false
     local osType=""
@@ -784,70 +788,83 @@ doCheckAvailableResourcesLocally() {
     local osStateToDisplay=$([ ${osIssueFound} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printError "[NOT OK]")")
     println "DETECTED OS: ${osInfoToDisplay} ${osStateToDisplay}"
 
-    resourceIssueFound=false
+    local resourceIssueFound="none"
 
     local availableRAM=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
     local availableRAMIssue=false
+    local RAMStateToDisplay=$(echo "$(printSuccess "[OK]")")
 
-    local availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $2}'`
+    local availableDiskSpace=`sudo df ${HOME} | tail -1 | awk '{print $4}'`  # available
     local availableDiskSpaceIssue=false
+    local diskStateToDisplay=$(echo "$(printSuccess "[OK]")")
 
     local availableCores=`grep -c ^processor /proc/cpuinfo`
     local availableCoresIssue=false
+    local coresStateToDisplay=$(echo "$(printSuccess "[OK]")")
 
     if (( ${availableRAM} < ${MIN_RAM_KB} )); then
-        resourceIssueFound=true
-        availableRAMIssue=true
+        resourceIssueFound="blocker"
+        RAMStateToDisplay=$(echo "$(printError "[NOT OK]")")
+    elif (( ${availableRAM} < ${REC_RAM_KB} )); then
+        [ ${resourceIssueFound} == "none" ] && resourceIssueFound="warning"
+        RAMStateToDisplay=$(echo "$(printWarning "[WARNING]")")
     fi
 
     if (( ${availableCores} < ${MIN_CORES})); then
-        resourceIssueFound=true
-        availableCoresIssue=true
+        resourceIssueFound="blocker"
+        coresStateToDisplay=$(echo "$(printError "[NOT OK]")")
+    elif (( ${availableCores} < ${REC_CORES} )); then
+        [ ${resourceIssueFound} == "none" ] && resourceIssueFound="warning"
+        coresStateToDisplay=$(echo "$(printWarning "[WARNING]")")
     fi
 
     if (( ${availableDiskSpace} < ${MIN_DISK_SPACE_KB})); then
-        resourceIssueFound=true
-        availableDiskSpaceIssue=true
+        resourceIssueFound="blocker"
+        diskStateToDisplay=$(echo "$(printError "[NOT OK]")")
+    elif (( ${availableDiskSpace} < ${REC_DISK_SPACE_KB} )); then
+        [ ${resourceIssueFound} == "none" ] && resourceIssueFound="warning"
+        diskStateToDisplay=$(echo "$(printWarning "[WARNING]")")
     fi
 
-    local minRAMToDisplay=$(printf "%-15s" "$(printf "%0.2f" "$( m=34; awk -v m=${MIN_RAM_KB} 'BEGIN { print m/1000/1000 }' )") GB")
+    local minRAMToDisplay=$(printf "%-15s" "$(echo ${MIN_RAM_KB} | awk '{tmp = $1/1000/1000; printf"%0.2f",tmp}') GB")
+    local recRAMToDisplay=$(printf "%-15s" "$(echo ${REC_RAM_KB} | awk '{tmp = $1/1000/1000; printf"%0.2f",tmp}') GB")
     local availableRAMToDisplay=`cat /proc/meminfo | grep MemTotal | awk '{tmp = $2/1000/1000; printf"%0.2f",tmp}'`
     local availableRAMToDisplay=$(printf "%-11s" "${availableRAMToDisplay} GB")
-    local RAMStateToDisplay=$([ ${availableRAMIssue} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printWarning "[WARNING]")")
 
     local minCoresToDisplay=$(printf "%-15s" "${MIN_CORES} cores")
+    local recCoresToDisplay=$(printf "%-15s" "${REC_CORES} cores")
     local availableCoresToDisplay=$(printf "%-11s" "${availableCores} cores")
-    local coresStateToDisplay=$([ ${availableCoresIssue} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printWarning "[WARNING]")")
 
     local minDiskSpaceToDisplay=$(printf "%-15s" "$(( ${MIN_DISK_SPACE_KB} /1000/1000 )) GB")
+    local recDiskSpaceToDisplay=$(printf "%-15s" "$(( ${REC_DISK_SPACE_KB} /1000/1000 )) GB")
     local availableDiskSpaceToDisplay=$(( availableDiskSpace /1000/1000 ))
     local availableDiskSpaceToDisplay=$(printf "%-11s" "${availableDiskSpaceToDisplay} GB")
-    local diskStateToDisplay=$([ ${availableDiskSpaceIssue} == false ] && echo "$(printSuccess "[OK]")" || echo "$(printWarning "[WARNING]")")
 
     println
-    println "                RECOMMENDED     AVAILABLE"
-    println "RAM             $minRAMToDisplay $availableRAMToDisplay $RAMStateToDisplay"
-    println "CPU             $minCoresToDisplay $availableCoresToDisplay $coresStateToDisplay"
-    println "Disk Space      $minDiskSpaceToDisplay $availableDiskSpaceToDisplay $diskStateToDisplay"
+    println "                MINIMUM        RECOMMENDED     AVAILABLE"
+    println "RAM             $minRAMToDisplay $recRAMToDisplay $availableRAMToDisplay $RAMStateToDisplay"
+    println "CPU             $minCoresToDisplay $recCoresToDisplay $availableCoresToDisplay $coresStateToDisplay"
+    println "Disk Space      $minDiskSpaceToDisplay $recDiskSpaceToDisplay $availableDiskSpaceToDisplay $diskStateToDisplay"
     println
 
-    if [[ ${osIssueFound} == true || ${resourceIssueFound} == true ]]; then
-        if [[ ${osIssueFound} == true ]]; then
-            println $(printError "ERROR: The OS version doesn't match requirements.")
-            println
-            println $(printWarning "NOTE: You need a CentOS 7.1 node.")
-            exit 1;
-        fi
-
-        if [[ ${resourceIssueFound} == true ]]; then
-            println $(printWarning "!!! The resources available are lower than recommended.")
-        fi
-
+    if [[ ${osIssueFound} == true ]]; then
+        println $(printError "ERROR: The OS version doesn't match requirements.")
         println
+        println $(printWarning "NOTE: You need a CentOS 7.1 node.")
+        exit 1;
+    fi
 
-        if [[ ${SILENT} == false && ${resourceIssueFound} == true ]]; then
-            pressYKeyToContinue "Proceed?"
+    if [[ ! ${resourceIssueFound} == "none" ]]; then
+        if [[ ${resourceIssueFound} == "blocker" ]]; then
+            println $(printError "ERROR: The resources available are lower than minimum.")
+            exit 1
+        else
+            println $(printWarning "!!! The resources available are lower than recommended.")
             println
+            if [[ ${SILENT} == false ]]; then
+                pressYKeyToContinue "Proceed?"
+                println
+            fi
         fi
     fi
 }
@@ -903,7 +920,7 @@ printPreInstallInfo_multi() {
     println
 
     preConfigureSystem
-    doCheckAvailableResourcesLocally 1000000 1 14000000
+    doCheckAvailableResourcesLocally 1000000 1 20000000 2000000 2 50000000
 
 
     if [[ ${ARTIFACT} == "codenvy" ]]; then
@@ -1029,7 +1046,7 @@ doCheckAvailableResourcesOnNodes() {
             MIN_DISK_SPACE_KB=50000000
         else
             MIN_RAM_KB=1000000
-            MIN_DISK_SPACE_KB=14000000
+            MIN_DISK_SPACE_KB=20000000
         fi
 
         local osIssueFound=false
@@ -1073,7 +1090,7 @@ doCheckAvailableResourcesOnNodes() {
         local availableRAM=`${sshPrefix} "cat /proc/meminfo | grep MemTotal" | awk '{print $2}'`
         local availableRAMIssue=false
 
-        local availableDiskSpace=`${sshPrefix} "sudo df ${HOME} | tail -1" | awk '{print $2}'`
+        local availableDiskSpace=`${sshPrefix} "sudo df ${HOME} | tail -1" | awk '{print $4}'` # available
         local availableDiskSpaceIssue=false
 
         if [[ -z ${availableRAM} || ${availableRAM} < ${MIN_RAM_KB} ]]; then
@@ -1404,6 +1421,10 @@ fi
 
 setStepIndicator ${LAST_INSTALLATION_STEP}
 sleep 2
+pauseTimer
+pausePuppetInfoPrinter
+pauseInternetAccessChecker
+pauseFooterUpdater
 
 printPostInstallInfo_${ARTIFACT}
 
