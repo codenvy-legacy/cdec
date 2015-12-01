@@ -122,8 +122,8 @@
             <!-- exclude to solve conflict with 'org.everrest:everrest-assured' artifact-->
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpcore</artifactId>
+                    <groupId>org.apache.httpcomponents</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -173,8 +173,8 @@
             <exclusions>
                 <!-- exclude mina-core to solve version conflict with 'org.apache.sshd:sshd-core' artifact -->
                 <exclusion>
-                    <groupId>org.apache.mina</groupId>
                     <artifactId>mina-core</artifactId>
+                    <groupId>org.apache.mina</groupId>
                 </exclusion>
             </exclusions>
         </dependency>
