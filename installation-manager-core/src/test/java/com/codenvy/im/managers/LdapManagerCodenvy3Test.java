@@ -20,7 +20,6 @@ package com.codenvy.im.managers;
 import com.codenvy.im.testhelper.ldap.BaseLdapTest;
 import com.codenvy.im.testhelper.ldap.EmbeddedADS;
 import com.codenvy.im.utils.HttpTransport;
-import com.google.common.collect.ImmutableMap;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;

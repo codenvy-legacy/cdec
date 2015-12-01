@@ -18,6 +18,9 @@
 package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+
+import java.io.IOException;
 
 import static java.lang.String.format;
 
@@ -26,20 +29,26 @@ import static java.lang.String.format;
  */
 public class LdapManagerHelperCodenvy4Impl extends LdapManagerHelper {
 
-    public LdapManagerHelperCodenvy4Impl(Config config) {
-        super(config);
+    public LdapManagerHelperCodenvy4Impl(ConfigManager configManager) {
+        super(configManager);
     }
 
     @Override
-    public String getRootPrincipal() {
-        return config.getValue(Config.JAVA_NAMING_SECURITY_PRINCIPAL);
+    public String getRootPrincipal() throws IOException {
+        return configManager.loadInstalledCodenvyConfig().getValue(Config.JAVA_NAMING_SECURITY_PRINCIPAL);
     }
 
     @Override
-    public String getNameOfObjectToChangePassword() {
+    public String getNameOfObjectToChangePassword() throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
         return format("%s=%s,%s",
                config.getValue(Config.USER_LDAP_USER_DN),
                config.getValue(Config.ADMIN_LDAP_USER_NAME),
                config.getValue(Config.USER_LDAP_USER_CONTAINER_DN));
+    }
+
+    @Override
+    public String getRealm() {
+        return null;
     }
 }

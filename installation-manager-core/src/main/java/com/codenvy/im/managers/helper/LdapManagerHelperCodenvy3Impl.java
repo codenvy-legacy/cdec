@@ -18,6 +18,9 @@
 package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+
+import java.io.IOException;
 
 import static java.lang.String.format;
 
@@ -26,20 +29,26 @@ import static java.lang.String.format;
  */
 public class LdapManagerHelperCodenvy3Impl extends LdapManagerHelper {
 
-    public LdapManagerHelperCodenvy3Impl(Config config) {
-        super(config);
+    public LdapManagerHelperCodenvy3Impl(ConfigManager configManager) {
+        super(configManager);
     }
 
     /** only 'cn=root' has rights to change admin password in default Codenvy ldap */
     @Override
-    public String getRootPrincipal() {
-        return format("cn=root,%s", config.getValue(Config.ADMIN_LDAP_DN));
+    public String getRootPrincipal() throws IOException {
+        return format("cn=root,%s", configManager.loadInstalledCodenvyConfig().getValue(Config.ADMIN_LDAP_DN));
     }
 
     @Override
-    public String getNameOfObjectToChangePassword() {
+    public String getNameOfObjectToChangePassword() throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
         return format("cn=%s,%s",
                config.getValue(Config.ADMIN_LDAP_USER_NAME),
                config.getValue(Config.SYSTEM_LDAP_USER_BASE));
+    }
+
+    @Override
+    public String getRealm() {
+        return "sysldap";
     }
 }

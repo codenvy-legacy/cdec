@@ -23,6 +23,7 @@ import com.codenvy.im.managers.helper.LdapManagerHelperCodenvy3Impl;
 import com.codenvy.im.managers.helper.LdapManagerHelperCodenvy4Impl;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
@@ -39,6 +40,7 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import java.io.IOException;
 import java.util.Hashtable;
+import java.util.Map;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
@@ -50,26 +52,20 @@ import static java.lang.String.format;
 @Singleton
 public class LdapManager {
 
-    private final String REALM;
     private final ConfigManager configManager;
     private final HttpTransport httpTransport;
 
-    private final LdapManagerHelper helper;
+    private final Map<Integer, LdapManagerHelper> HELPERS;
 
     @Inject
     public LdapManager(ConfigManager configManager, HttpTransport httpTransport) throws IOException {
         this.configManager = configManager;
         this.httpTransport = httpTransport;
 
-        Config config = configManager.loadInstalledCodenvyConfig();
-        Version codenvyVersion = Version.valueOf(config.getValue(Config.VERSION));
-        if (codenvyVersion.compareToMajor(4) < 0) {
-            helper = new LdapManagerHelperCodenvy3Impl(config);
-            REALM = "sysldap";
-        } else {
-            helper = new LdapManagerHelperCodenvy4Impl(config);
-            REALM = null;
-        }
+        HELPERS = ImmutableMap.of(
+            3, new LdapManagerHelperCodenvy3Impl(configManager),
+            4, new LdapManagerHelperCodenvy4Impl(configManager)
+        );
     }
 
     /**
@@ -96,7 +92,7 @@ public class LdapManager {
                     new ModificationItem(DirContext.REPLACE_ATTRIBUTE, new BasicAttribute("userPassword", encryptedPwd))
                 };
 
-                ldapContext.modifyAttributes(helper.getNameOfObjectToChangePassword(), mods);
+                ldapContext.modifyAttributes(getHelper().getNameOfObjectToChangePassword(), mods);
             } finally {
                 ldapContext.close();
             }
@@ -147,7 +143,7 @@ public class LdapManager {
         Credentials credentials = new DtoServerImpls.CredentialsImpl();
         credentials.setPassword(new String(currentPassword, "UTF-8"));
         credentials.setUsername(config.getValue(Config.ADMIN_LDAP_USER_NAME));
-        credentials.setRealm(REALM);
+        credentials.setRealm(getHelper().getRealm());
 
         String requestUrl = combinePaths(configManager.getApiEndpoint(), "/auth/login");
         try {
@@ -171,7 +167,16 @@ public class LdapManager {
     }
 
     /** only 'cn=root' has rights to change admin password in default Codenvy ldap */
-    protected String getRootPrincipal() {
-        return helper.getRootPrincipal();
+    protected String getRootPrincipal() throws IOException {
+        return getHelper().getRootPrincipal();
+    }
+
+    private LdapManagerHelper getHelper() throws IOException {
+        Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
+        if (codenvyVersion.compareToMajor(4) < 0) {
+            return HELPERS.get(3);
+        } else {
+            return HELPERS.get(4);
+        }
     }
 }

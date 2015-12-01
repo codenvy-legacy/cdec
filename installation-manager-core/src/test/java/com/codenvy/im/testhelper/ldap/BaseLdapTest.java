@@ -18,21 +18,12 @@
 package com.codenvy.im.testhelper.ldap;
 
 import com.codenvy.im.BaseTest;
-import com.codenvy.im.managers.Config;
-
-import org.apache.directory.api.ldap.model.entry.Entry;
-import org.apache.directory.api.ldap.model.name.Dn;
-import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * @author Alexander Reshetnyak

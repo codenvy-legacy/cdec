@@ -17,20 +17,24 @@
  */
 package com.codenvy.im.managers.helper;
 
-import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+
+import java.io.IOException;
 
 /**
  * @author Dmytro Nochevnov
  */
 abstract public class LdapManagerHelper {
 
-    protected Config config;
+    protected ConfigManager configManager;
 
-    public LdapManagerHelper(Config config) {
-        this.config = config;
+    public LdapManagerHelper(ConfigManager configManager) {
+        this.configManager = configManager;
     }
 
-    abstract public String getRootPrincipal();
+    abstract public String getRootPrincipal() throws IOException;
 
-    abstract public String getNameOfObjectToChangePassword();
+    abstract public String getNameOfObjectToChangePassword() throws IOException;
+
+    abstract public String getRealm();
 }

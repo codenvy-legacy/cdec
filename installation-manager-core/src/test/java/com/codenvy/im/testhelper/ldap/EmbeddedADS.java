@@ -18,49 +18,37 @@
 package com.codenvy.im.testhelper.ldap;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.directory.api.ldap.model.entry.DefaultEntry;
-import org.apache.directory.api.ldap.model.entry.Entry;
-import org.apache.directory.api.ldap.model.exception.LdapException;
-import org.apache.directory.api.ldap.model.ldif.LdifEntry;
-import org.apache.directory.api.ldap.model.ldif.LdifReader;
-import org.apache.directory.api.ldap.model.name.Dn;
-import org.apache.directory.api.ldap.model.schema.SchemaManager;
-import org.apache.directory.api.ldap.model.schema.registries.SchemaLoader;
-import org.apache.directory.api.ldap.schema.extractor.SchemaLdifExtractor;
-import org.apache.directory.api.ldap.schema.extractor.impl.DefaultSchemaLdifExtractor;
-import org.apache.directory.api.ldap.schema.loader.LdifSchemaLoader;
-import org.apache.directory.api.ldap.schema.manager.impl.DefaultSchemaManager;
-import org.apache.directory.api.util.exception.Exceptions;
 import org.apache.directory.server.constants.ServerDNConstants;
+import org.apache.directory.server.core.CoreSession;
 import org.apache.directory.server.core.DefaultDirectoryService;
-import org.apache.directory.server.core.api.CacheService;
-import org.apache.directory.server.core.api.CoreSession;
-import org.apache.directory.server.core.api.DirectoryService;
-import org.apache.directory.server.core.api.DnFactory;
-import org.apache.directory.server.core.api.InstanceLayout;
-import org.apache.directory.server.core.api.interceptor.context.AddOperationContext;
-import org.apache.directory.server.core.api.partition.Partition;
-import org.apache.directory.server.core.api.schema.SchemaPartition;
-import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmIndex;
+import org.apache.directory.server.core.DirectoryService;
+import org.apache.directory.server.core.interceptor.context.AddOperationContext;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.apache.directory.server.core.partition.ldif.LdifPartition;
-import org.apache.directory.server.i18n.I18n;
+import org.apache.directory.server.core.schema.SchemaPartition;
 import org.apache.directory.server.ldap.LdapServer;
 import org.apache.directory.server.protocol.shared.transport.TcpTransport;
+import org.apache.directory.shared.ldap.entry.DefaultServerEntry;
+import org.apache.directory.shared.ldap.entry.ServerEntry;
+import org.apache.directory.shared.ldap.ldif.LdifEntry;
+import org.apache.directory.shared.ldap.ldif.LdifReader;
+import org.apache.directory.shared.ldap.schema.SchemaManager;
+import org.apache.directory.shared.ldap.schema.ldif.extractor.SchemaLdifExtractor;
+import org.apache.directory.shared.ldap.schema.ldif.extractor.impl.DefaultSchemaLdifExtractor;
+import org.apache.directory.shared.ldap.schema.loader.ldif.LdifSchemaLoader;
+import org.apache.directory.shared.ldap.schema.manager.impl.DefaultSchemaManager;
+import org.apache.directory.shared.ldap.schema.registries.SchemaLoader;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * A simple example exposing how to embed Apache Directory Server version 1.5.7
  * into an application.
  *
- * @author <a href="mailto:dev@directory.apache.org">Apache Directory Project</a>
+ * @author Alexander Reshetnyak
  * @author Dmytro Nochevnov
  */
 public class EmbeddedADS {
@@ -108,79 +96,53 @@ public class EmbeddedADS {
      */
     public JdbmPartition addPartition(String partitionId, String partitionDn) throws Exception {
         // Create a new partition with the given partition id
-        DnFactory dnFactory = service.getDnFactory();
-        JdbmPartition partition = new JdbmPartition(service.getSchemaManager(), dnFactory);
+        JdbmPartition partition = new JdbmPartition();
         partition.setId(partitionId);
-        partition.setPartitionPath(new File(service.getInstanceLayout().getPartitionsDirectory(), partitionId).toURI());
-        partition.setSuffixDn(new Dn(partitionDn));
+        partition.setPartitionDir(new File(service.getWorkingDirectory(), partitionId));
+        partition.setSuffix(partitionDn);
         service.addPartition(partition);
 
         return partition;
     }
 
     /**
-     * Add a new set of index on the given attributes
-     *
-     * @param partition
-     *         The partition on which we want to add index
-     * @param attrs
-     *         The list of attributes to index
-     */
-    private void addIndex(Partition partition, String... attrs) {
-        // Index some attributes on the apache partition
-        Set indexedAttributes = new HashSet();
-
-        for (String attribute : attrs) {
-            indexedAttributes.add(new JdbmIndex(attribute, false));
-        }
-
-        ((JdbmPartition)partition).setIndexedAttributes(indexedAttributes);
-    }
-
-
-    /**
-     * initialize the schema manager and add the schema partition to diectory service
+     * initialize the schema manager and add the schema partition to directory service
      *
      * @throws Exception
      *         if the schema LDIF files are not found on the classpath
      */
     private void initSchemaPartition() throws Exception {
-        InstanceLayout instanceLayout = service.getInstanceLayout();
+        SchemaPartition schemaPartition = service.getSchemaService().getSchemaPartition();
 
-        File schemaPartitionDirectory = new File(instanceLayout.getPartitionsDirectory(), "schema");
+        // Init the LdifPartition
+        LdifPartition ldifPartition = new LdifPartition();
+        String workingDirectory = service.getWorkingDirectory().getPath();
+        ldifPartition.setWorkingDirectory( workingDirectory + "/schema" );
 
         // Extract the schema on disk (a brand new one) and load the registries
-        if (schemaPartitionDirectory.exists()) {
-            System.out.println("schema partition already exists, skipping schema extraction");
-        } else {
-            SchemaLdifExtractor extractor = new DefaultSchemaLdifExtractor(instanceLayout.getPartitionsDirectory());
-            extractor.extractOrCopy();
-        }
+        File schemaRepository = new File( workingDirectory, "schema" );
+        SchemaLdifExtractor extractor = new DefaultSchemaLdifExtractor( new File( workingDirectory ) );
+        extractor.extractOrCopy( true );
 
-        SchemaLoader loader = new LdifSchemaLoader(schemaPartitionDirectory);
-        SchemaManager schemaManager = new DefaultSchemaManager(loader);
+        schemaPartition.setWrappedPartition( ldifPartition );
+
+        SchemaLoader loader = new LdifSchemaLoader( schemaRepository );
+        SchemaManager schemaManager = new DefaultSchemaManager( loader );
+        service.setSchemaManager( schemaManager );
 
         // We have to load the schema now, otherwise we won't be able
         // to initialize the Partitions, as we won't be able to parse
-        // and normalize their suffix Dn
+        // and normalize their suffix DN
         schemaManager.loadAllEnabled();
+
+        schemaPartition.setSchemaManager( schemaManager );
 
         List<Throwable> errors = schemaManager.getErrors();
 
-        if (errors.size() != 0) {
-            throw new Exception(I18n.err(I18n.ERR_317, Exceptions.printErrors(errors)));
+        if ( errors.size() != 0 )
+        {
+            throw new Exception( "Schema load failed : " + errors );
         }
-
-        service.setSchemaManager(schemaManager);
-
-        // Init the LdifPartition with schema
-        LdifPartition schemaLdifPartition = new LdifPartition(schemaManager, service.getDnFactory());
-        schemaLdifPartition.setPartitionPath(schemaPartitionDirectory.toURI());
-
-        // The schema partition
-        SchemaPartition schemaPartition = new SchemaPartition(schemaManager);
-        schemaPartition.setWrappedPartition(schemaLdifPartition);
-        service.setSchemaPartition(schemaPartition);
     }
 
 
@@ -196,12 +158,7 @@ public class EmbeddedADS {
     private void initDirectoryService(File workDir) throws Exception {
         // Initialize the LDAP service
         service = new DefaultDirectoryService();
-        service.setInstanceLayout(new InstanceLayout(workDir));
-
-        CacheService cacheService = new CacheService();
-        cacheService.initialize(service.getInstanceLayout());
-
-        service.setCacheService(cacheService);
+        service.setWorkingDirectory(workDir);
 
         // first load the schema
         initSchemaPartition();
@@ -210,10 +167,10 @@ public class EmbeddedADS {
         // this is a MANDATORY partition
         // DO NOT add this via addPartition() method, trunk code complains about duplicate partition
         // while initializing
-        JdbmPartition systemPartition = new JdbmPartition(service.getSchemaManager(), service.getDnFactory());
+        JdbmPartition systemPartition = new JdbmPartition();
         systemPartition.setId("system");
-        systemPartition.setPartitionPath(new File(service.getInstanceLayout().getPartitionsDirectory(), systemPartition.getId()).toURI());
-        systemPartition.setSuffixDn(new Dn(ServerDNConstants.SYSTEM_DN));
+        systemPartition.setPartitionDir(new File(service.getWorkingDirectory(), systemPartition.getId()));
+        systemPartition.setSuffix(ServerDNConstants.SYSTEM_DN);
         systemPartition.setSchemaManager(service.getSchemaManager());
 
         // mandatory to call this method to set the system partition
@@ -228,7 +185,7 @@ public class EmbeddedADS {
         service.startup();
     }
 
-    public void importEntriesFromLdif(JdbmPartition partition, Path ldif) throws IOException, LdapException {
+    public void importEntriesFromLdif(JdbmPartition partition, Path ldif) throws Exception {
         try (java.io.InputStream is = new FileInputStream(ldif.toFile())) {
             LdifReader entries = new LdifReader(is);
 
@@ -236,10 +193,9 @@ public class EmbeddedADS {
             SchemaManager schemaManager = rootDSE.getDirectoryService().getSchemaManager();
 
             for (LdifEntry ldifEntry : entries) {
-                Entry entry = new DefaultEntry(schemaManager, ldifEntry.getEntry());
+                ServerEntry entry = new DefaultServerEntry(schemaManager, ldifEntry.getEntry());
                 AddOperationContext addContext = new AddOperationContext(service.getAdminSession(), entry);
                 partition.add(addContext);
-                partition.updateCache(addContext);
             }
         }
     }
@@ -264,6 +220,6 @@ public class EmbeddedADS {
      */
     public void stopAndCleanupServer() {
         server.stop();
-        FileUtils.deleteQuietly(service.getInstanceLayout().getPartitionsDirectory());
+        FileUtils.deleteQuietly(service.getWorkingDirectory());
     }
 }
