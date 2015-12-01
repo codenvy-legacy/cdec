@@ -122,8 +122,8 @@
             <!-- exclude to solve conflict with 'org.everrest:everrest-assured' artifact-->
             <exclusions>
                 <exclusion>
-                    <artifactId>httpcore</artifactId>
                     <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpcore</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -170,18 +170,18 @@
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <!-- exclude mina-core to solve version conflict with 'org.apache.sshd:sshd-core' artifact -->
+                <exclusion>
+                    <groupId>org.apache.mina</groupId>
+                    <artifactId>mina-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
             <scope>test</scope>
-            <exclusions>
-                <!-- exclude mina-core to solve conflict version with 'org.apache.directory.server:apacheds-all' artifact -->
-                <exclusion>
-                    <artifactId>org.apache.mina</artifactId>
-                    <groupId>mina-core</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.everrest</groupId>
