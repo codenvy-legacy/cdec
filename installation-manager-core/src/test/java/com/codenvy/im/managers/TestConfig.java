@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -63,7 +64,7 @@ public class TestConfig {
         assertNotNull(config.getValue(Config.PUPPET_RESOURCE_URL));
     }
 
-    @Test(dataProvider = "GetValues")
+    @Test(dataProvider = "getValues")
     public void testGetValues(String propertyName, String propertyValue, String osVersion, List<String> expectedResult) {
         OSUtils.VERSION = osVersion;
         Config config = new Config(Collections.singletonMap(propertyName, propertyValue));
@@ -71,8 +72,8 @@ public class TestConfig {
         assertEquals(result, expectedResult);
     }
 
-    @DataProvider(name = "GetValues")
-    public static Object[][] GetValues() {
+    @DataProvider
+    public Object[][] getValues() {
         return new Object[][]{
                 {"property", null, "6", null},
                 {"property", "", "6", new ArrayList<String>()},
@@ -83,4 +84,46 @@ public class TestConfig {
                 {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
     }
+
+    @Test(dataProvider = "getEnclosedValue")
+    public void testGetEnclosedValues(String propertyName, String osVersion, Config config, String expectedValue) {
+        OSUtils.VERSION = osVersion;
+        String result = config.getValue(propertyName);
+        assertEquals(result, expectedValue);
+    }
+
+    @DataProvider
+    public Object[][] getEnclosedValue() {
+        Map<String, String> properties = ImmutableMap.of(
+            "prop_1", "value_1.1,$prop_2,value_1.2",
+            "prop_2", "$prop_3,$prop_4",                  // check on several variables enclosed into one value
+            "prop_3", "$" + Config.PUPPET_AGENT_VERSION,  // Config.PUPPET_AGENT_VERSION depends on version
+            "prop_4", "value_4"
+        );
+
+        Config config = new Config(properties);
+
+        return new Object[][]{
+            {"prop_1", null, config, String.format("value_1.1,$%s,value_4,value_1.2", Config.PUPPET_AGENT_VERSION)},  // enclosed variable remained as it because of osVersion = null
+            {"prop_1", "6", config, "value_1.1,puppet-3.4.3-1.el6.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_1", "7", config, "value_1.1,puppet-3.5.1-1.el7.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_2", "6", config, "puppet-3.4.3-1.el6.noarch,value_4"},                     // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_2", "7", config, "puppet-3.5.1-1.el7.noarch,value_4"}                      // Config.PUPPET_AGENT_VERSION depends on version
+            };
+    }
+
+    @Test
+    public void testGetEnclosedCyclicValues() {
+        Map<String, String> properties = ImmutableMap.of(
+            "prop_1", "value_1.1,$prop_1,value_1.2",
+            "prop_2", "value_2,$prop_3",
+            "prop_3", "$prop_1"
+        );
+
+        Config config = new Config(properties);
+
+        String result = config.getValue("prop_1");
+        assertEquals(result, "value_1.1,$prop_1,value_1.2");
+    }
+
 }

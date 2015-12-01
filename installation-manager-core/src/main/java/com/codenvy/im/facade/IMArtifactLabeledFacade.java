@@ -24,8 +24,8 @@ import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
-import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BasicArtifactInfo;
@@ -70,7 +70,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    SaasAuthServiceProxy saasAuthServiceProxy,
                                    SaasAccountServiceProxy saasAccountServiceProxy,
                                    SaasRepositoryServiceProxy saasRepositoryServiceProxy,
-                                   PasswordManager passwordManager,
+                                   LdapManager ldapManager,
                                    NodeManager nodeManager,
                                    BackupManager backupManager,
                                    StorageManager storageManager,
@@ -83,7 +83,7 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
               saasAuthServiceProxy,
               saasAccountServiceProxy,
               saasRepositoryServiceProxy,
-              passwordManager,
+              ldapManager,
               nodeManager,
               backupManager,
               storageManager,

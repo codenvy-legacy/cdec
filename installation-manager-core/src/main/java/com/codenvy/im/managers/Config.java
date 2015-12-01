@@ -18,12 +18,16 @@
 package com.codenvy.im.managers;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.codenvy.im.utils.OSUtils.getVersion;
 import static java.util.Collections.unmodifiableMap;
@@ -39,23 +43,45 @@ public class Config {
     public static final String MULTI_SERVER_BASE_PROPERTIES  = "manifests/nodes/multi_server/base_configurations.pp";
     public static final String MULTI_SERVER_NODES_PROPERTIES = "manifests/nodes/multi_server/nodes.pp";
 
+    public static final Pattern ENCLOSED_PROPERTY_NAME_PATTERN =  Pattern.compile("\\$\\w+");
+
     public static final String VERSION = "version";
 
     public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
     public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
     public static final String PUPPET_RESOURCE_URL   = "puppet_resource_url";
 
-    public static final String AIO_HOST_URL                       = "aio_host_url"; // 3.1.0
-    public static final String HOST_URL                           = "host_url";
-    public static final String NODE_HOST_PROPERTY_SUFFIX          = "_host_name";  // suffix of property like "builder_host_name"
-    public static final String PUPPET_MASTER_HOST_NAME_PROPERTY   = "puppet_master_host_name";
-    public static final String MONGO_ADMIN_USERNAME_PROPERTY      = "mongo_admin_user_name";
-    public static final String MONGO_ADMIN_PASSWORD_PROPERTY      = "mongo_admin_pass";
-    public static final String NODE_SSH_USER_NAME_PROPERTY        = "node_ssh_user_name";
-    public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY = "node_ssh_user_private_key";
-    public static final String ADMIN_LDAP_DN                      = "admin_ldap_dn";
+    public static final String AIO_HOST_URL              = "aio_host_url"; // 3.1.0  TODO [ndp] remove outdated property
+    public static final String HOST_URL                  = "host_url";
+    public static final String NODE_HOST_PROPERTY_SUFFIX = "_host_name";  // suffix of property like "builder_host_name"
+
+    public static final String PUPPET_MASTER_HOST_NAME = "puppet_master_host_name";
+
+    public static final String MONGO_ADMIN_USERNAME      = "mongo_admin_user_name";
+    public static final String MONGO_ADMIN_PASSWORD      = "mongo_admin_pass";
+    public static final String NODE_SSH_USER_NAME        = "node_ssh_user_name";
+    public static final String NODE_SSH_USER_PRIVATE_KEY = "node_ssh_user_private_key";
+
+    /* ldap properties */
+    public static final String SYSTEM_LDAP_USER_BASE     = "system_ldap_user_base";
+
+    public static final String ADMIN_LDAP_DN        = "admin_ldap_dn";
     public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
-    public static final String SYSTEM_LDAP_PASSWORD = "system_ldap_password";
+    public static final String ADMIN_LDAP_PASSWORD  = "admin_ldap_password";
+
+    public static final String USER_LDAP_USER_CONTAINER_DN = "user_ldap_user_container_dn";
+    public static final String USER_LDAP_OBJECT_CLASSES    = "user_ldap_object_classes";
+    public static final String USER_LDAP_DN                = "user_ldap_dn";
+    public static final String USER_LDAP_PASSWORD          = "user_ldap_password";
+    public static final String USER_LDAP_USERS_OU          = "user_ldap_users_ou";
+    public static final String USER_LDAP_USER_DN           = "user_ldap_user_dn";
+
+    public static final String LDAP_HOST     = "ldap_host";
+    public static final String LDAP_PORT     = "ldap_port";
+    public static final String LDAP_PROTOCOL = "ldap_protocol";
+
+    public static final String JAVA_NAMING_SECURITY_AUTHENTICATION = "java_naming_security_authentication";
+    public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
@@ -80,13 +106,48 @@ public class Config {
         this.properties = Collections.unmodifiableMap(properties);
     }
 
-    /** @return the property value */
+    /**
+     * Recursively substitute properties which are enclosed into the requesting value.
+     * For example, value "ou=$user_ldap_users_ou,$user_ldap_dn" has enclosed properties '$user_ldap_users_ou', '$user_ldap_dn'.
+     * Algorithm doesn't take into account:
+     * - qualified variable names,
+     * - names like ${foo}.
+     *
+     * Algorithm doesn't substitute cyclic property links.
+     */
     @Nullable
     public String getValue(String property) {
-        if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
-            return PROPERTIES_BY_VERSION.get(property).get(getVersion());
+        return getValue(property, new ArrayList<>());
+    }
+
+    @Nullable
+    private String getValue(String property, List<String> usedProperties) {
+        if (usedProperties.contains(property)) {
+            return null;
         }
-        return properties.get(property);
+
+        usedProperties.add(property);
+
+        String value;
+        if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
+            value = PROPERTIES_BY_VERSION.get(property).get(getVersion());
+        } else {
+            value = properties.get(property);
+        }
+
+        if (value != null) {
+            Matcher m = ENCLOSED_PROPERTY_NAME_PATTERN.matcher(value);
+            while (m.find()) {
+                String enclosedPropertyName = m.group();
+                String enclosedPropertyValue = getValue(enclosedPropertyName.replace("$", ""), usedProperties);
+
+                if (enclosedPropertyValue != null) {
+                    value = value.replace(enclosedPropertyName, enclosedPropertyValue);
+                }
+            }
+        }
+
+        return value;
     }
 
     /** @return list of values separated by comma */
@@ -114,7 +175,6 @@ public class Config {
 
         return result;
     }
-
 
     /** Getter for #properties. Unmodifiable map will be returned */
     public Map<String, String> getProperties() {

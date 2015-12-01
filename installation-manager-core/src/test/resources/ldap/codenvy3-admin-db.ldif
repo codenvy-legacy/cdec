@@ -1,0 +1,148 @@
+dn: dc=codenvycorp,dc=com
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+dc: codenvycorp
+o: codenvycorp
+description: "Codenvy Inc."
+structuralObjectClass: organization
+entryUUID: 56edcc8e-227c-1035-897c-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.037868Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: ou=groups,dc=codenvycorp,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+description: groups
+structuralObjectClass: organizationalUnit
+entryUUID: 56f075ce-227c-1035-897d-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.055311Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: ou=users,dc=codenvycorp,dc=com
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+description: users
+structuralObjectClass: organizationalUnit
+entryUUID: 56f214ce-227c-1035-897e-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.065937Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=employees,ou=groups,dc=codenvycorp,dc=com
+description: Company employees
+objectClass: groupOfUniqueNames
+uniqueMember: cn=prodmanager,ou=users,dc=codenvycorp,dc=com
+uniqueMember: cn=admin,ou=users,dc=codenvycorp,dc=com
+cn: employees
+structuralObjectClass: groupOfUniqueNames
+entryUUID: 56f27932-227c-1035-897f-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.068466Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=apache_auth_service,dc=codenvycorp,dc=com
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: HTTPD
+cn: apache_auth_service
+sn: Server
+description: read-only access for authentication from apache
+userPassword:: cGFzc3dvcmQ=
+structuralObjectClass: organizationalPerson
+entryUUID: 56f3157c-227c-1035-8980-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.072510Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=backup-agent,ou=users,dc=codenvycorp,dc=com
+mail: backup-agent@codenvycorp.com
+userPassword:: cGFzc3dvcmQ=
+displayName: Backup Agent
+givenName: Backup
+objectClass: inetOrgPerson
+sn: Agent
+cn: backup-agent
+structuralObjectClass: inetOrgPerson
+entryUUID: 56f38f02-227c-1035-8981-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.075614Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=prodmanager,ou=users,dc=codenvycorp,dc=com
+mail: prodmanager@codenvy.com
+uid: prodmanager
+givenName: prodmanager
+objectClass: inetOrgPerson
+sn: Prod
+cn: Manager
+cn: prodmanager
+userPassword:: cGFzc3dvcmQ=
+displayName: Production Manager
+structuralObjectClass: inetOrgPerson
+entryUUID: 56f3b7fc-227c-1035-8982-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.076671Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=admin,ou=users,dc=codenvycorp,dc=com
+mail: admin@codenvy.com
+uid: admin
+givenName: admin
+objectClass: inetOrgPerson
+sn: Prod
+cn: Admin
+userPassword:: cGFzc3dvcmQ=
+displayName: Production Manager
+structuralObjectClass: inetOrgPerson
+entryUUID: 56f4f5f4-227c-1035-8983-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.084794Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=codenvy-product-admins,ou=groups,dc=codenvycorp,dc=com
+description: Admins for codenvy.com
+objectClass: groupOfUniqueNames
+uniqueMember: cn=admin,ou=users,dc=codenvycorp,dc=com
+cn: codenvy-product-admins
+structuralObjectClass: groupOfUniqueNames
+entryUUID: 56f52fec-227c-1035-8984-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.086281Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z
+
+dn: cn=codenvy-product-managers,ou=groups,dc=codenvycorp,dc=com
+description: Managers for codenvy.com
+objectClass: groupOfUniqueNames
+uniqueMember: cn=prodmanager,ou=users,dc=codenvycorp,dc=com
+cn: codenvy-product-managers
+structuralObjectClass: groupOfUniqueNames
+entryUUID: 56f55dfa-227c-1035-8985-bf6a903e986c
+creatorsName: cn=root,dc=codenvycorp,dc=com
+createTimestamp: 20151118201147Z
+entryCSN: 20151118201147.087473Z#000000#000#000000
+modifiersName: cn=root,dc=codenvycorp,dc=com
+modifyTimestamp: 20151118201147Z

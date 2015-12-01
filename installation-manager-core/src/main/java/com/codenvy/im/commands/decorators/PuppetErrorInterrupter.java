@@ -229,7 +229,7 @@ public class PuppetErrorInterrupter implements Command {
         Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         String hostUrl = codenvyConfig.getHostUrl();
         String systemAdminName = codenvyConfig.getValue(Config.ADMIN_LDAP_USER_NAME);
-        char[] systemAdminPassword = codenvyConfig.getValue(Config.SYSTEM_LDAP_PASSWORD).toCharArray();
+        char[] systemAdminPassword = codenvyConfig.getValue(Config.ADMIN_LDAP_PASSWORD).toCharArray();
         InstallType installType = configManager.detectInstallationType();
         String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
 

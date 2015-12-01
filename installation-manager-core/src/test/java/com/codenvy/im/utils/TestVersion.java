@@ -20,9 +20,9 @@ package com.codenvy.im.utils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Anatoliy Bazko
@@ -30,7 +30,7 @@ import static org.testng.AssertJUnit.assertTrue;
 public class TestVersion {
     @Test(dataProvider = "testValidVersion")
     public void testValidVersion(String version) throws Exception {
-        assertTrue("Version is invalid: " + version, Version.isValidVersion(version));
+        assertTrue(Version.isValidVersion(version), "Version is invalid: " + version);
     }
 
     @DataProvider(name = "testValidVersion")
@@ -57,7 +57,7 @@ public class TestVersion {
 
     @Test(dataProvider = "testInvalidVersion")
     public void testInvalidVersion(String version) throws Exception {
-        assertFalse("Version is valid: " + version, Version.isValidVersion(version));
+        assertFalse(Version.isValidVersion(version), "Version is valid: " + version);
     }
 
     @DataProvider(name = "testInvalidVersion")
@@ -128,8 +128,8 @@ public class TestVersion {
 
 
     @Test(dataProvider = "testCompareTo")
-    public void testCompareTo(String version1, String version2, int result) throws Exception {
-        assertEquals(version1 + " vs " + version2, Version.valueOf(version1).compareTo(Version.valueOf(version2)), result);
+    public void testCompareTo(String version1, String version2, int expected) throws Exception {
+        assertEquals(Version.valueOf(version1).compareTo(Version.valueOf(version2)), expected, version1 + " vs " + version2);
     }
 
     @DataProvider(name = "testCompareTo")
@@ -168,7 +168,7 @@ public class TestVersion {
     public void testIsSuitedFor(String version, String pattern, boolean expected) throws Exception {
         boolean actual = Version.valueOf(version).isSuitedFor(pattern);
 
-        assertEquals(pattern, expected, actual);
+        assertEquals(actual, expected, pattern);
     }
 
     @DataProvider(name = "testIsSuitedFor")
@@ -186,4 +186,21 @@ public class TestVersion {
                 {"1.0.1", "1\\.1\\.(.*)", false}
         };
     }
+
+    @Test(dataProvider = "getDataForTestCompareToMajor")
+    public void testCompareToMajor(Version version, int majorToCompare, int expected) throws Exception {
+        int actual = version.compareToMajor(majorToCompare);
+
+        assertEquals(actual , expected);
+    }
+
+    @DataProvider
+    public static Object[][] getDataForTestCompareToMajor() {
+        return new Object[][]{
+            {Version.valueOf("1.0.0-SNAPSHOT"), 1, 0},
+            {Version.valueOf("2.0.0"), 1, 1},
+            {Version.valueOf("1.0.0"), 2, -1}
+        };
+    }
+
 }

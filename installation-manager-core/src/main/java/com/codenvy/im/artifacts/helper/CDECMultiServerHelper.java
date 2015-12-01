@@ -210,14 +210,14 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
                 commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
-                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
 
                 // make it possible to sign up nodes' certificates automatically
                 StringBuilder autosignFileContent = new StringBuilder();
                 for (NodeConfig node : nodeConfigs) {
                     autosignFileContent.append(format("%s\n", node.getHost()));
                 }
-                autosignFileContent.append(format("%s\n", config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+                autosignFileContent.append(format("%s\n", config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
 
                 commands.add(createCommand(format("sudo sh -c \"echo -e '%s' > /etc/puppet/autosign.conf\"",
                                                   autosignFileContent)));
@@ -241,13 +241,13 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                   "  report = true\\n" +
                                                   "  default_schedules = false\\n" +
                                                   "  certname = %1$s\\n/g' /etc/puppet/puppet.conf",
-                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME))));
 
                 commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                                   "  server = %s\\n" +
                                                   "  runinterval = 420\\n" +
                                                   "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY))));
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME))));
 
                 // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
                 commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'"));
@@ -258,7 +258,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                   "  server = %s\\n" +
                                                   "  runinterval = 420\\n" +
                                                   "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)),
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME)),
                                            nodeConfigs));
 
                 for (NodeConfig node : nodeConfigs) {
@@ -339,7 +339,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     commands.add(createReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
                 }
                 commands.add(createReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_NODES_PROPERTIES, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
-                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
 
                 return new MacroCommand(commands, "Configure Codenvy");
 
@@ -445,8 +445,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("mkdir -p %s", remoteMongoBackupPath), dataNode));
         commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin --quiet",
                                           // suppress stdout to avoid hanging up SecureSSh
-                                          codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                          codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
+                                          codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                          codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                           remoteMongoBackupPath), dataNode));
 
         Path adminDatabaseBackup = remoteMongoBackupPath.resolve("admin");
@@ -463,8 +463,8 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("mkdir -p %s", remoteMongoAnalyticsBackupPath), analyticsNode));
         commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin --quiet",
                                           // suppress stdout to avoid hanging up SecureSSh
-                                          codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                          codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
+                                          codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                          codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                           remoteMongoAnalyticsBackupPath), analyticsNode));
 
         adminDatabaseBackup = remoteMongoAnalyticsBackupPath.resolve("admin");
@@ -634,13 +634,13 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             // remove all databases except 'admin' one
             commands.add(createCommand(format("/usr/bin/mongo -u %s -p %s --authenticationDatabase admin --quiet --eval " +
                                               "'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), dataNode));
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD)), dataNode));
 
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop --quiet",
                                               // suppress stdout to avoid hanging up SecureSSH
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                               remoteMongoBackupPath), dataNode));
         }
 
@@ -655,13 +655,13 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
             // remove all databases expect 'admin' one
             commands.add(createCommand(format("/usr/bin/mongo -u %s -p %s --authenticationDatabase admin --quiet --eval 'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY)), analyticsNode));
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD)), analyticsNode));
 
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop --quiet",
 // suppress stdout to avoid hanging up SecureSSh
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                               remoteMongoAnalyticsBackupPath), analyticsNode));
         }
 

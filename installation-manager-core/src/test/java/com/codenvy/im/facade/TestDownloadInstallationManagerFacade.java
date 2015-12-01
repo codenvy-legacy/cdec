@@ -23,8 +23,8 @@ import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
+import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
-import com.codenvy.im.managers.PasswordManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -33,7 +33,6 @@ import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
-
 import org.mockito.Mock;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -70,7 +69,7 @@ public class TestDownloadInstallationManagerFacade {
     @Mock
     private HttpTransport              transport;
     @Mock
-    private PasswordManager            passwordManager;
+    private LdapManager                ldapManager;
     @Mock
     private NodeManager                nodeManager;
     @Mock
@@ -97,7 +96,7 @@ public class TestDownloadInstallationManagerFacade {
                                                                    saasAuthServiceProxy,
                                                                    saasAccountServiceProxy,
                                                                    saasRepositoryServiceProxy,
-                                                                   passwordManager,
+                                                                   ldapManager,
                                                                    nodeManager,
                                                                    backupManager,
                                                                    storageManager,

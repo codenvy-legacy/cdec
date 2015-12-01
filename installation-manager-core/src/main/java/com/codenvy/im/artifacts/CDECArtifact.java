@@ -58,8 +58,8 @@ import static java.lang.String.format;
  */
 @Singleton
 public class CDECArtifact extends AbstractArtifact {
-    public static final String NAME = "codenvy";
-    private final Map<InstallType, CDECArtifactHelper> helpers = ImmutableMap.of(
+    public static final String                         NAME    = "codenvy";
+    private final Map<InstallType, CDECArtifactHelper> HELPERS = ImmutableMap.of(
             InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this, configManager),
             InstallType.MULTI_SERVER, new CDECMultiServerHelper(this, configManager));
 
@@ -263,7 +263,7 @@ public class CDECArtifact extends AbstractArtifact {
     }
 
     protected CDECArtifactHelper getHelper(InstallType type) {
-        return helpers.get(type);
+        return HELPERS.get(type);
     }
 
     protected boolean isApiServiceAlive() {

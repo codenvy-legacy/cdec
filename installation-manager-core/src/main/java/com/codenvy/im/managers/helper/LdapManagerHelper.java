@@ -15,30 +15,26 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.saas;
+package com.codenvy.im.managers.helper;
 
-import com.codenvy.im.utils.HttpTransport;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import com.codenvy.im.managers.ConfigManager;
 
-import javax.inject.Named;
+import java.io.IOException;
 
 /**
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-@Singleton
-public class SaasApiServiceProxy {
-    private final String        saasApiEndpoint;
-    private final HttpTransport transport;
+abstract public class LdapManagerHelper {
 
-    @Inject
-    public SaasApiServiceProxy(@Named("saas.api.endpoint") String saasApiEndpoint,
-                               HttpTransport transport) {
-        this.saasApiEndpoint = saasApiEndpoint;
-        this.transport = transport;
+    protected ConfigManager configManager;
+
+    public LdapManagerHelper(ConfigManager configManager) {
+        this.configManager = configManager;
     }
 
-    public int getUsersCount() {
-        return 0;
-    }
+    abstract public String getRootPrincipal() throws IOException;
+
+    abstract public String getNameOfObjectToChangePassword() throws IOException;
+
+    abstract public String getRealm();
 }

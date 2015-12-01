@@ -17,61 +17,86 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.im.saas.SaasApiServiceProxy;
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.LdapManager;
+import com.codenvy.im.report.ReportParameters;
+import com.codenvy.im.report.ReportType;
+import com.codenvy.im.utils.Commons;
+import com.codenvy.im.utils.HttpTransport;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.codenvy.mail.MailSenderClient;
+import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.schedule.ScheduleCron;
 
 import javax.inject.Named;
 import javax.mail.MessagingException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.net.InetAddress;
+
+import static com.codenvy.im.utils.Commons.combinePaths;
 
 /**
  * Sends reports:
  * <li>to Codenvy with number of users.</li>
  *
  * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
 @Singleton
 public class ReportSender {
-    private static final String WEEKLY_ON_PREM_REPORT = "Weekly On-Prem report";
-
-    private final SaasApiServiceProxy apiService;
-    private final MailSenderClient    mailClient;
-    private final String              recipients;
-    private final String              sender;
+    private final LdapManager      ldapManager;
+    private final MailSenderClient mailClient;
+    private final HttpTransport    httpTransport;
+    private final String           updateServerEndpoint;
+    private final ConfigManager    configManager;
 
     @Inject
-    public ReportSender(@Named("installation-manager.report-sender.recipients") String recipients,
-                        @Named("installation-manager.report-sender.sender") String sender,
-                        SaasApiServiceProxy apiService,
-                        MailSenderClient mailClient) {
-        this.apiService = apiService;
+    public ReportSender(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
+                        LdapManager ldapManager,
+                        MailSenderClient mailClient,
+                        HttpTransport httpTransport,
+                        ConfigManager configManager) {
+        this.ldapManager = ldapManager;
         this.mailClient = mailClient;
-        this.recipients = recipients;
-        this.sender = sender;
+        this.httpTransport = httpTransport;
+        this.updateServerEndpoint = updateServerEndpoint;
+        this.configManager = configManager;
     }
 
-    //    @ScheduleCron(cron = "0 0 1 ? * SUN *") // TODO [AB] every sunday's night
-    // @ScheduleCron(cron = "0 0/1 * 1/1 * ? *")
-    public void sendWeeklyReports() throws IOException, MessagingException {
+//    @ScheduleCron(cron = "0 0 1 ? * SUN *")  // TODO [ndp] CDEC-376
+    // @ScheduleCron(cron = "0 0/1 * 1/1 * ? *")  // send every 1 minute
+    public void sendWeeklyReports() throws IOException, MessagingException, JsonParseException {
         sendNumberOfUsers();
     }
 
-    private void sendNumberOfUsers() throws IOException, MessagingException {
-        StringBuilder msg = new StringBuilder();
-        msg.append("Hostname: ");
-        msg.append(InetAddress.getLocalHost().getHostName());
-        msg.append('\n');
-        msg.append("Number of users: ");
-        msg.append(apiService.getUsersCount());
-        msg.append('\n');
-        msg.append('\n');
+    private void sendNumberOfUsers() throws IOException, MessagingException, JsonParseException {
+        ReportParameters parameters = obtainReportParameters(ReportType.CODENVY_ONPREM_USER_NUMBER_REPORT);
 
-        mailClient.sendMail(sender, recipients, null, WEEKLY_ON_PREM_REPORT, MediaType.TEXT_PLAIN, msg.toString());
+        if (! parameters.isActive()) {
+            return;
+        }
+
+        String externalIP = obtainExternalIP();
+
+        StringBuilder msg = new StringBuilder();
+        msg.append(String.format("External IP address: %s\n", externalIP));
+        msg.append(String.format("Hostname: %s\n", configManager.loadInstalledCodenvyConfig().getValue(Config.HOST_URL)));
+        msg.append(String.format("Number of users: %s\n", ldapManager.getNumberOfUsers()));
+
+        mailClient.sendMail(parameters.getSender(), parameters.getReceiver(), null, parameters.getTitle(), MediaType.TEXT_PLAIN, msg.toString());
+    }
+
+    private String obtainExternalIP() throws IOException {
+        String requestUrl = combinePaths(updateServerEndpoint, "/util/client-ip");
+        return httpTransport.doGet(requestUrl);
+    }
+
+    private ReportParameters obtainReportParameters(ReportType reportType) throws IOException, JsonParseException {
+        String requestUrl = combinePaths(updateServerEndpoint, "/parameters/" + reportType.name().toLowerCase());
+
+        String response = httpTransport.doPost(requestUrl, null);
+        return Commons.fromJson(response, ReportParameters.class);
     }
 }

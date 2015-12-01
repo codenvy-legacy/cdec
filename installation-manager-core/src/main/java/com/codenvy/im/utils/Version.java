@@ -193,4 +193,8 @@ public class Version implements Comparable<Version> {
             return v2.compareTo(v1);
         }
     }
+
+    public int compareToMajor(int majorToCompare) {
+        return Integer.compare(this.major, majorToCompare);
+    }
 }

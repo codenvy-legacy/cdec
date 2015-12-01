@@ -327,8 +327,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         Path mongoBackupPath = getComponentTempPath(tempDir, MONGO);
         commands.add(createCommand(format("mkdir -p %s", mongoBackupPath)));
         commands.add(createCommand(format("/usr/bin/mongodump -u%s -p%s -o %s --authenticationDatabase admin --quiet",
-                                          codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                          codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
+                                          codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                          codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                           mongoBackupPath)));
 
         Path adminDatabaseBackup = mongoBackupPath.resolve("admin");
@@ -412,12 +412,12 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             // remove all databases expect 'admin' one
             commands.add(createCommand(format("/usr/bin/mongo -u %s -p %s --authenticationDatabase admin --quiet --eval " +
                                               "'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'",
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY))));
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD))));
             commands.add(createCommand(format("/usr/bin/mongorestore -u%s -p%s %s --authenticationDatabase admin --drop --quiet",
                                               // suppress stdout to avoid hanging up SecureSSH
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME_PROPERTY),
-                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD_PROPERTY),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_USERNAME),
+                                              codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                               mongoBackupPath)));
         }
         // restore filesystem data from {backup_file}/fs folder
