@@ -1043,7 +1043,7 @@ doCheckAvailableResourcesOnNodes() {
 
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
             MIN_RAM_KB=1500000
-            MIN_DISK_SPACE_KB=50000000
+            MIN_DISK_SPACE_KB=45000000
         else
             MIN_RAM_KB=1000000
             MIN_DISK_SPACE_KB=20000000
