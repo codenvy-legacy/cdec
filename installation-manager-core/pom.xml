@@ -175,6 +175,13 @@
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <!-- exclude mina-core to solve conflict version with 'org.apache.directory.server:apacheds-all' artifact -->
+                <exclusion>
+                    <artifactId>org.apache.mina</artifactId>
+                    <groupId>mina-core</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.everrest</groupId>
