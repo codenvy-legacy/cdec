@@ -27,12 +27,15 @@ import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -63,6 +66,8 @@ import static org.testng.Assert.assertTrue;
  */
 public class InstallManagerTest extends BaseTest {
 
+    public static final String INITIAL_OS_VERSION = OSUtils.VERSION;
+
     @Mock
     private ConfigManager configManager;
     @Mock
@@ -72,6 +77,11 @@ public class InstallManagerTest extends BaseTest {
     private Artifact       installManagerArtifact;
     private InstallManager installManager;
 
+    @BeforeClass
+    public void setOsVersion() {
+        OSUtils.VERSION = "7";
+    }
+
     @BeforeMethod
     public void setUp() throws IOException {
         MockitoAnnotations.initMocks(this);
@@ -80,6 +90,11 @@ public class InstallManagerTest extends BaseTest {
         cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager));
 
         installManager = spy(new InstallManager(new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
+    }
+
+    @AfterClass
+    public void restoreOsVersion() throws Exception {
+        OSUtils.VERSION = INITIAL_OS_VERSION;
     }
 
     @Test
