@@ -28,10 +28,12 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
+
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -39,8 +41,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.codenvy.im.commands.CommandLibrary.createCompressCommand;
 import static com.codenvy.im.commands.CommandLibrary.createCopyFromLocalToRemoteCommand;
@@ -172,22 +176,31 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 commands.add(createCommand("sudo sed -i \"\\$a    path /etc/puppet/files\"  /etc/puppet/fileserver.conf"));
                 commands.add(createCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
 
-                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
-                    String property = e.getKey();
-                    String value = e.getValue();
+                Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
+                while (propertiesFiles.hasNext()) {
+                    Path file = propertiesFiles.next();
 
-                    commands.add(createPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createPropertyReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
+                    commands.add(createReplaceCommand(file,
+                                                      ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
+                                                      config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+
+                    for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                        String property = e.getKey();
+                        String value = e.getValue();
+
+                        commands.add(createPropertyReplaceCommand(file, "$" + property, value));
+                    }
                 }
 
                 for (Map.Entry<String, String> e : ConfigManager.getPuppetNodesConfigReplacement(nodeConfigs).entrySet()) {
                     String replacingToken = e.getKey();
                     String replacement = e.getValue();
 
-                    commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
+                    commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PP, replacingToken, replacement));
                 }
-                commands.add(createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PROPERTIES, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
-                                                  config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
+                commands.add(
+                        createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PP, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
+                                             config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
 
                 // make it possible to sign up nodes' certificates automatically
                 StringBuilder autosignFileContent = new StringBuilder();
@@ -300,12 +313,17 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
             case 1:
                 List<Command> commands = new ArrayList<>();
-                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
-                    String property = e.getKey();
-                    String value = e.getValue();
 
-                    commands.add(createPropertyReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createPropertyReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_BASE_PROPERTIES, "$" + property, value));
+                Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(getTmpCodenvyDir(), InstallType.MULTI_SERVER);
+                while (propertiesFiles.hasNext()) {
+                    Path file = propertiesFiles.next();
+
+                    for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                        String property = e.getKey();
+                        String value = e.getValue();
+
+                        commands.add(createPropertyReplaceCommand(file, "$" + property, value));
+                    }
                 }
 
                 final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
@@ -313,9 +331,11 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                     String replacingToken = e.getKey();
                     String replacement = e.getValue();
 
-                    commands.add(createReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_NODES_PROPERTIES, replacingToken, replacement));
+                    commands.add(
+                            createReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_NODES_PP, replacingToken, replacement));
                 }
-                commands.add(createReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_NODES_PROPERTIES, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
+                commands.add(createReplaceCommand(getTmpCodenvyDir() + "/" + Config.MULTI_SERVER_NODES_PP,
+                                                  ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
                                                   config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
 
                 return new MacroCommand(commands, "Configure Codenvy");
@@ -717,16 +737,14 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy multi server config
-        String multiServerPropertiesFilePath = configManager.getPuppetConfigFile(Config.MULTI_SERVER_PROPERTIES).toString();
-        commands.add(createFileBackupCommand(multiServerPropertiesFilePath));
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            commands.add(createPropertyReplaceCommand(multiServerPropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
-        }
+        Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
+        while (propertiesFiles.hasNext()) {
+            Path file = propertiesFiles.next();
 
-        String multiServerBasePropertiesFilePath = configManager.getPuppetConfigFile(Config.MULTI_SERVER_BASE_PROPERTIES).toString();
-        commands.add(createFileBackupCommand(multiServerBasePropertiesFilePath));
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            commands.add(createPropertyReplaceCommand(multiServerBasePropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
+            commands.add(createFileBackupCommand(file));
+            commands.addAll(properties.entrySet().stream()
+                                      .map(entry -> createPropertyReplaceCommand(file, "$" + entry.getKey(), entry.getValue()))
+                                      .collect(Collectors.toList()));
         }
 
         // force applying updated puppet config on puppet agent at the all nodes (don't take into account additional nodes)

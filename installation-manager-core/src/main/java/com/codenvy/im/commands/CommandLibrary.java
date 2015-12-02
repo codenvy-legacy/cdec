@@ -24,6 +24,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,10 +56,18 @@ public class CommandLibrary {
         return createPropertyReplaceCommand(file, property, value, true);
     }
 
+    public static Command createPropertyReplaceCommand(Path file, String property, String value) {
+        return createPropertyReplaceCommand(file.toString(), property, value, true);
+    }
+
     public static Command createPropertyReplaceCommand(String file, String property, String value, boolean withSudo) {
         String replacingToken = format("%s *= *\"[^\"]*\"", property);
         String replacement = format("%s = \"%s\"", property, value);
         return createReplaceCommand(file, replacingToken, replacement, withSudo);
+    }
+
+    public static Command createReplaceCommand(Path file, String replacingToken, String replacement) {
+        return createReplaceCommand(file.toString(), replacingToken, replacement, true);
     }
 
     public static Command createReplaceCommand(String file, String replacingToken, String replacement) {
@@ -107,6 +116,10 @@ public class CommandLibrary {
 
     public static Command createFileBackupCommand(final String file) {
         return createCommand(getFileBackupCommand(file));
+    }
+
+    public static Command createFileBackupCommand(final Path file) {
+        return createCommand(getFileBackupCommand(file.toString()));
     }
 
     protected static String getFileBackupCommand(final String file) {

@@ -19,16 +19,17 @@ package com.codenvy.im.managers;
 
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
-import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.commands.MacroCommand;
-import com.google.common.collect.ImmutableList;
+import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
@@ -92,11 +93,13 @@ public class NodeManager {
 
         try {
             // modify puppet master config
-            String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
-            commands.add(createFileBackupCommand(puppetMasterConfigFilePath));
-            commands.add(createPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                                      "$" + property,
-                                                      value));
+            Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
+            while (propertiesFiles.hasNext()) {
+                Path file = propertiesFiles.next();
+
+                commands.add(createFileBackupCommand(file));
+                commands.add(createPropertyReplaceCommand(file, "$" + property, value));
+            }
 
             // add node into the autosign list of puppet master
             commands.add(createCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
@@ -202,39 +205,42 @@ public class NodeManager {
                                            String property) throws NodeException {
         try {
             String value = nodesConfigUtil.getValueWithoutNode(node);
-            String puppetMasterConfigFilePath = "/etc/puppet/" + Config.MULTI_SERVER_PROPERTIES;
             NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
 
-            return new MacroCommand(ImmutableList.of(
-                // modify puppet master config
-                createFileBackupCommand(puppetMasterConfigFilePath),
-                createPropertyReplaceCommand(puppetMasterConfigFilePath,
-                                             "$" + property,
-                                             value),
+            List<Command> commands = new ArrayList<>();
 
-                // force applying updated puppet config for puppet agent on API node
-                createForcePuppetAgentCommand(apiNode),
+            // modify puppet master config
+            Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
+            while (propertiesFiles.hasNext()) {
+                Path file = propertiesFiles.next();
 
-                // wait until there node is removed from configuration on API server
-                createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                     "while true; do " +
-                                     "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
-                                     "    sleep 5; " +  // sleep 5 sec
-                                     "done; " +
-                                     "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
-                              apiNode),
+                commands.add(createFileBackupCommand(file));
+                commands.add(createPropertyReplaceCommand(file, "$" + property, value));
+            }
 
-                // wait until API server restarts
-                new WaitOnAliveArtifactCommand(cdecArtifact),
+            // force applying updated puppet config for puppet agent on API node
+            commands.add(createForcePuppetAgentCommand(apiNode));
 
-                // remove out-date puppet agent's certificate
-                createCommand(format("sudo puppet cert clean %s", node.getHost())),
-                createCommand("sudo systemctl restart puppetmaster"),
+            // wait until there node is removed from configuration on API server
+            commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
+                                              "while true; do " +
+                                              "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
+                                              "    sleep 5; " +  // sleep 5 sec
+                                              "done; " +
+                                              "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
+                                       apiNode));
 
-                // stop puppet agent on removing node and remove out-date certificate
-                createCommand("sudo systemctl stop puppet", node),
-                createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
-            ), "Remove node commands");
+            // wait until API server restarts
+            commands.add(new WaitOnAliveArtifactCommand(cdecArtifact));
+
+            // remove out-date puppet agent's certificate
+            commands.add(createCommand(format("sudo puppet cert clean %s", node.getHost())));
+            commands.add(createCommand("sudo systemctl restart puppetmaster"));
+
+            // stop puppet agent on removing node and remove out-date certificate
+            commands.add(createCommand("sudo systemctl stop puppet", node));
+            commands.add(createCommand("sudo rm -rf /var/lib/puppet/ssl", node));
+            return new MacroCommand(commands, "Remove node commands");
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }

@@ -28,9 +28,11 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
+import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
+
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -38,8 +40,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createFileRestoreOrBackupCommand;
@@ -47,6 +51,7 @@ import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentComma
 import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStartServiceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStopServiceCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
@@ -132,16 +137,17 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                 commands.add(createCommand("sudo sed -i \"\\$a    allow *\"                 /etc/puppet/fileserver.conf"));
 
 
-                commands.add(createCommand(format("sudo sed -i 's/%s/%s/g' /etc/puppet/manifests/nodes/single_server/single_server.pp",
-                                                  "YOUR_DNS_NAME", config.getHostUrl())));
+                Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
+                while (propertiesFiles.hasNext()) {
+                    Path file = propertiesFiles.next();
 
-                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
-                    String property = e.getKey();
-                    String value = e.getValue();
+                    commands.add(createReplaceCommand(file, "YOUR_DNS_NAME", config.getHostUrl()));
+                    for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                        String property = e.getKey();
+                        String value = e.getValue();
 
-                    commands.add(createPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(
-                        createPropertyReplaceCommand("/etc/puppet/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                        commands.add(createPropertyReplaceCommand(file, "$" + property, value));
+                    }
                 }
 
                 return new MacroCommand(commands, "Configure puppet master");
@@ -206,16 +212,20 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
             case 1:
                 List<Command> commands = new ArrayList<>();
-                commands.add(createCommand(format("sed -i 's/YOUR_DNS_NAME/%s/g' %s",
-                                                  config.getHostUrl(),
-                                                  Paths.get(getTmpCodenvyDir(), Config.SINGLE_SERVER_PROPERTIES))));
-                for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
-                    String property = e.getKey();
-                    String value = e.getValue();
 
-                    commands.add(createPropertyReplaceCommand(getTmpCodenvyDir() + "/" + Config.SINGLE_SERVER_PROPERTIES, "$" + property, value));
-                    commands.add(createPropertyReplaceCommand(getTmpCodenvyDir() + "/" + Config.SINGLE_SERVER_BASE_PROPERTIES, "$" + property, value));
+                Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(getTmpCodenvyDir(), InstallType.SINGLE_SERVER);
+                while (propertiesFiles.hasNext()) {
+                    Path file = propertiesFiles.next();
+
+                    commands.add(createReplaceCommand(file, "YOUR_DNS_NAME", config.getHostUrl()));
+                    for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
+                        String property = e.getKey();
+                        String value = e.getValue();
+
+                        commands.add(createPropertyReplaceCommand(file, "$" + property, value));
+                    }
                 }
+
                 return new MacroCommand(commands, "Configure Codenvy");
 
             case 2:
@@ -419,16 +429,14 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy single server config
-        String singleServerPropertiesFilePath = configManager.getPuppetConfigFile(Config.SINGLE_SERVER_PROPERTIES).toString();
-        commands.add(createFileBackupCommand(singleServerPropertiesFilePath));
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            commands.add(createPropertyReplaceCommand(singleServerPropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
-        }
+        Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
+        while (propertiesFiles.hasNext()) {
+            Path file = propertiesFiles.next();
 
-        String singleServerBasePropertiesFilePath = configManager.getPuppetConfigFile(Config.SINGLE_SERVER_BASE_PROPERTIES).toString();
-        commands.add(createFileBackupCommand(singleServerBasePropertiesFilePath));
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-            commands.add(createPropertyReplaceCommand(singleServerBasePropertiesFilePath, "$" + entry.getKey(), entry.getValue()));
+            commands.add(createFileBackupCommand(file));
+            commands.addAll(properties.entrySet().stream()
+                                      .map(entry -> createPropertyReplaceCommand(file, "$" + entry.getKey(), entry.getValue()))
+                                      .collect(Collectors.toList()));
         }
 
         // force applying updated puppet config on puppet agent of API node

@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.commands;
 
+import com.codenvy.im.BaseTest;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
@@ -24,7 +25,6 @@ import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import org.apache.commons.io.FileUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -42,11 +42,12 @@ import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
 import static org.apache.commons.io.FileUtils.readFileToString;
 import static org.apache.commons.io.FileUtils.write;
+import static org.apache.commons.io.FileUtils.writeStringToFile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
-public class TestCommandLibrary {
+public class TestCommandLibrary extends BaseTest {
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
     public static NodeConfig testApiNode    = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
     public static NodeConfig testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
@@ -218,7 +219,8 @@ public class TestCommandLibrary {
 
         Path patchDir = Paths.get("target/patches");
         createDirectories(patchDir);
-        FileUtils.writeStringToFile(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_before_update.sh").toFile(), "echo -n \"$test_property1\"");
+        writeStringToFile(patchDir.resolve(InstallType.MULTI_SERVER.toString().toLowerCase()).resolve("patch_before_update.sh").toFile(),
+                          "echo -n \"$test_property1\"");
 
         Command command = CommandLibrary.createPatchCommand(patchDir, CommandLibrary.PatchType.BEFORE_UPDATE, installOptions);
         assertEquals(command.toString(), "[{'command'='sudo cat target/patches/multi_server/patch_before_update.sh " +
@@ -228,32 +230,6 @@ public class TestCommandLibrary {
                                          "&& sudo mv tmp.tmp target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}, " +
                                          "{'command'='bash target/patches/multi_server/patch_before_update.sh', 'agent'='LocalAgent'}]");
     }
-
-//    @Test
-//    public void testCreatePatchAfterUpdateSingleServerCommand() throws Exception {
-//        ImmutableMap<String, String> configProperties = ImmutableMap.of("test_property1", "property1",
-//                                                                        "test_property2", "property2");
-//        InstallOptions installOptions = new InstallOptions().setInstallType(InstallType.SINGLE_SERVER)
-//                                                            .setConfigProperties(configProperties);
-//
-//        Path patchDir = Paths.get("target/patches");
-//        createDirectories(patchDir);
-//        createDirectories(patchDir.resolve("1.0.1"));
-//        createDirectories(patchDir.resolve("1.0.2"));
-//
-//        FileUtils.write(patchDir.resolve("1.0.1").resolve(InstallType.SINGLE_SERVER.toString().toLowerCase()).resolve("patch_after_update.sh").toFile(), "echo -n \"$test_property1\"");
-//        FileUtils.write(patchDir.resolve("1.0.2").resolve(InstallType.SINGLE_SERVER.toString().toLowerCase()).resolve("patch_after_update.sh").toFile(), "echo -n \"1.0.2\"");
-//
-//        Command command = CommandLibrary.createPatchCommand(patchDir, CommandLibrary.PatchType.AFTER_UPDATE, installOptions);
-//        assertEquals(command.toString(), "[" +
-//                                         "{'command'='sudo sed -i 's/$test_property1/property1/g' target/patches/1.0.1/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
-//                                         "{'command'='sudo sed -i 's/$test_property2/property2/g' target/patches/1.0.1/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
-//                                         "{'command'='sudo bash target/patches/1.0.1/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
-//                                         "{'command'='sudo sed -i 's/$test_property1/property1/g' target/patches/1.0.2/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
-//                                         "{'command'='sudo sed -i 's/$test_property2/property2/g' target/patches/1.0.2/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
-//                                         "{'command'='sudo bash target/patches/1.0.2/single_server/patch_after_update.sh', 'agent'='LocalAgent'}]");
-//    }
-
 
     @Test
     public void testCreateStopServiceCommand() throws AgentException {

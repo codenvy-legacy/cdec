@@ -17,6 +17,8 @@
  */
 package com.codenvy.im.managers;
 
+import com.google.common.collect.ImmutableList;
+
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -36,12 +38,16 @@ import static java.util.Collections.unmodifiableMap;
 public class Config {
     public static final String PUPPET_CONF_FILE_NAME = "puppet.conf";
 
-    public static final String SINGLE_SERVER_PROPERTIES      = "manifests/nodes/single_server/single_server.pp";
-    public static final String SINGLE_SERVER_BASE_PROPERTIES = "manifests/nodes/single_server/base_config.pp";
+    public static final String SINGLE_SERVER_PP             = "manifests/nodes/single_server/single_server.pp";
+    public static final String SINGLE_SERVER_BASE_CONFIG_PP = "manifests/nodes/single_server/base_config.pp";
 
-    public static final String MULTI_SERVER_PROPERTIES       = "manifests/nodes/multi_server/custom_configurations.pp";
-    public static final String MULTI_SERVER_BASE_PROPERTIES  = "manifests/nodes/multi_server/base_configurations.pp";
-    public static final String MULTI_SERVER_NODES_PROPERTIES = "manifests/nodes/multi_server/nodes.pp";
+    public static final String MULTI_SERVER_CUSTOM_CONFIG_PP = "manifests/nodes/multi_server/custom_configurations.pp";
+    public static final String MULTI_SERVER_BASE_CONFIG_PP   = "manifests/nodes/multi_server/base_configurations.pp";
+    public static final String MULTI_SERVER_NODES_PP         = "manifests/nodes/multi_server/nodes.pp";
+
+    public static final String SINGLE_SERVER_4_0_PROPERTIES     = "manifests/nodes/codenvy/codenvy.pp";
+    public static final String MULTI_SERVER_4_0_PROPERTIES      = "manifests/nodes/codenvy_multi/codenvy.pp";
+    public static final String MULTI_SERVER_BASE_4_0_PROPERTIES = "manifests/nodes/codenvy_multi/base.pp";
 
     public static final Pattern ENCLOSED_PROPERTY_NAME_PATTERN =  Pattern.compile("\\$\\w+");
 
@@ -82,6 +88,21 @@ public class Config {
 
     public static final String JAVA_NAMING_SECURITY_AUTHENTICATION = "java_naming_security_authentication";
     public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
+    public static final String PUPPET_MASTER_HOST_NAME_PROPERTY    = "puppet_master_host_name";
+    public static final String MONGO_ADMIN_USERNAME_PROPERTY       = "mongo_admin_user_name";
+    public static final String MONGO_ADMIN_PASSWORD_PROPERTY       = "mongo_admin_pass";
+    public static final String NODE_SSH_USER_NAME_PROPERTY         = "node_ssh_user_name";
+    public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY  = "node_ssh_user_private_key";
+    public static final String SYSTEM_LDAP_PASSWORD                = "system_ldap_password";
+
+    public static final List<String> MULTI_SERVER_PROPERTIES = ImmutableList.of(MULTI_SERVER_BASE_CONFIG_PP,
+                                                                                MULTI_SERVER_4_0_PROPERTIES,
+                                                                                MULTI_SERVER_BASE_4_0_PROPERTIES,
+                                                                                MULTI_SERVER_CUSTOM_CONFIG_PP);
+
+    public static final List<String> SINGLE_SERVER_PROPERTIES = ImmutableList.of(SINGLE_SERVER_BASE_CONFIG_PP,
+                                                                                 SINGLE_SERVER_4_0_PROPERTIES,
+                                                                                 SINGLE_SERVER_PP);
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
