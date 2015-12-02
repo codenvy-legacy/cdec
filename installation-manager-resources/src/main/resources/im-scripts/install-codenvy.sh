@@ -704,7 +704,7 @@ printPreInstallInfo_single() {
     println
 
     preConfigureSystem
-    doCheckAvailableResourcesLocally 2500000 1 50000000 8000000 4 300000000
+    doCheckAvailableResourcesLocally 2500000 1 40000000 8000000 4 300000000
 
     println "Checking access to external dependencies..."
     println
@@ -1043,7 +1043,7 @@ doCheckAvailableResourcesOnNodes() {
 
         if [[ ${HOST} == ${RUNNER_HOST_NAME} ]]; then
             MIN_RAM_KB=1500000
-            MIN_DISK_SPACE_KB=45000000
+            MIN_DISK_SPACE_KB=40000000
         else
             MIN_RAM_KB=1000000
             MIN_DISK_SPACE_KB=20000000
