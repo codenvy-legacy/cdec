@@ -113,6 +113,8 @@ public class TestCDECArtifact extends BaseTest {
                                     "echo -n \"$test_property1\"");
         FileUtils.writeStringToFile(Paths.get(ETC_PUPPET, "patches", InstallType.MULTI_SERVER.toString().toLowerCase(), "patch_after_update.sh").toFile(),
                                     "echo -n \"$test_property1\"");
+
+        OSUtils.VERSION = "7";
     }
 
     @AfterMethod
@@ -138,26 +140,14 @@ public class TestCDECArtifact extends BaseTest {
         assertTrue(info.size() > 1);
     }
 
-    @Test
-    public void testGetInstallSingleServerCommandOsVersion6() throws Exception {
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Codenvy On-Prem can be installed on CentOS 7 only")
+    public void testGetInstallOnWrongOsVersion6() throws Exception {
         OSUtils.VERSION = "6";
-
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.SINGLE_SERVER);
-        options.setConfigProperties(ImmutableMap.of("some property", "some value"));
-
-        int steps = spyCdecArtifact.getInstallInfo(InstallType.SINGLE_SERVER).size();
-        for (int i = 0; i < steps; i++) {
-            options.setStep(i);
-            Command command = spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
-            assertNotNull(command);
-        }
+        spyCdecArtifact.getInstallCommand(null, null, null);
     }
 
     @Test
     public void testGetInstallSingleServerCommandOsVersion7() throws Exception {
-        OSUtils.VERSION = "7";
-
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.SINGLE_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value"));
@@ -182,8 +172,6 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetInstallMultiServerCommandsForMultiServer() throws Exception {
-        OSUtils.VERSION = "7";
-
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("site_host_name", "site.example.com",
@@ -199,8 +187,6 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Site node config not found.")
     public void testGetInstallMultiServerCommandsForMultiServerError() throws Exception {
-        OSUtils.VERSION = "7";
-
         InstallOptions options = new InstallOptions();
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setConfigProperties(ImmutableMap.of("some property", "some value",
@@ -216,26 +202,12 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Step number .* is out of install range")
     public void testGetInstallMultiServerCommandUnexistedStepError() throws Exception {
-        OSUtils.VERSION = "7";
-
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setInstallType(InstallType.MULTI_SERVER);
         options.setStep(Integer.MAX_VALUE);
 
         spyCdecArtifact.getInstallCommand(null, Paths.get("some path"), options);
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class)
-    public void testGetInstallMultiServerCommandsWrongOS() throws Exception {
-        OSUtils.VERSION = "6";
-
-        InstallOptions options = new InstallOptions();
-        options.setInstallType(InstallType.MULTI_SERVER);
-        options.setConfigProperties(ImmutableMap.of("some property", "some value"));
-        options.setStep(0);
-
-        spyCdecArtifact.getInstallCommand(null, null, options);
     }
 
     @Test
@@ -271,6 +243,12 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(spyCdecArtifact.getUpdateCommand(versionToUpdate, pathToBinaries, options.setStep(5)).toString(),
                      "[{'command'='sudo cat " + ETC_PUPPET + "/patches/single_server/patch_after_update.sh | sed ':a;N;$!ba;s/\\n/~n/g' | sed 's|$some property|some value|g' | sed 's|~n|\\n|g' > tmp.tmp && sudo mv tmp.tmp " + ETC_PUPPET + "/patches/single_server/patch_after_update.sh', 'agent'='LocalAgent'}, " +
                      "{'command'='bash " + ETC_PUPPET + "/patches/single_server/patch_after_update.sh', 'agent'='LocalAgent'}]");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Codenvy On-Prem can be updated on CentOS 7 only")
+    public void testGetUpdateCommandOnWrongOS6() throws Exception {
+        OSUtils.VERSION = "6";
+        spyCdecArtifact.getUpdateCommand(null, null, null);
     }
 
     @Test
@@ -336,8 +314,6 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetUpdateCommandNonexistentStepError() throws Exception {
         prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
-        OSUtils.VERSION = "7";
-
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setInstallType(InstallType.SINGLE_SERVER);
@@ -350,8 +326,6 @@ public class TestCDECArtifact extends BaseTest {
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateInfoFromSingleToMultiServerError() throws Exception {
         prepareSingleNodeEnv(mockConfigManager, mockTransport);
-
-        OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
@@ -374,8 +348,6 @@ public class TestCDECArtifact extends BaseTest {
     public void testGetUpdateCommandFromSingleToMultiServerError() throws Exception {
         prepareSingleNodeEnv(mockConfigManager, mockTransport);
 
-        OSUtils.VERSION = "7";
-
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());
         options.setInstallType(InstallType.MULTI_SERVER);
@@ -388,8 +360,6 @@ public class TestCDECArtifact extends BaseTest {
             expectedExceptionsMessageRegExp = "Only update to the Codenvy of the same installation type is supported")
     public void testGetUpdateCommandFromMultiToSingleServerError() throws Exception {
         prepareMultiNodeEnv(mockConfigManager, mockTransport);
-
-        OSUtils.VERSION = "7";
 
         InstallOptions options = new InstallOptions();
         options.setConfigProperties(Collections.<String, String>emptyMap());

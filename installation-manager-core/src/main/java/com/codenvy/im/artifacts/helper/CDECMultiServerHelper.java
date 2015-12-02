@@ -29,11 +29,9 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.NodeConfig;
-import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -109,10 +107,6 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         final Config config = new Config(installOptions.getConfigProperties());
         final int step = installOptions.getStep();
 
-        if (!OSUtils.getVersion().equals("7")) {
-            throw new IllegalStateException("Multi-server installation is supported only on CentOS 7");
-        }
-
         final List<NodeConfig> nodeConfigs = extractConfigsFrom(config);
         switch (step) {
             case 0:
@@ -142,6 +136,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
                     // install puppet master
+                    add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
                     add(createCommand(
                         "yum list installed | grep puppetlabs-release.noarch; "
                         + "if [ $? -ne 0 ]; "
@@ -149,38 +144,20 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                         + "; fi"));
                     // install puppet master
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
-                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants ]; then" +
-                                      " sudo mkdir /etc/systemd/system/multi-user.target.wants;" +
-                                      "fi"));
-                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
-                                      " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
-                                      ".wants/puppetmaster.service'" +
-                                      "; fi"));
                     add(createCommand("sudo systemctl enable puppetmaster"));
 
-                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
-
                     // install puppet agent
-                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                      ".wants/puppet.service'" +
-                                      "; fi"));
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
                     add(createCommand("sudo systemctl enable puppet"));
 
-                    // install puppet agents on each node
+                    // install puppet agent on each node
+                    add(createCommand("yum clean all", nodeConfigs));   // cleanup to avoid yum install failures
                     add(createCommand(
                         "yum list installed | grep puppetlabs-release.noarch; "
                         + "if [ $? -ne 0 ]; "
                         + format("then sudo yum -y -q install %s ", config.getValue(Config.PUPPET_RESOURCE_URL))
                         + "; fi", nodeConfigs));
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));  // -q here is needed to avoid hung up of ssh
-
-                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants ]; then" +
-                                      " sudo mkdir /etc/systemd/system/multi-user.target.wants;" +
-                                      "fi", nodeConfigs));
-                    add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                      " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target.wants/puppet.service'" +
-                                      "; fi", nodeConfigs));
                     add(createCommand("sudo systemctl enable puppet", nodeConfigs));
                 }}, "Install puppet binaries");
 

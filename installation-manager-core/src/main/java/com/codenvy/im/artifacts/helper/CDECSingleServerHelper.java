@@ -28,11 +28,9 @@ import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
-import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -103,6 +101,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
+                    add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
                     add(createCommand("if ! sudo grep -Eq \"127.0.0.1.*puppet\" /etc/hosts; then\n" +
                                       " echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null\n" +
                                       "fi"));
@@ -116,26 +115,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
 
-                    if (OSUtils.getVersion().equals("6")) {
-                        add(createCommand("sudo chkconfig --add puppetmaster"));
-                        add(createCommand("sudo chkconfig puppetmaster on"));
-                        add(createCommand("sudo chkconfig --add puppet"));
-                        add(createCommand("sudo chkconfig puppet on"));
-                    } else {
-                        add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants ]; then" +
-                                          " sudo mkdir /etc/systemd/system/multi-user.target.wants;" +
-                                          "fi"));
-                        add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppetmaster.service ]; then" +
-                                          " sudo ln -s '/usr/lib/systemd/system/puppetmaster.service' '/etc/systemd/system/multi-user.target" +
-                                          ".wants/puppetmaster.service'" +
-                                          "; fi"));
-                        add(createCommand("sudo systemctl enable puppetmaster"));
-                        add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                          " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                          ".wants/puppet.service'" +
-                                          "; fi"));
-                        add(createCommand("sudo systemctl enable puppet"));
-                    }
+                    add(createCommand("sudo systemctl enable puppetmaster"));
+                    add(createCommand("sudo systemctl enable puppet"));
 
                 }}, "Install puppet binaries");
 
@@ -185,24 +166,13 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                         "Configure puppet agent");
 
             case 5:
-                if (OSUtils.getVersion().equals("6")) {
-                    return createCommand("sudo service puppetmaster start");
-                } else {
-                    return createCommand("sudo systemctl start puppetmaster");
-                }
+                return createCommand("sudo systemctl start puppetmaster");
 
             case 6:
-                if (OSUtils.getVersion().equals("6")) {
-                    return new MacroCommand(ImmutableList.<Command>of(
-                        createCommand("sleep 30"),
-                        createCommand("sudo service puppet start")),
-                                            "Launch puppet agent");
-                } else {
-                    return new MacroCommand(ImmutableList.<Command>of(
-                        createCommand("sleep 30"),
-                        createCommand("sudo systemctl start puppet")),
-                                            "Launch puppet agent");
-                }
+                return new MacroCommand(ImmutableList.<Command>of(
+                    createCommand("sleep 30"),
+                    createCommand("sudo systemctl start puppet")),
+                                        "Launch puppet agent");
 
             case 7:
                 Command command = createCommand("doneState=\"Installing\"; " +

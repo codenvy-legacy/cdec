@@ -31,6 +31,7 @@ import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.IllegalVersionException;
+import com.codenvy.im.utils.OSUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -183,6 +184,10 @@ public class CDECArtifact extends AbstractArtifact {
     public Command getUpdateCommand(Version versionToUpdate,
                                     Path pathToBinaries,
                                     InstallOptions installOptions) throws IOException, IllegalArgumentException {
+        if (!OSUtils.getVersion().equals("7")) {
+            throw new IllegalStateException("Codenvy On-Prem can be updated on CentOS 7 only");
+        }
+
         if (installOptions.getInstallType() != configManager.detectInstallationType()) {
             throw new IllegalArgumentException("Only update to the Codenvy of the same installation type is supported");
         }
@@ -201,6 +206,10 @@ public class CDECArtifact extends AbstractArtifact {
     public Command getInstallCommand(final Version versionToInstall,
                                      final Path pathToBinaries,
                                      final InstallOptions installOptions) throws IOException {
+
+        if (!OSUtils.getVersion().equals("7")) {
+            throw new IllegalStateException("Codenvy On-Prem can be installed on CentOS 7 only");
+        }
 
         return getHelper(installOptions.getInstallType())
                 .getInstallCommand(versionToInstall, pathToBinaries, installOptions);

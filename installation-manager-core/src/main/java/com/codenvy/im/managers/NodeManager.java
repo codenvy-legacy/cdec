@@ -105,18 +105,13 @@ public class NodeManager {
             String puppetMasterNodeDns = configManager.fetchMasterHostName();
 
             // install puppet agents on adding node
+            commands.add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
             commands.add(createCommand("yum list installed | grep puppetlabs-release.noarch; "
                                        + "if [ $? -ne 0 ]; "
                                        + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
                                        + "; fi",
                                        node));
             commands.add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
-
-            commands.add(createCommand("if [ ! -f /etc/systemd/system/multi-user.target.wants/puppet.service ]; then" +
-                                       " sudo ln -s '/usr/lib/systemd/system/puppet.service' '/etc/systemd/system/multi-user.target" +
-                                       ".wants/puppet.service'" +
-                                       "; fi",
-                                       node));
             commands.add(createCommand("sudo systemctl enable puppet", node));
 
             // configure puppet agent
@@ -234,10 +229,10 @@ public class NodeManager {
 
                 // remove out-date puppet agent's certificate
                 createCommand(format("sudo puppet cert clean %s", node.getHost())),
-                createCommand("sudo service puppetmaster restart"),
+                createCommand("sudo systemctl restart puppetmaster"),
 
                 // stop puppet agent on removing node and remove out-date certificate
-                createCommand("sudo service puppet stop", node),
+                createCommand("sudo systemctl stop puppet", node),
                 createCommand("sudo rm -rf /var/lib/puppet/ssl", node)
             ), "Remove node commands");
         } catch (Exception e) {
