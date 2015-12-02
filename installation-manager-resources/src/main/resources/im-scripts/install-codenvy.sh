@@ -593,7 +593,7 @@ pressYKeyToContinue() {
 doCheckPortRemote() {
     local protocol=$1
     local port=$2
-    local host=$33
+    local host=$3
     OUTPUT=$(ssh -o LogLevel=quiet -o StrictHostKeyChecking=no -t ${host} "netstat -ano | egrep LISTEN | egrep ${protocol} | egrep ':${host}\s'")
     echo ${OUTPUT}
 }
