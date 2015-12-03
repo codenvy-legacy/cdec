@@ -68,7 +68,7 @@ public class TestConfigManager extends BaseTest {
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
-        configManager = spy(new ConfigManager("", "target/puppet", transport));
+        configManager = spy(new ConfigManager(UPDATE_API_ENDPOINT, PUPPET_BASE_DIR, transport));
 
         spyCdec = spy(ArtifactFactory.createArtifact(CDECArtifact.NAME));
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdec).getInstalledVersion();
@@ -111,7 +111,7 @@ public class TestConfigManager extends BaseTest {
         FileUtils.write(properties.toFile(), "a=1\n" +
                                              "b=2\n" +
                                              "c=\n" +
-                                             "d=\n");
+                                             "d=3\\n4\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
         Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
@@ -119,7 +119,7 @@ public class TestConfigManager extends BaseTest {
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
         assertEquals(m.get("c"), "");
-        assertEquals(m.get("d"), "");
+        assertEquals(m.get("d"), "3\n4");
     }
 
     @Test
@@ -246,8 +246,8 @@ public class TestConfigManager extends BaseTest {
         Path parent = Paths.get(TEST_DIR, "codenvy");
         Path binaries = Paths.get(TEST_DIR, "binaries.zip");
 
-        Path singleServerProps = parent.resolve(Config.SINGLE_SERVER_PROPERTIES);
-        Path singleServerBaseProps = parent.resolve(Config.SINGLE_SERVER_BASE_PROPERTIES);
+        Path singleServerProps = parent.resolve(Config.SINGLE_SERVER_PP);
+        Path singleServerBaseProps = parent.resolve(Config.SINGLE_SERVER_BASE_CONFIG_PP);
 
         createFile(singleServerProps);
         createFile(singleServerBaseProps);
@@ -277,18 +277,25 @@ public class TestConfigManager extends BaseTest {
     }
 
     @Test
-    public void testGetCssPropertiesFiles() {
+    public void testGetSingleServerPropertiesFiles() throws Exception {
+        prepareSingleNodeEnv(configManager, transport);
+
         Iterator<Path> singleServerCssPropertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
         assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
-                                                 .endsWith("target/puppet/manifests/nodes/single_server/single_server.pp"));
-        assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
                                                  .endsWith("target/puppet/manifests/nodes/single_server/base_config.pp"));
+        assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
+                                                 .endsWith("target/puppet/manifests/nodes/single_server/single_server.pp"));
+    }
+
+    @Test
+    public void testGetMultiServerPropertiesFiles() throws Exception {
+        prepareMultiNodeEnv(configManager, transport);
 
         Iterator<Path> multiServerCssPropertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
         assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
-                                                .endsWith("target/puppet/manifests/nodes/multi_server/custom_configurations.pp"));
-        assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
                                                 .endsWith("target/puppet/manifests/nodes/multi_server/base_configurations.pp"));
+        assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
+                                                .endsWith("target/puppet/manifests/nodes/multi_server/custom_configurations.pp"));
     }
 
     @Test

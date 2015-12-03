@@ -34,7 +34,9 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class AdditionalNodesConfigUtil {
 
-    /** Names of properties of Config.MULTI_SERVER_PROPERTIES config file */
+    /**
+     * Names of properties of Config.MULTI_SERVER_CUSTOM_CONFIG_PP config file
+     */
     private static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_CODENVY_PROPERTIES = ImmutableMap.of(
             NodeConfig.NodeType.BUILDER, "additional_builders",
             NodeConfig.NodeType.RUNNER, "additional_runners"

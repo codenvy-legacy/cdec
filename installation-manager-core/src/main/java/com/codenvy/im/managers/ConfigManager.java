@@ -25,7 +25,6 @@ import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -33,10 +32,10 @@ import com.google.inject.Singleton;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
-
-import javax.validation.constraints.NotNull;
 import org.eclipse.che.commons.annotation.Nullable;
+
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -47,6 +46,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +58,7 @@ import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 import static java.nio.file.Files.exists;
+import static java.nio.file.Files.newBufferedReader;
 
 /** @author Dmytro Nochevnov */
 @Singleton
@@ -163,12 +164,12 @@ public class ConfigManager {
     public Map<String, String> loadInstalledCodenvyProperties(InstallType installType) throws IOException {
         Map<String, String> properties = new HashMap<>();
 
-        Iterator<Path> files = getCodenvyPropertiesFiles(installType);
-        while (files.hasNext()) {
-            Path propertiesFile = files.next();
+        Iterator<Path> propertiesFiles = getCodenvyPropertiesFiles(installType);
+        while (propertiesFiles.hasNext()) {
+            Path file = propertiesFiles.next();
 
             try {
-                properties.putAll(doLoadInstalledCodenvyProperties(propertiesFile));
+                properties.putAll(doLoadInstalledCodenvyProperties(file));
             } catch (IOException e) {
                 throw new ConfigException(format("Can't load Codenvy properties: %s", e.getMessage()), e);
             }
@@ -177,20 +178,42 @@ public class ConfigManager {
         return properties;
     }
 
-    protected Iterator<Path> getCodenvyPropertiesFiles(InstallType installType) {
-        switch (installType) {
-            case MULTI_SERVER:
-                return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.MULTI_SERVER_PROPERTIES),
-                                        Paths.get(puppetBaseDir + File.separator + Config.MULTI_SERVER_BASE_PROPERTIES)).iterator();
-
-            case SINGLE_SERVER:
-            default:
-                return ImmutableList.of(Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_PROPERTIES),
-                                        Paths.get(puppetBaseDir + File.separator + Config.SINGLE_SERVER_BASE_PROPERTIES)).iterator();
-        }
+    /**
+     * Returns the list of puppet properties files.
+     */
+    public Iterator<Path> getCodenvyPropertiesFiles(InstallType installType) {
+        return getCodenvyPropertiesFiles(puppetBaseDir, installType);
     }
 
-    /** @return list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PROPERTIES based on the node configs. */
+    /**
+     * Returns the list of puppet properties files.
+     */
+    public Iterator<Path> getCodenvyPropertiesFiles(String baseDir, InstallType installType) {
+        List<Path> propertiesFiles = new LinkedList<>();
+
+        List<String> properties;
+        switch (installType) {
+            case MULTI_SERVER:
+                properties = Config.MULTI_SERVER_PROPERTIES;
+                break;
+            case SINGLE_SERVER:
+            default:
+                properties = Config.SINGLE_SERVER_PROPERTIES;
+        }
+
+        for (String relPathPropertyFile : properties) {
+            Path absPathCandidate = Paths.get(baseDir + File.separator + relPathPropertyFile);
+            if (exists(absPathCandidate)) {
+                propertiesFiles.add(absPathCandidate);
+            }
+        }
+
+        return propertiesFiles.iterator();
+    }
+
+    /**
+     * @return list of replacements for multi-node master puppet config file Config.MULTI_SERVER_NODES_PP based on the node configs.
+     */
     public static Map<String, String> getPuppetNodesConfigReplacement(List<NodeConfig> nodeConfigs) {
         Map<String, String> replacements = new HashMap<>(nodeConfigs.size());
 
@@ -233,12 +256,14 @@ public class ConfigManager {
     protected Map<String, String> doLoadCodenvyProperties(Path file) throws IOException {
         Map<String, String> m = new HashMap<>();
 
-        try (BufferedReader in = java.nio.file.Files.newBufferedReader(file, Charset.forName("UTF-8"))) {
+        try (BufferedReader in = newBufferedReader(file, Charset.forName("UTF-8"))) {
             String line;
             while ((line = in.readLine()) != null) {
                 Matcher matcher = CODENVY_PROP_TEMPLATE.matcher(line);
                 while (matcher.find()) {
-                    m.put(matcher.group(1), matcher.group(2));
+                    String key = matcher.group(1);
+                    String value = matcher.group(2).replace("\\n", "\n");
+                    m.put(key, value);
                 }
             }
         }

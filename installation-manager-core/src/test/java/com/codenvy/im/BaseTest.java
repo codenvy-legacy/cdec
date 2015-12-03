@@ -43,13 +43,14 @@ import static org.mockito.Mockito.when;
  * @author Anatoliy Bazko
  */
 public class BaseTest {
+    protected static final String PUPPET_BASE_DIR     = "target/puppet";
     protected static final String TEST_DIR            = "target";
     protected static final String DOWNLOAD_DIR        = "target/download";
     protected static final String UPDATE_API_ENDPOINT = "update/endpoint";
     protected static final String ASSEMBLY_PROPERTIES = "target/assembly.properties";
     protected static final String SAAS_API_ENDPOINT   = "saas/endpoint";
-    public static final Path   PUPPET_CONF_FILE = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
-    public static final String TEST_VERSION_STR = "3.3.0";
+    public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
+    public static final    String TEST_VERSION_STR    = "3.3.0";
 
     @BeforeMethod
     public void clear() throws Exception {
@@ -63,9 +64,12 @@ public class BaseTest {
         }
 
         FileUtils.deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());
+        FileUtils.deleteDirectory(Paths.get(PUPPET_BASE_DIR).toFile());
     }
 
     protected void createSingleNodeConf() throws Exception {
+        FileUtils.writeStringToFile(Paths.get(PUPPET_BASE_DIR, Config.SINGLE_SERVER_PP).toFile(), "");
+        FileUtils.writeStringToFile(Paths.get(PUPPET_BASE_DIR, Config.SINGLE_SERVER_BASE_CONFIG_PP).toFile(), "");
         FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[master]\n" +
                                                                "    certname = hostname\n" +
                                                                "[main]\n" +
@@ -81,6 +85,8 @@ public class BaseTest {
     }
 
     protected void createMultiNodeConf() throws Exception {
+        FileUtils.writeStringToFile(Paths.get(PUPPET_BASE_DIR, Config.MULTI_SERVER_BASE_CONFIG_PP).toFile(), "");
+        FileUtils.writeStringToFile(Paths.get(PUPPET_BASE_DIR, Config.MULTI_SERVER_CUSTOM_CONFIG_PP).toFile(), "");
         FileUtils.writeStringToFile(PUPPET_CONF_FILE.toFile(), "[main]\n"
                                                                + " server = master.codenvy.onprem\n"
                                                                + " runinterval = 420\n"
