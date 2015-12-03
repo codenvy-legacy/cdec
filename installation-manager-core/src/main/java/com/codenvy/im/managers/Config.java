@@ -47,8 +47,8 @@ public class Config {
 
     public static final String VERSION = "version";
 
-    public static final String PUPPET_AGENT_VERSION  = "puppet_agent_version";
-    public static final String PUPPET_SERVER_VERSION = "puppet_server_version";
+    public static final String PUPPET_AGENT_PACKAGE  = "puppet_agent_package";
+    public static final String PUPPET_SERVER_PACKAGE = "puppet_server_package";
     public static final String PUPPET_RESOURCE_URL   = "puppet_resource_url";
 
     public static final String AIO_HOST_URL              = "aio_host_url"; // 3.1.0  TODO [ndp] remove outdated property
@@ -84,16 +84,13 @@ public class Config {
     public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
-        put(PUPPET_AGENT_VERSION, new HashMap<String, String>() {{
-            put("6", "puppet-3.4.3-1.el6.noarch");
+        put(PUPPET_AGENT_PACKAGE, new HashMap<String, String>() {{
             put("7", "puppet-3.5.1-1.el7.noarch");
         }});
-        put(PUPPET_SERVER_VERSION, new HashMap<String, String>() {{
-            put("6", "puppet-server-3.4.3-1.el6.noarch");
+        put(PUPPET_SERVER_PACKAGE, new HashMap<String, String>() {{
             put("7", "puppet-server-3.5.1-1.el7.noarch");
         }});
         put(PUPPET_RESOURCE_URL, new HashMap<String, String>() {{
-            put("6", "http://yum.puppetlabs.com/el/6/products/x86_64/puppetlabs-release-6-7.noarch.rpm");
             put("7", "https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm");
         }});
     }};

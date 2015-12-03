@@ -59,8 +59,8 @@ public class TestConfig {
     @Test
     public void testGetValueByVersion() throws Exception {
         Config config = new Config(Collections.<String, String>emptyMap());
-        assertNotNull(config.getValue(Config.PUPPET_AGENT_VERSION));
-        assertNotNull(config.getValue(Config.PUPPET_SERVER_VERSION));
+        assertNotNull(config.getValue(Config.PUPPET_AGENT_PACKAGE));
+        assertNotNull(config.getValue(Config.PUPPET_SERVER_PACKAGE));
         assertNotNull(config.getValue(Config.PUPPET_RESOURCE_URL));
     }
 
@@ -75,13 +75,12 @@ public class TestConfig {
     @DataProvider
     public Object[][] getValues() {
         return new Object[][]{
-                {"property", null, "6", null},
-                {"property", "", "6", new ArrayList<String>()},
-                {"property", "value1", "6", new ArrayList<>(ImmutableList.of("value1"))},
-                {"property", "value1,value2", "6", new ArrayList<>(ImmutableList.of("value1", "value2"))},
-                {"property", "value1,value2,value3", "6", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
-                {Config.PUPPET_AGENT_VERSION, "", "6", new ArrayList<>(ImmutableList.of("puppet-3.4.3-1.el6.noarch"))},
-                {Config.PUPPET_AGENT_VERSION, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+                {"property", null, "7", null},
+                {"property", "", "7", new ArrayList<String>()},
+                {"property", "value1", "7", new ArrayList<>(ImmutableList.of("value1"))},
+                {"property", "value1,value2", "7", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+                {"property", "value1,value2,value3", "7", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
+                {Config.PUPPET_AGENT_PACKAGE, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
         };
     }
 
@@ -97,17 +96,15 @@ public class TestConfig {
         Map<String, String> properties = ImmutableMap.of(
             "prop_1", "value_1.1,$prop_2,value_1.2",
             "prop_2", "$prop_3,$prop_4",                  // check on several variables enclosed into one value
-            "prop_3", "$" + Config.PUPPET_AGENT_VERSION,  // Config.PUPPET_AGENT_VERSION depends on version
+            "prop_3", "$" + Config.PUPPET_AGENT_PACKAGE,  // Config.PUPPET_AGENT_PACKAGE depends on version
             "prop_4", "value_4"
         );
 
         Config config = new Config(properties);
 
         return new Object[][]{
-            {"prop_1", null, config, String.format("value_1.1,$%s,value_4,value_1.2", Config.PUPPET_AGENT_VERSION)},  // enclosed variable remained as it because of osVersion = null
-            {"prop_1", "6", config, "value_1.1,puppet-3.4.3-1.el6.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_1", null, config, String.format("value_1.1,$%s,value_4,value_1.2", Config.PUPPET_AGENT_PACKAGE)},  // enclosed variable remained as it because of osVersion = null
             {"prop_1", "7", config, "value_1.1,puppet-3.5.1-1.el7.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
-            {"prop_2", "6", config, "puppet-3.4.3-1.el6.noarch,value_4"},                     // Config.PUPPET_AGENT_VERSION depends on version
             {"prop_2", "7", config, "puppet-3.5.1-1.el7.noarch,value_4"}                      // Config.PUPPET_AGENT_VERSION depends on version
             };
     }

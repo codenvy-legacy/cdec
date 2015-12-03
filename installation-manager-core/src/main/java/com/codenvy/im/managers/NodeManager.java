@@ -104,14 +104,12 @@ public class NodeManager {
 
             String puppetMasterNodeDns = configManager.fetchMasterHostName();
 
-            // install puppet agents on adding node
+            // install and enable puppet agent on adding node
             commands.add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
-            commands.add(createCommand("yum list installed | grep puppetlabs-release.noarch; "
-                                       + "if [ $? -ne 0 ]; "
-                                       + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                                       + "; fi",
-                                       node));
-            commands.add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), node));
+            commands.add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
+                         + "then sudo yum -y -q install %s; "
+                         + "fi", config.getValue(Config.PUPPET_RESOURCE_URL)), node));
+            commands.add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_PACKAGE)), node));
             commands.add(createCommand("sudo systemctl enable puppet", node));
 
             // configure puppet agent

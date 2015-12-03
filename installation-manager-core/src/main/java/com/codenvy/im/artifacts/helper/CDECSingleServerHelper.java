@@ -101,23 +101,26 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
-                    add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
                     add(createCommand("if ! sudo grep -Eq \"127.0.0.1.*puppet\" /etc/hosts; then\n" +
                                       " echo '127.0.0.1 puppet' | sudo tee --append /etc/hosts > /dev/null\n" +
                                       "fi"));
                     add(createCommand(format("if ! sudo grep -Fq \"%1$s\" /etc/hosts; then\n" +
                                              "  echo \"127.0.0.1 %1$s\" | sudo tee --append /etc/hosts > /dev/null\n" +
                                              "fi", config.getHostUrl())));
-                    add(createCommand(
-                        "if [ \"`yum list installed | grep puppetlabs-release.noarch`\" == \"\" ]; "
-                        + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                        + "; fi"));
-                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
-                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
-
+                    
+                    // install puppet rpm
+                    add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
+                    add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
+                        + "then sudo yum -y -q install %s; "
+                        + "fi", config.getValue(Config.PUPPET_RESOURCE_URL))));
+                        
+                    // install and enable puppet server
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_PACKAGE))));
                     add(createCommand("sudo systemctl enable puppetmaster"));
-                    add(createCommand("sudo systemctl enable puppet"));
 
+                    // install and enable puppet agent
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_PACKAGE))));
+                    add(createCommand("sudo systemctl enable puppet"));
                 }}, "Install puppet binaries");
 
             case 2:

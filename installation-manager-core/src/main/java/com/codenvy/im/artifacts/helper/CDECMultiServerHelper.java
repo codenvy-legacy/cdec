@@ -135,29 +135,26 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
             case 1:
                 return new MacroCommand(new ArrayList<Command>() {{
-                    // install puppet master
+                    // install puppet rpm
                     add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
-                    add(createCommand(
-                        "yum list installed | grep puppetlabs-release.noarch; "
-                        + "if [ $? -ne 0 ]; "
-                        + format("then sudo yum -y -q install %s", config.getValue(Config.PUPPET_RESOURCE_URL))
-                        + "; fi"));
-                    // install puppet master
-                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_VERSION))));
+                    add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
+                        + "then sudo yum -y -q install %s; "
+                        + "fi", config.getValue(Config.PUPPET_RESOURCE_URL))));
+                        
+                    // install and enable puppet server
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_PACKAGE))));
                     add(createCommand("sudo systemctl enable puppetmaster"));
 
-                    // install puppet agent
-                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION))));
+                    // install and enable puppet agent
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_PACKAGE))));
                     add(createCommand("sudo systemctl enable puppet"));
 
                     // install puppet agent on each node
                     add(createCommand("yum clean all", nodeConfigs));   // cleanup to avoid yum install failures
-                    add(createCommand(
-                        "yum list installed | grep puppetlabs-release.noarch; "
-                        + "if [ $? -ne 0 ]; "
-                        + format("then sudo yum -y -q install %s ", config.getValue(Config.PUPPET_RESOURCE_URL))
-                        + "; fi", nodeConfigs));
-                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_VERSION)), nodeConfigs));  // -q here is needed to avoid hung up of ssh
+                    add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
+                        + "then sudo yum -y -q install %s; "
+                        + "fi", config.getValue(Config.PUPPET_RESOURCE_URL)), nodeConfigs));
+                    add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_PACKAGE)), nodeConfigs));
                     add(createCommand("sudo systemctl enable puppet", nodeConfigs));
                 }}, "Install puppet binaries");
 

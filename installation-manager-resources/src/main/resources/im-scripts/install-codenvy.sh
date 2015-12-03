@@ -19,6 +19,8 @@ unset SYSTEM_ADMIN_PASSWORD
 JDK_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
 JRE_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz
 
+PUPPET_AGENT_PACKAGE=puppet-3.5.1-1.el7.noarch
+PUPPET_SERVER_PACKAGE=puppet-server-3.5.1-1.el7.noarch
 
 EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
                        "https://install.codenvycorp.com||0"
@@ -370,6 +372,8 @@ preConfigureSystem() {
         exit 1
     fi
 
+    doCheckInstalledPuppet
+
     sudo yum clean all &> /dev/null
 
     installPackageIfNeed curl
@@ -658,6 +662,30 @@ doCheckAvailablePorts_single() {
 
         validatePortLocal "${PROTOCOL}" "${PORT_ONLY}"
     done
+}
+
+doCheckInstalledPuppet() {
+    # check puppet agent
+    rpm -qa | grep "^puppet-[0-9]" &> /dev/null; 
+    if [ $? -eq 0 ]; then
+        rpm -qa | grep "$PUPPET_AGENT_PACKAGE" &> /dev/null;
+        if [ $? -ne 0 ]; then
+            println $(printError "ERROR: You already have puppet agent of wrong version!")
+            println $(printWarning "NOTE: Please, uninstall it or update to package '$PUPPET_AGENT_PACKAGE', and then start installation again.")
+            exit 1;
+        fi 
+    fi
+
+    # check puppet server
+    rpm -qa | grep "^puppet-server-[0-9]" &> /dev/null; 
+    if [ $? -eq 0 ]; then
+        rpm -qa | grep "$PUPPET_SERVER_PACKAGE" &> /dev/null;
+        if [ $? -ne 0 ]; then
+            println $(printError "ERROR: You already have puppet server of wrong version!")
+            println $(printWarning "NOTE: Please, uninstall it or update to package '$PUPPET_SERVER_PACKAGE', and then start installation again.")
+            exit 1;
+        fi 
+    fi
 }
 
 doCheckAvailablePorts_multi() {
