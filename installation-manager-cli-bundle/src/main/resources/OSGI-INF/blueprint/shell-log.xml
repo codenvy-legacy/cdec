@@ -30,9 +30,6 @@
             <action class="com.codenvy.im.cli.command.LoginCommand"/>
         </command>
         <command>
-            <action class="com.codenvy.im.cli.command.SubscriptionCommand"/>
-        </command>
-        <command>
             <action class="com.codenvy.im.cli.command.ConfigCommand"/>
         </command>
         <command>

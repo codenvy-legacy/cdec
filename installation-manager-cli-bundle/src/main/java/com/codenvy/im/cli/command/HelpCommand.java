@@ -72,7 +72,6 @@ public class HelpCommand extends AbstractIMCommand {
                                        .withEntry(withCyan("im-restore"), "Restore Codenvy data")
                                        .withEntry(withCyan("im-add-node"), "Add new Codenvy node such as builder or runner")
                                        .withEntry(withCyan("im-remove-node"), "Remove Codenvy node")
-                                       .withEntry(withCyan("im-subscription"), "Check Codenvy subscription")
                                        .withEntry(withCyan("im-password"), "Change Codenvy admin password")
                                        .alphabeticalSort().toAscii();
 

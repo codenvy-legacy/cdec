@@ -19,15 +19,11 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Check subscription"
-
+printAndLog "TEST CASE: Check subscription from within IM server"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
-LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
-
-installImCliClient
-validateInstalledImCliClientVersion
+installCodenvy
+validateInstalledCodenvyVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
@@ -43,24 +39,67 @@ OUTPUT=${TMP}
 fetchJsonParameter "name"
 ACCOUNT_NAME=${OUTPUT}
 
-PASSWORD="pwd123ABC"
+ACCOUNT_PASSWORD="pwd123ABC"
 
 # add user with [account/owner] role
-doPost "application/json" "{\"name\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${PASSWORD}\"}" "${SAAS_SERVER}/api/user/create?token=${TOKEN}"
+doPost "application/json" "{\"name\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${ACCOUNT_PASSWORD}\"}" "${SAAS_SERVER}/api/user/create?token=${TOKEN}"
 fetchJsonParameter "id"
 USER_OWNER_ID=${OUTPUT}
 doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account/owner\"]}" "${SAAS_SERVER}/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
 
-# test im-subscription without login
-executeIMCommand "--valid-exit-code=1" "im-subscription"
-validateExpectedString ".*Please.log.in.into..saas-server..remote.*"
+###### test subscription
+auth "admin" "password"                   # for Codenvy3
+#doAuth "admin@codenvy.onprem" "password" # for Codenvy4
 
-log "Expected failure"
-executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NAME}"
+# need to ensure logout state
+doHttpRequest --method=POST \
+              --url=http://${HOST_URL}/im/logout?token=${TOKEN} \
+              --output-http-code
+validateExpectedString "200"
 
-# test im-subscription after login and adding OnPremises subscription
-executeIMCommand "im-subscription"
-validateExpectedString ".*\"subscription\".\:.\"OnPremises\".*\"message\".\:.\"Subscription.is.valid\".*"
+# test get subscription before login
+doHttpRequest --method=GET \
+              --url=http://${HOST_URL}/im/subscription?token=${TOKEN} \
+              --output-http-code
+validateExpectedString "403"
+
+# test login using installation manager server
+doHttpRequest --method=POST \
+              --content-type="application/json" \
+              --body="{\"username\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${ACCOUNT_PASSWORD}\"}" \
+              --url="http://${HOST_URL}/im/login?token=${TOKEN}" \
+              --output-http-code
+validateExpectedString "200"
+
+# test get subscription after login
+doHttpRequest --method=GET \
+              --url=http://${HOST_URL}/im/subscription?token=${TOKEN} \
+              --output-http-code
+validateExpectedString "404"
+
+# test add subscription after login
+doHttpRequest --method=POST \
+              --content-type="application/json" \
+              --body="{\"username\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${ACCOUNT_PASSWORD}\"}" \
+              --url="http://${HOST_URL}/im/subscription?token=${TOKEN}" \
+              --output-http-code
+validateExpectedString "201"
+
+# test get subscription after adding subscription. Example of result:
+doGet "http://${HOST_URL}/im/subscription?token=${TOKEN}"
+validateExpectedString ".*OnPremises.*([\n].*)*.*${ACCOUNT_ID}.*"
+
+# test logout
+doHttpRequest --method=POST \
+              --url=http://${HOST_URL}/im/logout?token=${TOKEN} \
+              --output-http-code
+validateExpectedString "200"
+
+# test get subscription after logout
+doHttpRequest --method=GET \
+              --url=http://${HOST_URL}/im/subscription?token=${TOKEN} \
+              --output-http-code
+validateExpectedString "403"
 
 printAndLog "RESULT: PASSED"
 

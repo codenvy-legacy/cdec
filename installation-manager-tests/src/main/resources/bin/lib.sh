@@ -81,7 +81,7 @@ retrieveTestLogs() {
 
     mkdir --parent ${logDirName}
 
-    if [[ ${INSTALL_ON_NODE} == "master.codenvy" ]]; then
+    if [[ ${INSTALL_ON_NODE} == "master.${HOST_URL}" ]]; then
         for HOST in master api analytics data site runner1 builder1 datasource; do
             $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy "sudo chown -R root:root /var/log/puppet")
             $(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@${HOST}.codenvy "sudo chmod 777 /var/log/puppet")
@@ -137,7 +137,7 @@ installCodenvy() {
         shift
     fi
 
-    if [[ ${INSTALL_ON_NODE} == "master.codenvy" ]]; then
+    if [[ ${INSTALL_ON_NODE} == "master.${HOST_URL}" ]]; then
         scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
         MULTI_OPTION="--multi"
     fi
@@ -193,9 +193,14 @@ doAuth() {
     REALM=$3
     SERVER_DNS=$4
 
-    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="http://codenvy"
+    [[ -z ${SERVER_DNS} ]] && SERVER_DNS="http://${HOST_URL}"
 
-    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d '{"username":"'${USERNAME}'", "password":"'${PASSWORD}'", "realm":"'${REALM}'"}' ${SERVER_DNS}/api/auth/login)
+    if [[ -n ${REALM} ]]; then
+        local REALM_PARAMETER=", \"realm\":\"${REALM}\""
+    fi
+
+    OUTPUT=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"username\":\"${USERNAME}\", \"password\":\"${PASSWORD}\"${REALM_PARAMETER}}" ${SERVER_DNS}/api/auth/login)
+
     EXIT_CODE=$?
 
     log ${OUTPUT}
@@ -250,13 +255,13 @@ executeSshCommand() {
 }
 
 detectMasterNode() {
-    ping -c1 -q "master.codenvy" >> /dev/null
+    ping -c1 -q "master.${HOST_URL}" >> /dev/null
     if [[ $? == 0 ]]; then
-        echo "master.codenvy"
+        echo "master.${HOST_URL}"
     else
-        ping -c1 -q "codenvy" >> /dev/null
+        ping -c1 -q ${HOST_URL} >> /dev/null
         if [[ $? == 0 ]]; then
-            echo "codenvy"
+            echo ${HOST_URL}
         else
             validateExitCode 1
         fi
@@ -268,14 +273,39 @@ fetchJsonParameter() {
     OUTPUT=`echo ${OUTPUT} | sed 's/.*"'$1'"\s*:\s*"\([^"]*\)*".*/\1/'`
 }
 
-doPost() {
-    logStartCommand "POST "$@
+# --method={POST|GET|...}
+# --content-type=...
+# --body=...
+# --url=...
+# --output-http-code
+# --verbose
+doHttpRequest() {
+    for var in "$@"; do
+        if [[ "$var" =~ --content-type=.* ]]; then
+            local CONTENT_TYPE_OPTION=`echo "-H \"Content-Type: $var\"" | sed -e "s/--content-type=//g"`
 
-    CONTENT_TYPE=$1
-    BODY=$2
-    URL=$3
+        elif [[ "$var" =~ --body=.* ]]; then
+            local BODY_OPTION=`echo "-d '$var'" | sed -e "s/--body=//g"`
 
-    OUTPUT=$(curl -H "Content-Type: ${CONTENT_TYPE}" -d "${BODY}" -X POST ${URL})
+        elif [[ "$var" =~ --url=.* ]]; then
+            local URL=`echo "$var" | sed -e "s/--url=//g"`
+
+        elif [[ "$var" =~ --method=.* ]]; then
+            local METHOD_OPTION=`echo "-X $var" | sed -e "s/--method=//g"`
+            
+        elif [[ "$var" == "--output-http-code" ]]; then
+            local OUTPUT_HTTP_CODE_OPTION="-o /dev/null -w \"%{http_code}\""
+
+        elif [[ "$var" == "--verbose" ]]; then
+            local VERBOSE_OPTION="-v"
+        fi
+    done
+
+    local COMMAND="curl -s $VERBOSE_OPTION $OUTPUT_HTTP_CODE_OPTION $CONTENT_TYPE_OPTION $BODY_OPTION $METHOD_OPTION $URL"
+    
+    logStartCommand $COMMAND
+    
+    OUTPUT=$(eval $COMMAND)
     EXIT_CODE=$?
     log ${OUTPUT}
 
@@ -284,18 +314,16 @@ doPost() {
     logEndCommand "curl"
 }
 
+doPost() {
+    doHttpRequest --method=POST \
+                  --content-type=$1 \
+                  --body="$2" \
+                  --url=$3
+}
+
 doGet() {
-    logStartCommand "GET "$@
-
-    URL=$1
-
-    OUTPUT=$(curl -X GET ${URL})
-    EXIT_CODE=$?
-    log ${OUTPUT}
-
-    validateExitCode ${EXIT_CODE}
-
-    logEndCommand "curl"
+    doHttpRequest --method=GET \
+                  --url=$1
 }
 
 createDefaultFactory() {
@@ -303,7 +331,7 @@ createDefaultFactory() {
 
     TOKEN=$1
 
-    OUTPUT=$(curl 'http://codenvy/api/factory/?token='${TOKEN} -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7yqwdS1Jq8TWiUAE'  --data-binary $'------WebKitFormBoundary7yqwdS1Jq8TWiUAE\r\nContent-Disposition: form-data; name="factoryUrl"\r\n\r\n{\r\n  "v": "2.1",\r\n  "project": {\r\n    "name": "my-minimalistic-factory",\r\n    "description": "Minimalistic Template"\r\n  },\r\n  "source": {\r\n    "project": {\r\n      "location": "https://github.com/codenvy/sdk",\r\n      "type": "git"\r\n    }\r\n  }\r\n}\r\n------WebKitFormBoundary7yqwdS1Jq8TWiUAE--\r\n')
+    OUTPUT=$(curl "http://${HOST_URL}/api/factory/?token="${TOKEN} -H 'Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7yqwdS1Jq8TWiUAE'  --data-binary $'------WebKitFormBoundary7yqwdS1Jq8TWiUAE\r\nContent-Disposition: form-data; name="factoryUrl"\r\n\r\n{\r\n  "v": "2.1",\r\n  "project": {\r\n    "name": "my-minimalistic-factory",\r\n    "description": "Minimalistic Template"\r\n  },\r\n  "source": {\r\n    "project": {\r\n      "location": "https://github.com/codenvy/sdk",\r\n      "type": "git"\r\n    }\r\n  }\r\n}\r\n------WebKitFormBoundary7yqwdS1Jq8TWiUAE--\r\n')
     EXIT_CODE=$?
     log ${OUTPUT}
 

@@ -63,7 +63,6 @@ public class TestHelpCommand extends AbstractTestCommand {
 
         assertTrue(output.contains("im-download"));
         assertTrue(output.contains("im-config"));
-        assertTrue(output.contains("im-subscription"));
         assertTrue(output.contains("im-install"));
     }
 }
