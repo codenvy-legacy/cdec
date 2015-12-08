@@ -33,21 +33,21 @@ auth "admin" "new-password"
 
 # change Codenvy hostname
 executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
-executeIMCommand "im-config" "--hostname" "${NEW_HOSTNAME}"
+executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
 
 # verify changes on api node
 executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties"  "api.codenvy"  # TODO [ndp] remove
 sleep 2m                                                                                        # TODO [ndp] remove
 executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties"  "api.codenvy"  # TODO [ndp] remove
-executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service
 executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"  # TODO [ndp] remove
 sleep 2m                                                                                            # TODO [ndp] remove
 executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"  # TODO [ndp] remove
-executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOSTNAME}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
+executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
-auth "admin" "new-password" "http://${NEW_HOSTNAME}"
+auth "admin" "new-password" "http://${NEW_HOST_URL}"
 
 # test re-install
 # remove codenvy binaries
