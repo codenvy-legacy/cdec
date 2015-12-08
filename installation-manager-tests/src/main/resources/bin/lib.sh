@@ -288,7 +288,7 @@ doHttpRequest() {
             local BODY_OPTION=`echo "-d '$var'" | sed -e "s/--body=//g"`
 
         elif [[ "$var" =~ --url=.* ]]; then
-            local URL=`echo "$var" | sed -e "s/--url=//g"`
+            local URL=`echo "'$var'" | sed -e "s/--url=//g"`
 
         elif [[ "$var" =~ --method=.* ]]; then
             local METHOD_OPTION=`echo "-X $var" | sed -e "s/--method=//g"`
