@@ -670,7 +670,7 @@ doCheckInstalledPuppet() {
     if [ $? -eq 0 ]; then
         rpm -qa | grep "$PUPPET_AGENT_PACKAGE" &> /dev/null;
         if [ $? -ne 0 ]; then
-            println $(printError "ERROR: You already have puppet agent of wrong version!")
+            println $(printError "ERROR: Your system has the wrong puppet agent version!")
             println $(printWarning "NOTE: Please, uninstall it or update to package '$PUPPET_AGENT_PACKAGE', and then start installation again.")
             exit 1;
         fi 
@@ -681,7 +681,7 @@ doCheckInstalledPuppet() {
     if [ $? -eq 0 ]; then
         rpm -qa | grep "$PUPPET_SERVER_PACKAGE" &> /dev/null;
         if [ $? -ne 0 ]; then
-            println $(printError "ERROR: You already have puppet server of wrong version!")
+            println $(printError "ERROR: Your system has the wrong puppet server version!")
             println $(printWarning "NOTE: Please, uninstall it or update to package '$PUPPET_SERVER_PACKAGE', and then start installation again.")
             exit 1;
         fi 
