@@ -26,7 +26,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.managers.AdditionalNodesConfigUtil;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -434,7 +434,7 @@ public class InstallationManagerService {
             }
 
             // get additional nodes dns lists
-            AdditionalNodesConfigUtil additionalNodesConfigUtil = new AdditionalNodesConfigUtil(config);
+            AdditionalNodesConfigHelperCodenvy3 additionalNodesConfigUtil = new AdditionalNodesConfigHelperCodenvy3(config);
             Map<String, List<String>> additionalRunners = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
             if (additionalRunners != null) {
                 selectedProperties.putAll(additionalRunners);
@@ -444,6 +444,8 @@ public class InstallationManagerService {
             if (additionalBuilders != null) {
                 selectedProperties.putAll(additionalBuilders);
             }
+
+            // TODO [ndp] CDEC-367 get additional nodes of Codenvy 4
 
             // add host url
             String hostUrl = config.getHostUrl();

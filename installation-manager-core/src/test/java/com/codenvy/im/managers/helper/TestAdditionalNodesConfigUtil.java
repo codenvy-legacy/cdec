@@ -15,10 +15,11 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.managers;
+package com.codenvy.im.managers.helper;
 
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -46,13 +47,13 @@ public class TestAdditionalNodesConfigUtil {
 
     private static final String ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
 
-    private AdditionalNodesConfigUtil spyConfigUtil;
+    private AdditionalNodesConfigHelperCodenvy3 spyConfigUtil;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyConfigUtil = spy(new AdditionalNodesConfigUtil(mockConfig));
+        spyConfigUtil = spy(new AdditionalNodesConfigHelperCodenvy3(mockConfig));
     }
 
     @Test

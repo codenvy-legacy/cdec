@@ -127,7 +127,7 @@ public class TestNodeConfig {
 
     @Test
     public void testTypeEnum() throws Exception {
-        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS, API]");
+        assertEquals(Arrays.toString(NodeConfig.NodeType.values()), "[DATA, SITE, BUILDER, RUNNER, DATASOURCE, ANALYTICS, API, NODE]");
     }
 
     @Test

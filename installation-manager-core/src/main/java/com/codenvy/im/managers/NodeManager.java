@@ -21,20 +21,18 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.commands.MacroCommand;
-import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3;
+import com.codenvy.im.managers.helper.NodeManagerHelper;
+import com.codenvy.im.managers.helper.NodeManagerHelperCodenvy3Impl;
+import com.codenvy.im.managers.helper.NodeManagerHelperCodenvy4Impl;
+import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 
-import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
-import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
-import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
 import static java.lang.String.format;
 
@@ -42,12 +40,17 @@ import static java.lang.String.format;
 @Singleton
 public class NodeManager {
     private ConfigManager configManager;
-    private CDECArtifact  cdecArtifact;
+
+    private final Map<Integer, NodeManagerHelper> HELPERS;
 
     @Inject
     public NodeManager(ConfigManager configManager, CDECArtifact cdecArtifact) throws IOException {
         this.configManager = configManager;
-        this.cdecArtifact = cdecArtifact;
+
+        HELPERS = ImmutableMap.of(
+            3, new NodeManagerHelperCodenvy3Impl(configManager, cdecArtifact),
+            4, new NodeManagerHelperCodenvy4Impl(configManager)
+        );
     }
 
     /**
@@ -56,114 +59,25 @@ public class NodeManager {
      *         if node type isn't supported, or if there is adding node in the list of additional nodes
      */
     public NodeConfig add(String dns) throws IOException, IllegalArgumentException {
-        if (configManager.detectInstallationType() != InstallType.MULTI_SERVER) {
-            throw new IllegalStateException("You can add node to Multi-Server Codenvy only");
-        }
+        getHelper().checkInstallType();
 
-        Config config = getCodenvyConfig(configManager);
-        AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
-        NodeConfig addingNode = nodesConfigUtil.recognizeNodeConfigFromDns(dns);
+        Config config = configManager.loadInstalledCodenvyConfig();
+        NodeConfig addingNode = getHelper().recognizeNodeConfigFromDns(dns);
 
         String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME);
         addingNode.setUser(nodeSshUser);
 
-        String property = nodesConfigUtil.getPropertyNameBy(addingNode.getType());
+        String property = getHelper().getPropertyNameBy(addingNode.getType());
         if (property == null) {
             throw new IllegalArgumentException("This type of node isn't supported");
         }
 
         validate(addingNode);
 
-        Command addNodeCommand = getAddNodeCommand(property, nodesConfigUtil, addingNode, config);
+        Command addNodeCommand = getHelper().getAddNodeCommand(addingNode, property);
         addNodeCommand.execute();
 
         return addingNode;
-    }
-
-    /**
-     * @return commands to add node into puppet master config and wait until node becomes alive
-     */
-    protected Command getAddNodeCommand(String property,
-                                        AdditionalNodesConfigUtil nodesConfigUtil,
-                                        NodeConfig node, Config config) throws NodeException {
-        List<Command> commands = new ArrayList<>();
-
-        String value = nodesConfigUtil.getValueWithNode(node);
-        NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
-
-        try {
-            // modify puppet master config
-            Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
-            while (propertiesFiles.hasNext()) {
-                Path file = propertiesFiles.next();
-
-                commands.add(createFileBackupCommand(file));
-                commands.add(createPropertyReplaceCommand(file, "$" + property, value));
-            }
-
-            // add node into the autosign list of puppet master
-            commands.add(createCommand(format("sudo sh -c \"echo -e '%s' >> /etc/puppet/autosign.conf\"",
-                                              node.getHost())));
-
-            String puppetMasterNodeDns = configManager.fetchMasterHostName();
-
-            // install and enable puppet agent on adding node
-            commands.add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
-            commands.add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
-                         + "then sudo yum -y -q install %s; "
-                         + "fi", config.getValue(Config.PUPPET_RESOURCE_URL)), node));
-            commands.add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_PACKAGE)), node));
-            commands.add(createCommand("sudo systemctl enable puppet", node));
-
-            // configure puppet agent
-            commands.add(createFileBackupCommand("/etc/puppet/puppet.conf", node));
-            commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                              "  server = %s\\n" +
-                                              "  runinterval = 420\\n" +
-                                              "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                              puppetMasterNodeDns),
-                                       node));
-
-            commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                              "  show_diff = true\\n" +
-                                              "  pluginsync = true\\n" +
-                                              "  report = true\\n" +
-                                              "  default_schedules = false\\n" +
-                                              "  certname = %s\\n/g' /etc/puppet/puppet.conf",
-                                              node.getHost()),
-                                       node));
-
-            // start puppet agent
-            commands.add(createCommand("sudo systemctl start puppet", node));
-
-            // wait until server on additional node is installed
-            commands.add(createCommand("doneState=\"Installing\"; " +
-                                       "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                       "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                       "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                       "    sleep 30; " +
-                                       "done",
-                                       node));
-
-            // force applying updated puppet config on puppet agent of API node
-            commands.add(createForcePuppetAgentCommand(apiNode));
-
-            // wait until there is a changed configuration on API server
-            commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                              "while true; do " +
-                                              "    if sudo grep \"%s$\" ${testFile}; then break; fi; " +
-                                              "    sleep 5; " +  // sleep 5 sec
-                                              "done; " +
-                                              "sleep 15; # delay to involve into start of rebooting api server", value),
-                                       apiNode));
-
-            // wait until API server restarts
-            commands.add(new WaitOnAliveArtifactCommand(cdecArtifact));
-        } catch (Exception e) {
-            throw new NodeException(e.getMessage(), e);
-        }
-
-        return new MacroCommand(commands, "Add node commands");
     }
 
     /**
@@ -171,19 +85,15 @@ public class NodeManager {
      *         if node type isn't supported, or if there is no removing node in the list of additional nodes
      */
     public NodeConfig remove(String dns) throws IOException, IllegalArgumentException {
-        if (configManager.detectInstallationType() != InstallType.MULTI_SERVER) {
-            throw new IllegalStateException("You can remove node from Multi-Server Codenvy only");
-        }
+        getHelper().checkInstallType();
 
-        Config config = getCodenvyConfig(configManager);
-        AdditionalNodesConfigUtil nodesConfigUtil = getNodesConfigUtil(config);
-
-        NodeConfig.NodeType nodeType = nodesConfigUtil.recognizeNodeTypeFromConfigBy(dns);
+        Config config = configManager.loadInstalledCodenvyConfig();
+        NodeConfig.NodeType nodeType = getHelper().recognizeNodeTypeFromConfigBy(dns);
         if (nodeType == null) {
-            throw new NodeException(format("Node '%s' is not found in Codenvy configuration among additional nodes", dns));
+            throw new NodeException(format("Node '%s' is not found in Codenvy configuration", dns));
         }
 
-        String property = nodesConfigUtil.getPropertyNameBy(nodeType);
+        String property = getHelper().getPropertyNameBy(nodeType);
         if (property == null) {
             throw new IllegalArgumentException(format("Node type '%s' isn't supported", nodeType));
         }
@@ -191,57 +101,10 @@ public class NodeManager {
         String nodeSshUser = config.getValue(Config.NODE_SSH_USER_NAME);
         NodeConfig removingNode = new NodeConfig(nodeType, dns, nodeSshUser);
 
-        Command command = getRemoveNodeCommand(removingNode, config, nodesConfigUtil, property);
+        Command command = getHelper().getRemoveNodeCommand(removingNode, property);
         command.execute();
 
         return removingNode;
-    }
-
-    protected Command getRemoveNodeCommand(NodeConfig node,
-                                           Config config,
-                                           AdditionalNodesConfigUtil nodesConfigUtil,
-                                           String property) throws NodeException {
-        try {
-            String value = nodesConfigUtil.getValueWithoutNode(node);
-            NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
-
-            List<Command> commands = new ArrayList<>();
-
-            // modify puppet master config
-            Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
-            while (propertiesFiles.hasNext()) {
-                Path file = propertiesFiles.next();
-
-                commands.add(createFileBackupCommand(file));
-                commands.add(createPropertyReplaceCommand(file, "$" + property, value));
-            }
-
-            // force applying updated puppet config for puppet agent on API node
-            commands.add(createForcePuppetAgentCommand(apiNode));
-
-            // wait until there node is removed from configuration on API server
-            commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; " +
-                                              "while true; do " +
-                                              "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
-                                              "    sleep 5; " +  // sleep 5 sec
-                                              "done; " +
-                                              "sleep 15; # delay to involve into start of rebooting api server", node.getHost()),
-                                       apiNode));
-
-            // wait until API server restarts
-            commands.add(new WaitOnAliveArtifactCommand(cdecArtifact));
-
-            // remove out-date puppet agent's certificate
-            commands.add(createCommand(format("sudo puppet cert clean %s", node.getHost())));
-            commands.add(createCommand("sudo systemctl restart puppetmaster"));
-
-            // stop puppet agent on removing node and remove out-date certificate
-            commands.add(createCommand("sudo systemctl stop puppet", node));
-            commands.add(createCommand("sudo rm -rf /var/lib/puppet/ssl", node));
-            return new MacroCommand(commands, "Remove node commands");
-        } catch (Exception e) {
-            throw new NodeException(e.getMessage(), e);
-        }
     }
 
     protected void validate(NodeConfig node) throws NodeException {
@@ -259,12 +122,12 @@ public class NodeManager {
         return createCommand(command, node);
     }
 
-    protected Config getCodenvyConfig(ConfigManager configManager) throws IOException {
-        return configManager.loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
-    }
-
-    /** for testing propose */
-    protected AdditionalNodesConfigUtil getNodesConfigUtil(Config config) {
-        return new AdditionalNodesConfigUtil(config);
+    protected NodeManagerHelper getHelper() throws IOException {
+        Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
+        if (codenvyVersion.compareToMajor(4) < 0) {
+            return HELPERS.get(3);
+        } else {
+            return HELPERS.get(4);
+        }
     }
 }

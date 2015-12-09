@@ -15,8 +15,11 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.managers;
+package com.codenvy.im.managers.helper;
 
+import com.codenvy.im.managers.Config;
+import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableMap;
 
 import org.eclipse.che.commons.annotation.Nullable;
@@ -32,7 +35,7 @@ import static com.google.common.base.Joiner.on;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
-public class AdditionalNodesConfigUtil {
+public class AdditionalNodesConfigHelperCodenvy3 {
 
     /**
      * Names of properties of Config.MULTI_SERVER_CUSTOM_CONFIG_PP config file
@@ -46,7 +49,7 @@ public class AdditionalNodesConfigUtil {
 
     private Config config;
 
-    public AdditionalNodesConfigUtil(Config config) {
+    public AdditionalNodesConfigHelperCodenvy3(Config config) {
         this.config = config;
     }
 
