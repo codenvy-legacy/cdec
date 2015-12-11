@@ -27,7 +27,6 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
 import com.google.common.collect.ImmutableList;
-
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -50,23 +49,23 @@ import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
-    public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
+    public static final String SYSTEM_USER_NAME   = System.getProperty("user.name");
 
     @Mock
-    private ConfigManager                       mockConfigManager;
+    private ConfigManager               mockConfigManager;
     @Mock
-    private AdditionalNodesConfigHelperCodenvy3 mockNodesConfigUtil;
+    private AdditionalNodesConfigHelper mockNodesConfigHelper;
     @Mock
-    private CDECArtifact                        mockCdecArtifact;
+    private CDECArtifact                mockCdecArtifact;
     @Mock
-    private Command                             mockCommand;
+    private Command                     mockCommand;
 
     private static final String              TEST_NODE_DNS  = "localhost";
     private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
     private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS, null);
 
-    private static final String  TEST_RUNNER_NODE_URL             = "test_runner_node_url";
-    private static final String  ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
+    private static final String TEST_VALUE_WITH_NODE             = "test_runner_node_url";
+    private static final String ADDITIONAL_RUNNERS_PROPERTY_NAME = Config.ADDITIONAL_RUNNERS;
 
     private NodeManagerHelperCodenvy3Impl spyHelperCodenvy3;
 
@@ -79,18 +78,14 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
         doReturn(ImmutableList.of(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_CUSTOM_CONFIG_PP),
                                   Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_CONFIG_PP)).iterator())
             .when(mockConfigManager).getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
-        doReturn(ImmutableList.of(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_CONFIG_PP),
-                                  Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PP)).iterator())
-            .when(mockConfigManager).getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
 
-        doReturn(mockNodesConfigUtil).when(spyHelperCodenvy3).getNodesConfigHelper(any(Config.class));
+        doReturn(mockNodesConfigHelper).when(spyHelperCodenvy3).getNodesConfigHelper(any(Config.class));
 
         initConfigs();
     }
 
     private void initConfigs() throws IOException {
-        doReturn(ADDITIONAL_RUNNERS_PROPERTY_NAME).when(spyHelperCodenvy3).getPropertyNameBy(TEST_NODE_TYPE);
-        doReturn(TEST_RUNNER_NODE_URL).when(mockNodesConfigUtil).getValueWithNode(TEST_NODE);
+        doReturn(TEST_VALUE_WITH_NODE).when(mockNodesConfigHelper).getValueWithNode(TEST_NODE);
     }
 
     @Test
@@ -131,10 +126,10 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
                      "{'command'='sudo sh -c \"echo -e 'localhost' >> /etc/puppet/autosign.conf\"', 'agent'='LocalAgent'}");
         assertEquals(commands.get(5).toString(), format("{'command'='yum clean all', 'agent'='LocalAgent'}"));
         assertEquals(commands.get(6).toString(),
-                     format("{'command'='if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; then sudo yum -y -q install null; fi', 'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                     format("{'command'='if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; then sudo yum -y -q install https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm; fi', 'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
         assertEquals(commands.get(7).toString(),
-                     format("{'command'='sudo yum -y -q install null', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                     format("{'command'='sudo yum -y -q install puppet-3.5.1-1.el7.noarch', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
         assertEquals(commands.get(8).toString(),
                      format("{'command'='sudo systemctl enable puppet', 'agent'='{'host'='localhost', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
@@ -165,10 +160,10 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
         assertEquals(commands.get(16).toString(), "Wait until artifact 'mockCdecArtifact' becomes alive");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "error")
-    public void testGetAddNodeCommandWhenGetValueWithNodeException() throws Exception {
+    @Test(expectedExceptions = NodeException.class, expectedExceptionsMessageRegExp = "error")
+    public void testGetAddNodeCommandWithNodeException() throws Exception {
         prepareMultiNodeEnv(mockConfigManager);
-        doThrow(new IllegalArgumentException("error")).when(mockNodesConfigUtil).getValueWithNode(TEST_NODE);
+        doThrow(new IOException("error")).when(mockConfigManager).fetchMasterHostName();
 
         spyHelperCodenvy3.getAddNodeCommand(TEST_NODE, ADDITIONAL_RUNNERS_PROPERTY_NAME);
     }
@@ -224,7 +219,7 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
     }
 
     @Test(expectedExceptions = NodeException.class, expectedExceptionsMessageRegExp = "error")
-    public void testGetRemoveNodeCommandWhenGetValueWithNodeException() throws Exception {
+    public void testGetRemoveNodeCommandWithNodeException() throws Exception {
         Config mockConfig = mock(Config.class);
         doReturn(mockConfig).when(mockConfigManager).loadInstalledCodenvyConfig();
         doThrow(new IllegalArgumentException("error")).when(mockConfig)
@@ -248,26 +243,26 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
 
     @Test
     public void testRecognizeNodeTypeFromConfigBy() throws Exception {
-        doReturn(NodeConfig.NodeType.RUNNER).when(mockNodesConfigUtil).recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
+        doReturn(NodeConfig.NodeType.RUNNER).when(mockNodesConfigHelper).recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
         assertEquals(spyHelperCodenvy3.recognizeNodeTypeFromConfigBy(TEST_NODE_DNS), NodeConfig.NodeType.RUNNER);        
     }
 
     @Test
     public void testGetPropertyNameBy() throws Exception {
-        doReturn(ADDITIONAL_RUNNERS_PROPERTY_NAME).when(mockNodesConfigUtil).getPropertyNameBy(NodeConfig.NodeType.RUNNER);
+        doReturn(ADDITIONAL_RUNNERS_PROPERTY_NAME).when(mockNodesConfigHelper).getPropertyNameBy(NodeConfig.NodeType.RUNNER);
         assertEquals(spyHelperCodenvy3.getPropertyNameBy(NodeConfig.NodeType.RUNNER), ADDITIONAL_RUNNERS_PROPERTY_NAME);
     }
 
     @Test
     public void testRecognizeNodeConfigFromDns() throws Exception {
-        doReturn(TEST_NODE).when(mockNodesConfigUtil).recognizeNodeConfigFromDns(TEST_NODE_DNS);
+        doReturn(TEST_NODE).when(mockNodesConfigHelper).recognizeNodeConfigFromDns(TEST_NODE_DNS);
         assertEquals(spyHelperCodenvy3.recognizeNodeConfigFromDns(TEST_NODE_DNS), TEST_NODE);        
     }
 
     @Test
     public void testNodesConfigHelper() throws Exception {
         prepareMultiNodeEnv(mockConfigManager);
-        AdditionalNodesConfigHelperCodenvy3 helper = spyHelperCodenvy3.getNodesConfigHelper(new Config(Collections.EMPTY_MAP));
+        AdditionalNodesConfigHelper helper = spyHelperCodenvy3.getNodesConfigHelper(new Config(Collections.EMPTY_MAP));
         assertNotNull(helper);
     }
 }

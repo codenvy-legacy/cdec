@@ -65,22 +65,27 @@ public class TestConfig {
     }
 
     @Test(dataProvider = "getValues")
-    public void testGetValues(String propertyName, String propertyValue, String osVersion, List<String> expectedResult) {
+    public void testGetValues(String propertyName, String propertyValue, String delimiter, String osVersion, List<String> expectedResult) {
         OSUtils.VERSION = osVersion;
         Config config = new Config(Collections.singletonMap(propertyName, propertyValue));
-        List<String> result = config.getAllValues(propertyName);
+        List<String> result = config.getAllValues(propertyName, delimiter);
         assertEquals(result, expectedResult);
     }
 
     @DataProvider
     public Object[][] getValues() {
         return new Object[][]{
-                {"property", null, "7", null},
-                {"property", "", "7", new ArrayList<String>()},
-                {"property", "value1", "7", new ArrayList<>(ImmutableList.of("value1"))},
-                {"property", "value1,value2", "7", new ArrayList<>(ImmutableList.of("value1", "value2"))},
-                {"property", "value1,value2,value3", "7", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
-                {Config.PUPPET_AGENT_PACKAGE, "", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+            {"property", null, ",", "7", null},
+            {"property", "", ",", "7", new ArrayList<String>()},
+            {"property", "value1", ",", "7", new ArrayList<>(ImmutableList.of("value1"))},
+            {"property", "value1,value2", ",", "7", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+            {"property", "value1,value2,value3", ",", "7", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
+            {Config.PUPPET_AGENT_PACKAGE, "", ",", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+
+            {"property", "value1", "\n", "7", new ArrayList<>(ImmutableList.of("value1"))},
+            {"property", "value1\n", "\n", "7", new ArrayList<>(ImmutableList.of("value1"))},
+            {"property", "value1\nvalue2", "\n", "7", new ArrayList<>(ImmutableList.of("value1", "value2"))},
+            {"property", "value1\nvalue2\nvalue3\n", "\n", "7", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
         };
     }
 
@@ -123,4 +128,16 @@ public class TestConfig {
         assertEquals(result, "value_1.1,$prop_1,value_1.2");
     }
 
+    @Test
+    public void testGetValueWithoutSubstitution() {
+        Map<String, String> properties = ImmutableMap.of(
+            "prop_1", "$prop_2",
+            "prop_2", "value_2"
+        );
+
+        Config config = new Config(properties);
+
+        String result = config.getValueWithoutSubstitution("prop_1");
+        assertEquals(result, "$prop_2");
+    }
 }

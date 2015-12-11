@@ -47,16 +47,27 @@ public abstract class NodeManagerHelper {
      * certain dns.
      */
     @Nullable
-    public abstract NodeConfig.NodeType recognizeNodeTypeFromConfigBy(String dns) throws IOException;
+    public NodeConfig.NodeType recognizeNodeTypeFromConfigBy(String dns) throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+        return getNodesConfigHelper(config).recognizeNodeTypeFromConfigBy(dns);
+    }
 
     /**
      * @return name of property of puppet master config, which holds additional nodes of certain type.
      */
     @Nullable
-    public abstract String getPropertyNameBy(NodeConfig.NodeType nodeType) throws IOException;
+    public String getPropertyNameBy(NodeConfig.NodeType nodeType) throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+        return getNodesConfigHelper(config).getPropertyNameBy(nodeType);
+    }
 
     /**
      * Iterate through registered additional node types to find type which = prefix of dns, and then return NodeConfig(found_type, dns).
      */
-    public abstract NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException, IOException;
+    public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException, IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+        return getNodesConfigHelper(config).recognizeNodeConfigFromDns(dns);
+    }
+
+    public abstract AdditionalNodesConfigHelper getNodesConfigHelper(Config config);
 }

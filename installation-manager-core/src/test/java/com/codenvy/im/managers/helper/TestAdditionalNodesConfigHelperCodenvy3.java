@@ -36,7 +36,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 /** @author Dmytro Nochevnov */
-public class TestAdditionalNodesConfigUtil {
+public class TestAdditionalNodesConfigHelperCodenvy3 {
 
     @Mock
     private Config mockConfig;
@@ -47,18 +47,18 @@ public class TestAdditionalNodesConfigUtil {
 
     private static final String ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
 
-    private AdditionalNodesConfigHelperCodenvy3 spyConfigUtil;
+    private AdditionalNodesConfigHelperCodenvy3Impl spyConfigUtil;
 
     @BeforeMethod
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyConfigUtil = spy(new AdditionalNodesConfigHelperCodenvy3(mockConfig));
+        spyConfigUtil = spy(new AdditionalNodesConfigHelperCodenvy3Impl(mockConfig));
     }
 
     @Test
     public void testRecognizeNodeTypeBy() {
-        doReturn(TEST_NODE_DNS).when(mockConfig).getValue(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(TEST_NODE_DNS).when(mockConfig).getValueWithoutSubstitution(ADDITIONAL_RUNNERS_PROPERTY_NAME);
         NodeConfig.NodeType result = spyConfigUtil.recognizeNodeTypeFromConfigBy(TEST_NODE_DNS);
 
         assertEquals(result, NodeConfig.NodeType.RUNNER);
@@ -80,7 +80,8 @@ public class TestAdditionalNodesConfigUtil {
 
     @Test(dataProvider = "GetValueWithNode")
     public void testGetValueWithNode(List<String> additionalNodes, String addingNodeDns, String expectedResult) {
-        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                                String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.RUNNER, addingNodeDns, null);
 
         String result = spyConfigUtil.getValueWithNode(testNode);
@@ -100,7 +101,8 @@ public class TestAdditionalNodesConfigUtil {
     public void testGetValueWithNodeWhenNodeExists() {
         List<String> additionalNodes = new ArrayList<>();
         additionalNodes.add(String.format("http://%s:8080/runner/internal/runner", TEST_NODE_DNS));
-        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                                String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
 
         spyConfigUtil.getValueWithNode(TEST_NODE);
     }
@@ -108,13 +110,15 @@ public class TestAdditionalNodesConfigUtil {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "Additional nodes property '" + ADDITIONAL_RUNNERS_PROPERTY_NAME + "' isn't found in Codenvy config")
     public void testGetValueWithNodeWithoutAdditionalNodesProperty() {
-        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                     String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
         spyConfigUtil.getValueWithNode(TEST_NODE);
     }
 
     @Test(dataProvider = "GetValueWithoutNode")
     public void testGetValueWithoutNode(List<String> additionalNodes, String removingNodeDns, String expectedResult) {
-        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                                String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.RUNNER, removingNodeDns, null);
 
         String result = spyConfigUtil.getValueWithoutNode(testNode);
@@ -152,7 +156,8 @@ public class TestAdditionalNodesConfigUtil {
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "There is no node '" + TEST_NODE_DNS + "' in the list of additional nodes")
     public void testGetValueWithoutNodeWhenNodeIsNotExists() {
-        doReturn(new ArrayList<>()).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(new ArrayList<>()).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                                  String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
 
         spyConfigUtil.getValueWithoutNode(TEST_NODE);
     }
@@ -160,7 +165,8 @@ public class TestAdditionalNodesConfigUtil {
     @Test(expectedExceptions = IllegalStateException.class,
           expectedExceptionsMessageRegExp = "Additional nodes property '" + ADDITIONAL_RUNNERS_PROPERTY_NAME + "' isn't found in Codenvy config")
     public void testGetValueWithoutNodeWithoutAdditionalNodesProperty() {
-        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                     String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
         spyConfigUtil.getValueWithoutNode(TEST_NODE);
     }
 
@@ -201,7 +207,7 @@ public class TestAdditionalNodesConfigUtil {
 
     @Test(expectedExceptions = IllegalArgumentException.class,
           expectedExceptionsMessageRegExp = "Illegal DNS name 'runner2.another.com' of additional node. Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '.*'")
-    public void testRecognizeNodeConfigFromDnsWhenDnsDoesnotComplyBaseNodeDomain() {
+    public void testRecognizeNodeConfigFromDnsWhenDnsDoesNotComplyBaseNodeDomain() {
         doReturn("builder1.some.com").when(mockConfig).getValue(
                 NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
         doReturn("runner1.some.com").when(mockConfig).getValue(NodeConfig.NodeType.RUNNER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
@@ -217,7 +223,8 @@ public class TestAdditionalNodesConfigUtil {
             "wrong_address"
         ));
 
-        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(additionalNodes).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                                String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
 
         Map<String, List<String>> result = spyConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
         assertEquals(result.toString(), "{additional_runners=[test1.dev.com, test-2.dev.com, test3.dev.com]}");
@@ -225,7 +232,8 @@ public class TestAdditionalNodesConfigUtil {
 
     @Test
     public void testExtractAdditionalNodesDnsWhenPropertiesIsAbsent() {
-        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME);
+        doReturn(null).when(mockConfig).getAllValues(ADDITIONAL_RUNNERS_PROPERTY_NAME,
+                                                     String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
 
         Map<String, List<String>> result = spyConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
         assertNull(result);

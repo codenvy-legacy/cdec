@@ -21,7 +21,6 @@ import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3;
 import com.codenvy.im.managers.helper.NodeManagerHelper;
 import com.codenvy.im.managers.helper.NodeManagerHelperCodenvy3Impl;
 import com.codenvy.im.managers.helper.NodeManagerHelperCodenvy4Impl;

@@ -231,9 +231,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                                   config.getValue(Config.PUPPET_MASTER_HOST_NAME))));
 
                 commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                                  "  server = %s\\n" +
-                                                  "  runinterval = 420\\n" +
-                                                  "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
+                                                  "  server = %s\\n/g' /etc/puppet/puppet.conf",
                                                   config.getValue(Config.PUPPET_MASTER_HOST_NAME))));
 
                 // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages

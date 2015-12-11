@@ -18,10 +18,7 @@
 package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.managers.Config;
-import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
-import com.google.common.collect.ImmutableMap;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -35,37 +32,27 @@ import static com.google.common.base.Joiner.on;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
-public class AdditionalNodesConfigHelperCodenvy3 {
-
-    /**
-     * Names of properties of Config.MULTI_SERVER_CUSTOM_CONFIG_PP config file
-     */
-    private static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_CODENVY_PROPERTIES = ImmutableMap.of(
-            NodeConfig.NodeType.BUILDER, "additional_builders",
-            NodeConfig.NodeType.RUNNER, "additional_runners"
-                                                                                                               );
-
-    public static final String ADDITIONAL_NODE_URL_TEMPLATE = "http://%1$s:8080/%2$s/internal/%2$s";
+public abstract class AdditionalNodesConfigHelper {
 
     private Config config;
 
-    public AdditionalNodesConfigHelperCodenvy3(Config config) {
+    public AdditionalNodesConfigHelper(Config config) {
         this.config = config;
     }
 
     /**
      * Read all urls of additional nodes stored from the puppet master config, find out node with certain dns and return type of additional node with
      * certain dns.
-     * For example: given:
+     * For example (Codenvy3): given:
      * $additional_builders = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
      * dns = "builder3.example.com"
      * Result = BUILDER
      */
     @Nullable
     public NodeConfig.NodeType recognizeNodeTypeFromConfigBy(String dns) {
-        for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {
+        for (Map.Entry<NodeConfig.NodeType, String> entry : getAdditionalNodesCodenvyProperties().entrySet()) {
             String additionalNodesProperty = entry.getValue();
-            String additionalNodes = config.getValue(additionalNodesProperty);
+            String additionalNodes = config.getValueWithoutSubstitution(additionalNodesProperty);
 
             if (additionalNodes != null && additionalNodes.contains(dns)) {
                 return entry.getKey();
@@ -77,7 +64,7 @@ public class AdditionalNodesConfigHelperCodenvy3 {
 
     /**
      * Iterate through registered additional node types to find type which = prefix of dns, and then return NodeConfig(found_type, dns).
-     * For example: given:
+     * For example (Codenvy3): given:
      * dns = "builder2.dev.com"
      * $builder_host_name = "builder1.dev.com"  => base_node_domain = ".dev.com"
      * Result = new NodeConfig(BUILDER, "builder2.dev.com")
@@ -88,19 +75,14 @@ public class AdditionalNodesConfigHelperCodenvy3 {
      * Result = IllegalArgumentException("Illegal DNS name 'builder2.dev.com' of additional node....)
      *
      * @throws IllegalArgumentException
-     *         if dns doesn't comply with convention '<supported_node_type><number>(base_node_domain)' where supported prefix
+     *         if dns doesn't comply with convention '<supported_node_type><number>(base_node_domain)'
      */
     public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException {
-        for (Map.Entry<NodeConfig.NodeType, String> entry : ADDITIONAL_NODES_CODENVY_PROPERTIES.entrySet()) {
+        for (Map.Entry<NodeConfig.NodeType, String> entry : getAdditionalNodesCodenvyProperties().entrySet()) {
             NodeConfig.NodeType type = entry.getKey();
 
-            NodeConfig baseNode = NodeConfig.extractConfigFrom(config, type);
-            if (baseNode == null) {
-                throw new IllegalStateException(format("Host name of base node of type '%s' wasn't found.", type));
-            }
-
+            String baseNodeDomain = getBaseNodeDomain(type, config);
             String typeString = type.toString().toLowerCase();
-            String baseNodeDomain = ConfigManager.getBaseNodeDomain(baseNode).toLowerCase();
             String regex = format("^%s\\d+%s$",
                                   typeString,
                                   baseNodeDomain);
@@ -111,24 +93,31 @@ public class AdditionalNodesConfigHelperCodenvy3 {
         }
 
         throw new IllegalArgumentException(format("Illegal DNS name '%s' of additional node. " +
-                                                  "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from" +
-                                                  " the list '%s'",
+                                                  "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '%s'",
                                                   dns,
-                                                  ADDITIONAL_NODES_CODENVY_PROPERTIES.keySet().toString().toLowerCase()));
+                                                  getAdditionalNodesCodenvyProperties().keySet().toString().toLowerCase()));
     }
+
+    /**
+     * @return base node config for certain type of additional node.
+     * For example (Codenvy3): given:
+     * $runner_host_name=runner1.example.com
+     * Result: getBaseNodeDomain(RUNNER, config) => NodeConfig{ dns: "runner1.example.com" }
+     */
+    public abstract String getBaseNodeDomain(NodeConfig.NodeType type, Config config);
 
     /**
      * @return name of property of puppet master config, which holds additional nodes of certain type.
      */
     @Nullable
     public String getPropertyNameBy(NodeConfig.NodeType nodeType) {
-        return ADDITIONAL_NODES_CODENVY_PROPERTIES.get(nodeType);
+        return getAdditionalNodesCodenvyProperties().get(nodeType);
     }
 
     /**
      * Construct url of adding node, add it to the list of additional nodes of type = addingNode.getType() of the configuration of puppet master,
      * and return this list as row with comma-separated values.
-     * For example: given:
+     * For example (Codenvy3): given:
      * $additional_builders = "http://builder2.example.com:8080/builder/internal/builder"
      * addingNode = new NodeConfig(BUILDER, "builder3.example.com")
      * Result = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
@@ -140,7 +129,7 @@ public class AdditionalNodesConfigHelperCodenvy3 {
      */
     public String getValueWithNode(NodeConfig addingNode) throws IllegalArgumentException, IllegalStateException {
         String additionalNodesProperty = getPropertyNameBy(addingNode.getType());
-        List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        List<String> nodesUrls = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
         if (nodesUrls == null) {
             throw new IllegalStateException(format("Additional nodes property '%s' isn't found in Codenvy config", additionalNodesProperty));
         }
@@ -152,13 +141,13 @@ public class AdditionalNodesConfigHelperCodenvy3 {
 
         nodesUrls.add(nodeUrl);
 
-        return on(',').skipNulls().join(nodesUrls);
+        return on(getAdditionalNodeDelimiter()).skipNulls().join(nodesUrls);
     }
 
     /**
      * Erase url of removing node from the list of additional nodes of type = removingNode.getType() of the configuration of puppet master,
      * and return this list as row with comma-separated values.
-     * For example: given:
+     * For example (Codenvy3): given:
      * $additional_builders = "http://builder2.example.com:8080/builder/internal/builder,http://builder3.example.com:8080/builder/internal/builder"
      * removingNode = new NodeConfig(BUILDER, "builder3.example.com")
      * Result = "http://builder2.example.com:8080/builder/internal/builder"
@@ -170,7 +159,7 @@ public class AdditionalNodesConfigHelperCodenvy3 {
      */
     public String getValueWithoutNode(NodeConfig removingNode) throws IllegalArgumentException {
         String additionalNodesProperty = getPropertyNameBy(removingNode.getType());
-        List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        List<String> nodesUrls = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
         if (nodesUrls == null) {
             throw new IllegalStateException(format("Additional nodes property '%s' isn't found in Codenvy config", additionalNodesProperty));
         }
@@ -182,7 +171,7 @@ public class AdditionalNodesConfigHelperCodenvy3 {
 
         nodesUrls.remove(nodeUrl);
 
-        return on(',').skipNulls().join(nodesUrls);
+        return on(getAdditionalNodeDelimiter()).skipNulls().join(nodesUrls);
     }
 
     /**
@@ -193,7 +182,7 @@ public class AdditionalNodesConfigHelperCodenvy3 {
         Map<String, List<String>> result = new HashMap<>();
 
         String additionalNodesProperty = getPropertyNameBy(nodeType);
-        List<String> nodesUrls = config.getAllValues(additionalNodesProperty);
+        List<String> nodesUrls = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
         if (nodesUrls == null) {
             return null;
         }
@@ -213,12 +202,12 @@ public class AdditionalNodesConfigHelperCodenvy3 {
 
     /**
      * @return link like "http://builder3.example.com:8080/builder/internal/builder", or "http://runner3.example.com:8080/runner/internal/runner"
-     * For example: given:
+     * For example (Codenvy3): given:
      * node = new NodeConfig(BUILDER, "builder2.example.com")
      * Result = "http://builder2.example.com:8080/builder/internal/builder"
      */
     protected String getAdditionalNodeUrl(NodeConfig node) {
-        return format(ADDITIONAL_NODE_URL_TEMPLATE,
+        return format(getAdditionalNodeTemplate(),
                       node.getHost(),
                       node.getType().toString().toLowerCase()
                      );
@@ -226,20 +215,40 @@ public class AdditionalNodesConfigHelperCodenvy3 {
 
     /**
      * @return dns name like "builder3.example.com"
-     * For example: given:
+     * For example (Codenvy3): given:
      * nodeUrl = "http://builder2.example.com:8080/builder/internal/builder"
      * Result = builder2.example.com
      */
     @Nullable
     private String getAdditionalNodeDns(String nodeUrl) {
-        String regex = "^http(|s)://([^:/]+)";
+        String regex = getAdditionalNodeRegex() + "([^:/]+)";
         Pattern p = Pattern.compile(regex);
 
         Matcher m = p.matcher(nodeUrl);
         if (m.find()) {
-            return m.group().replaceAll("^http(|s)://", "");
+            return m.group().replaceAll(getAdditionalNodeRegex(), "");
         }
 
         return null;
     }
+
+    /**
+     * @return regex to recognize additional node url
+     */
+    public abstract String getAdditionalNodeRegex();
+
+    /**
+     * @return template of additional node url based on node dns
+     */
+    public abstract String getAdditionalNodeTemplate();
+
+    /**
+     * @return names of properties of config file which hold additional node urls
+     */
+    public abstract Map<NodeConfig.NodeType, String> getAdditionalNodesCodenvyProperties();
+
+    /**
+     * @return char which is used to separate urls of additional nodes in puppet config
+     */
+    public abstract char getAdditionalNodeDelimiter();
 }

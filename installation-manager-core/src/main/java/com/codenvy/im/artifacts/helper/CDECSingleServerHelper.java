@@ -161,15 +161,21 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                     createCommand("sudo sed -i '1i[master]' /etc/puppet/puppet.conf"),
                     createCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
                     createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                         "  dns_alt_names = puppet,%s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
-                    createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
+                                         "  dns_alt_names = puppet,%1$s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
+                    createCommand(format("sudo sed -i 's/\\[agent\\]/" +
+                                         "[master]\\n" +   // is needed to add nodes in All-In-One Codenvy
+                                         "  certname = %1$s\\n" +
+                                         "\\n" +
+                                         "\\[agent\\]\\n" +
                                          "  show_diff = true\\n" +
                                          "  pluginsync = true\\n" +
                                          "  report = true\\n" +
                                          "  default_schedules = false\\n" +
-                                         "  certname = %s\\n" +
+                                         "  certname = %1$s\\n" +
                                          "  runinterval = 300\\n" +
-                                         "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
+                                         "  configtimeout = 600\\n" +
+                                         "  server = %1$s\\n" +        // is needed to add nodes in All-In-One Codenvy
+                                         "/g' /etc/puppet/puppet.conf", config.getHostUrl())),
                     // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
                     createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'")),
                                         "Configure puppet agent");

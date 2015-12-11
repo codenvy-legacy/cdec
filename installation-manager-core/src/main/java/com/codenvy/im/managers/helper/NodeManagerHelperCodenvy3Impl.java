@@ -26,7 +26,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
-import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -59,11 +58,11 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
     @Override
     public Command getAddNodeCommand(NodeConfig node, String property) throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
-        AdditionalNodesConfigHelperCodenvy3 nodesConfigHelper = getNodesConfigHelper(config);
+        AdditionalNodesConfigHelper additionalNodesConfigHelper = getNodesConfigHelper(config);
 
         List<Command> commands = new ArrayList<>();
 
-        String value = nodesConfigHelper.getValueWithNode(node);
+        String value = additionalNodesConfigHelper.getValueWithNode(node);
         NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
 
         try {
@@ -145,10 +144,10 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
     public Command getRemoveNodeCommand(NodeConfig node,
                                         String property) throws IOException {
         Config config = configManager.loadInstalledCodenvyConfig();
-        AdditionalNodesConfigHelperCodenvy3 nodesConfigHelper = getNodesConfigHelper(config);
+        AdditionalNodesConfigHelper additionalNodesConfigHelper = getNodesConfigHelper(config);
 
         try {
-            String value = nodesConfigHelper.getValueWithoutNode(node);
+            String value = additionalNodesConfigHelper.getValueWithoutNode(node);
             NodeConfig apiNode = NodeConfig.extractConfigFrom(config, NodeConfig.NodeType.API);
 
             List<Command> commands = new ArrayList<>();
@@ -197,26 +196,8 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
         }
     }
 
-    @Nullable
-    public NodeConfig.NodeType recognizeNodeTypeFromConfigBy(String dns) throws IOException {
-        Config config = configManager.loadInstalledCodenvyConfig();
-        return getNodesConfigHelper(config).recognizeNodeTypeFromConfigBy(dns);
-    }
-
-    @Nullable
-    public String getPropertyNameBy(NodeConfig.NodeType nodeType) throws IOException {
-        Config config = configManager.loadInstalledCodenvyConfig();
-        return getNodesConfigHelper(config).getPropertyNameBy(nodeType);
-    }
-
     @Override
-    public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException, IOException {
-        Config config = configManager.loadInstalledCodenvyConfig();
-        return getNodesConfigHelper(config).recognizeNodeConfigFromDns(dns);
-    }
-
-    /** for testing propose */
-    public AdditionalNodesConfigHelperCodenvy3 getNodesConfigHelper(Config config) {
-        return new AdditionalNodesConfigHelperCodenvy3(config);
+    public AdditionalNodesConfigHelper getNodesConfigHelper(Config config) {
+        return new AdditionalNodesConfigHelperCodenvy3Impl(config);
     }
 }

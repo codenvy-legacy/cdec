@@ -95,6 +95,11 @@ public class Config {
     public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY  = "node_ssh_user_private_key";
     public static final String SYSTEM_LDAP_PASSWORD                = "system_ldap_password";
 
+    public static final String ADDITIONAL_BUILDERS = "additional_builders";
+    public static final String ADDITIONAL_RUNNERS  = "additional_runners";
+
+    public static final String SWARM_NODES = "swarm_nodes";
+
     public static final List<String> MULTI_SERVER_PROPERTIES = ImmutableList.of(MULTI_SERVER_BASE_CONFIG_PP,
                                                                                 MULTI_SERVER_4_0_PROPERTIES,
                                                                                 MULTI_SERVER_BASE_4_0_PROPERTIES,
@@ -138,6 +143,18 @@ public class Config {
         return getValue(property, new ArrayList<>());
     }
 
+    /**
+     * @return original value without substitution enclosed variable, for example, "ou=$user_ldap_users_ou,$user_ldap_dn".
+     */
+    @Nullable
+    public String getValueWithoutSubstitution(String property) {
+        if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
+            return PROPERTIES_BY_VERSION.get(property).get(getVersion());
+        }
+
+        return properties.get(property);
+    }
+
     @Nullable
     private String getValue(String property, List<String> usedProperties) {
         if (usedProperties.contains(property)) {
@@ -168,15 +185,15 @@ public class Config {
         return value;
     }
 
-    /** @return list of values separated by comma */
+    /** @return list of property values separated by delimiter. Don't substitute enclosed variables like $host_url */
     @Nullable
-    public List<String> getAllValues(String property) {
+    public List<String> getAllValues(String property, String delimiter) {
         property = property.toLowerCase();
         String value;
         if (PROPERTIES_DEPEND_ON_VERSION.contains(property)) {
             value = PROPERTIES_BY_VERSION.get(property).get(getVersion());
         } else {
-            value = getValue(property);
+            value = getValueWithoutSubstitution(property);
         }
 
         List<String> result = new LinkedList<>();
@@ -184,7 +201,7 @@ public class Config {
             return null;
         }
 
-        for (String item : value.split(",")) {
+        for (String item : value.split(delimiter)) {
             item = item.trim();
             if (!item.isEmpty()) {
                 result.add(item);

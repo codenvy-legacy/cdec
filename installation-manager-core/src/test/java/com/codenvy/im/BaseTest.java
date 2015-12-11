@@ -21,10 +21,13 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.OSUtils;
 import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
 import java.io.File;
@@ -51,6 +54,7 @@ public class BaseTest {
     protected static final String SAAS_API_ENDPOINT   = "saas/endpoint";
     public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
     public static final    String TEST_VERSION_STR    = "3.3.0";
+    public static final    String INITIAL_OS_VERSION  = OSUtils.VERSION;
 
     @BeforeMethod
     public void clear() throws Exception {
@@ -65,6 +69,11 @@ public class BaseTest {
 
         FileUtils.deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());
         FileUtils.deleteDirectory(Paths.get(PUPPET_BASE_DIR).toFile());
+    }
+
+    @BeforeClass
+    public void setupClass() {
+        OSUtils.VERSION = "7";
     }
 
     protected void createSingleNodeConf() throws Exception {
@@ -182,4 +191,8 @@ public class BaseTest {
         FileUtils.deleteDirectory(Paths.get(DOWNLOAD_DIR).toFile());
     }
 
+    @AfterClass
+    public void tearDownClass() {
+        OSUtils.VERSION = INITIAL_OS_VERSION;
+    }
 }

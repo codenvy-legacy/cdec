@@ -26,7 +26,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3Impl;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -434,7 +434,7 @@ public class InstallationManagerService {
             }
 
             // get additional nodes dns lists
-            AdditionalNodesConfigHelperCodenvy3 additionalNodesConfigUtil = new AdditionalNodesConfigHelperCodenvy3(config);
+            AdditionalNodesConfigHelperCodenvy3Impl additionalNodesConfigUtil = new AdditionalNodesConfigHelperCodenvy3Impl(config);
             Map<String, List<String>> additionalRunners = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
             if (additionalRunners != null) {
                 selectedProperties.putAll(additionalRunners);
