@@ -1,5 +1,5 @@
-box      = 'centos7.1-preconfigured.v8.2.box'
-url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.2.box'
+box      = 'centos7.1-preconfigured.v8.3.box'
+url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.3.box'
 
 ram = '1024'
 runner_ram = '1512' # should be > 1GB
