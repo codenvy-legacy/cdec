@@ -36,6 +36,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
@@ -206,6 +207,21 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
             {"line1", Collections.singletonList("line1")},
             {"line1\nline2", Arrays.asList("line1", "line2")}
         };
+    }
+
+    @Test
+    public void testGetPuppetLogFile() {
+        PuppetErrorInterrupter puppetErrorInterrupter = new PuppetErrorInterrupter(null, null ,null);
+        assertEquals(puppetErrorInterrupter.getPuppetLogFile().toString(), "/var/log/puppet/puppet-agent.log");
+    }
+
+    @Test
+    public void testIsReadPuppetLogCommand() {
+        String anyCommand = "test";
+        assertFalse(PuppetErrorInterrupter.isReadPuppetLogCommand(anyCommand));
+
+        String readPuppetLocCommand = "sudo tailf " + spyInterrupter.getPuppetLogFile();
+        assertFalse(PuppetErrorInterrupter.isReadPuppetLogCommand(readPuppetLocCommand));
     }
 
     @Override

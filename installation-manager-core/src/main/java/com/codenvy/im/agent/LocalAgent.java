@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.agent;
 
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.console.Console;
 
 import java.io.IOException;
@@ -59,6 +60,12 @@ public class LocalAgent extends AbstractAgent {
     }
 
     private String executeWithPassword(String command) throws AgentException {
+        // workaround to issue CDEC-460 where there was sudo password prompt thrown from IM in time of installing Codenvy
+        if (PuppetErrorInterrupter.isReadPuppetLogCommand(command)) {
+            LOG.log(Level.WARNING, "It is impossible to read puppet log: sudo password is required");    // ignore to don't interrupt installation
+            return "";
+        }
+
         if (pwdCache == null) {
             pwdCache = obtainPassword();
         }

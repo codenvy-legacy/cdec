@@ -57,8 +57,9 @@ public class PuppetErrorInterrupter implements Command {
     public static final int SELECTION_LINE_NUMBER   = 20;
 
     /** minimum number of similar errors at the same node to interrupt installation manager */
-    public final static int MIN_ERROR_EVENTS_TO_INTERRUPT_IM = Integer.parseInt(
+    public final static int  MIN_ERROR_EVENTS_TO_INTERRUPT_IM = Integer.parseInt(
         InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named("installation-manager.min_puppet_errors_to_interrupt_im"))));
+    public static final Path PATH_TO_PUPPET_LOG               = Paths.get("/var/log/puppet/puppet-agent.log");
 
     private final Command          command;
     private final List<NodeConfig> nodes;
@@ -273,11 +274,15 @@ public class PuppetErrorInterrupter implements Command {
     
     /** for testing propose */
     protected Path getPuppetLogFile() {
-        return Paths.get("/var/log/puppet/puppet-agent.log");
+        return PATH_TO_PUPPET_LOG;
     }
 
     /** for testing propose */
     protected boolean useSudo() {
         return true;
-    }  
+    }
+
+    public static boolean isReadPuppetLogCommand(String command) {
+        return command.contains(PATH_TO_PUPPET_LOG.toString());
+    }
 }
