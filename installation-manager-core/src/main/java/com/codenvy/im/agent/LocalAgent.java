@@ -38,11 +38,10 @@ public class LocalAgent extends AbstractAgent {
     private static final Logger LOG = Logger.getLogger(LocalAgent.class.getSimpleName());
 
     protected final static String READ_PASSWORD_PROMPT              = String.format("[sudo] password for %s: ", System.getProperty("user.name"));
-    protected final static String NEED_PASSWORD_STATUS              = "need_password_status";
-    protected static final String CHECK_PASSWORD_NECESSITY_COMMAND =
-            String.format("if ! sudo -n true 2>/dev/null; then echo \"%s\"; fi", NEED_PASSWORD_STATUS);
+    protected static final String CHECK_PASSWORD_NECESSITY_COMMAND  = "ERROR=$(sudo -n true 2>&1); if [[ $? != 0 ]] ; then echo $ERROR; fi";
     protected static final String CHECK_IS_PASSWORD_CORRECT_COMMAND = "sudo -S true";
     protected static final String PASSWORD_INCORRECT_STATUS         = "Sorry, try again";
+    protected static final String NEED_PASSWORD_MESSAGE             = "sudo: a password is required";
 
     private static char[] pwdCache = null;
 
@@ -62,7 +61,7 @@ public class LocalAgent extends AbstractAgent {
     private String executeWithPassword(String command) throws AgentException {
         // workaround to issue CDEC-460 where there was sudo password prompt thrown from IM in time of installing Codenvy
         if (PuppetErrorInterrupter.isReadPuppetLogCommand(command)) {
-            LOG.log(Level.WARNING, "It is impossible to read puppet log: sudo password is required");    // ignore to don't interrupt installation
+            LOG.log(Level.WARNING, "It is impossible to read puppet log: sudo right is required");    // ignore to don't interrupt installation
             return "";
         }
 
@@ -126,7 +125,13 @@ public class LocalAgent extends AbstractAgent {
 
         try {
             String result = executeWithoutPassword(CHECK_PASSWORD_NECESSITY_COMMAND);
-            return (result != null) && result.contains(NEED_PASSWORD_STATUS);
+
+            if ((result != null) && result.contains(NEED_PASSWORD_MESSAGE)) {
+                LOG.log(Level.WARNING, "Command '%s' requires sudo password");
+                return true;
+            }
+            
+            return false;
 
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "Can't verify requirement of sudo password", e);

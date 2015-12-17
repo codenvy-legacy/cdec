@@ -134,7 +134,7 @@ public class TestLocalAgent {
     @Test(expectedExceptions = AgentException.class,
             expectedExceptionsMessageRegExp = "Can't obtain correct password")
     public void testSudoCommandRequiredPasswordWithoutConsole() throws Exception {
-        inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_STATUS.getBytes());
+        inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_MESSAGE.getBytes());
         spyTestAgent.execute("sudo true;");
     }
 
@@ -143,7 +143,7 @@ public class TestLocalAgent {
         String expectedConsoleOutput = "\n[sudo] password for " + System.getProperty("user.name") + ": ";
 
         doReturn(TEST_PASSWORD).when(mockConsole).readPassword();
-        inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_STATUS.getBytes());
+        inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_MESSAGE.getBytes());
         spyTestAgent.execute("sudo true;");
         assertEquals(outputOfMockConsole, expectedConsoleOutput);
     }
@@ -180,7 +180,7 @@ public class TestLocalAgent {
 
     @Test
     public void testIsPasswordRequiredOnCommandWithSudoWhenProcessReturnsCorrectStatus() throws IOException {
-        inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_STATUS.getBytes());
+        inputStreamOfSpyProcess = new ByteArrayInputStream(LocalAgent.NEED_PASSWORD_MESSAGE.getBytes());
         assertTrue(spyTestAgent.isPasswordInputRequired(COMMAND_WITH_SUDO));
         verify(spyTestAgent).getProcess(LocalAgent.CHECK_PASSWORD_NECESSITY_COMMAND);
     }
