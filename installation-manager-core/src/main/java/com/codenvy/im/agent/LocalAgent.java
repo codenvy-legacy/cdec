@@ -127,7 +127,7 @@ public class LocalAgent extends AbstractAgent {
             String result = executeWithoutPassword(CHECK_PASSWORD_NECESSITY_COMMAND);
 
             if ((result != null) && result.contains(NEED_PASSWORD_MESSAGE)) {
-                LOG.log(Level.WARNING, "Command '%s' requires sudo password");
+                LOG.log(Level.WARNING, String.format("Command '%s' requires sudo password", command));
                 return true;
             }
             
