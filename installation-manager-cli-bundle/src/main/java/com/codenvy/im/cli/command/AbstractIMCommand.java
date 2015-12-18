@@ -276,11 +276,23 @@ public abstract class AbstractIMCommand extends AbsCommand {
         return null;
     }
 
-    /** Adds into preferences remote with certain name and url */
+    /**
+     * Create remote with certain name and url.
+     * Existed one will be rewritten with new url. Token and username linked to remote will be removed.
+     */
     protected void createRemote(String name, String url) {
-        if (!getMultiRemoteCodenvy().addRemote(name, url)) {
-            throw new IllegalStateException(format("It was impossible to add remote. Please add remote with url '%s' manually.", url));
+        Remote remote = getMultiRemoteCodenvy().getRemote(name);
+        if (remote != null) {
+            if (preferencesStorage != null) {
+                preferencesStorage.invalidate();
+            }
+
+            remote.setUrl(url);
+            getGlobalPreferences().path("remotes").put(name, remote);
+            return;
         }
+
+        getMultiRemoteCodenvy().addRemote(name, url);
     }
 
     /** Returns true if only remoteName = name of remote which has url = {saas server url} */
