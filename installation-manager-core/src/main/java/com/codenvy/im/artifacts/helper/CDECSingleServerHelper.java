@@ -51,6 +51,7 @@ import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentComma
 import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createRepeatCommand;
 import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStartServiceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStopServiceCommand;
@@ -297,7 +298,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         // stop services
         commands.add(createStopServiceCommand("puppet"));
         commands.add(createStopServiceCommand("crond"));
-        commands.add(createStopServiceCommand("codenvy"));
+        commands.add(createRepeatCommand(createStopServiceCommand("codenvy")));
         commands.add(createStopServiceCommand("slapd"));
 
         // dump LDAP user db into {backup_directory}/ldap/ldap.ldif file

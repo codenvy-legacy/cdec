@@ -55,6 +55,7 @@ import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentComma
 import static com.codenvy.im.commands.CommandLibrary.createPackCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPatchCommand;
 import static com.codenvy.im.commands.CommandLibrary.createPropertyReplaceCommand;
+import static com.codenvy.im.commands.CommandLibrary.createRepeatCommand;
 import static com.codenvy.im.commands.CommandLibrary.createReplaceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStartServiceCommand;
 import static com.codenvy.im.commands.CommandLibrary.createStopServiceCommand;
@@ -406,7 +407,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         // stop services on API node
         commands.add(createStopServiceCommand("puppet", apiNode));
         commands.add(createStopServiceCommand("crond", apiNode));
-        commands.add(createStopServiceCommand("codenvy", apiNode));
+        commands.add(createRepeatCommand(createStopServiceCommand("codenvy", apiNode)));
         commands.add(createStopServiceCommand("codenvy-codeassistant ", apiNode));
 
         // stop services on DATA node
@@ -415,7 +416,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(createStopServiceCommand("slapd", dataNode));
 
         // stop services on ANALYTICS node
-        commands.add(createStopServiceCommand("codenvy", analyticsNode));
+        commands.add(createRepeatCommand(createStopServiceCommand("codenvy", analyticsNode)));
         commands.add(createStopServiceCommand("puppet", analyticsNode));
 
         // copy backup file into api node, pack filesystem data of API node to the {backup_file}/api/fs folder into backup file, and then copy it to local temp dir

@@ -156,6 +156,10 @@ public class CommandLibrary {
                     .resolve(pathFilename);
     }
 
+    public static Command createRepeatCommand(Command command) {
+        return new RepeatCommand(command);
+    }
+
     public static Command createStopServiceCommand(String serviceName) {
         return createCommand(getServiceManagementCommand(serviceName, STOP));
     }
