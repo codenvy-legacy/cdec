@@ -107,7 +107,7 @@ public class SecureShellAgent extends AbstractAgent {
 
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
-
+        config.put("kex", "diffie-hellman-group1-sha1,diffie-hellman-group14-sha1,diffie-hellman-group-exchange-sha1,diffie-hellman-group-exchange-sha256");   // to fix algorithm negotiation fail
         session.setConfig(config);
         session.setServerAliveInterval(50 * 1000);  // 50 sec
         session.setServerAliveCountMax(150);
