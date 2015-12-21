@@ -35,7 +35,7 @@ import java.nio.file.attribute.PosixFilePermission;
 public class SshServerFactory {
     public static final String TEST_SSH_USER = "testUser";
     public static final String TEST_SSH_HOST = "127.0.0.1";
-    public static final int    TEST_SSH_PORT = 2223;
+    public static final int    TEST_SSH_PORT = 2224;
 
     private static final Path TEST_SSH_AUTH_PUBLIC_KEY =
         Paths.get(BaseTest.class.getClassLoader().getResource("../test-classes/test_rsa.pub.txt").getFile());
