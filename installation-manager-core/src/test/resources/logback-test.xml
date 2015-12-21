@@ -35,6 +35,8 @@
 
     <logger name="com.codenvy.im" level="DEBUG"/>
 
+    <logger name="org.apache.sshd" level="DEBUG"/>
+
     <root level="OFF">
         <appender-ref ref="stdout"/>
         <appender-ref ref="file"/>
