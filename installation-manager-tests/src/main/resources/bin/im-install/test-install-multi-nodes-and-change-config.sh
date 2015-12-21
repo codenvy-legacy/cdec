@@ -35,16 +35,17 @@ auth "admin" "new-password"
 executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
 executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
 
+    # TODO [ndp] remove
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@api.codenvy "sudo cat /home/codenvy/codenvy-data/conf/general.properties")
+    log ${OUTPUT}
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties")
+    log ${OUTPUT}
+sleep 10m        # TODO [ndp] remove
+
 # verify changes on api node
-executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties"  "api.codenvy"  # TODO [ndp] remove
-sleep 2m                                                                                        # TODO [ndp] remove
-executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties"  "api.codenvy"  # TODO [ndp] remove
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service
-executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"  # TODO [ndp] remove
-sleep 2m                                                                                            # TODO [ndp] remove
-executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"  # TODO [ndp] remove
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
 auth "admin" "new-password" "http://${NEW_HOST_URL}"

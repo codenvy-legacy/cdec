@@ -35,6 +35,13 @@ auth "admin" "new-password"
 executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
 executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
 
+    # TODO [ndp] remove
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy "sudo cat /home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties")
+    log ${OUTPUT}
+    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties")
+    log ${OUTPUT}
+sleep 10m         # TODO [ndp] remove
+
 # verify changes on api node
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties"
 
