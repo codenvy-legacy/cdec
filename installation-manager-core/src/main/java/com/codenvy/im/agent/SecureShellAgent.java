@@ -27,6 +27,8 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Properties;
 
+import org.slf4j.LoggerFactory;
+
 import static java.lang.String.format;
 
 /**
@@ -46,6 +48,7 @@ public class SecureShellAgent extends AbstractAgent {
         try {
             session = getSession(host, port, user);
             jsch.addIdentity(privateKeyFileAbsolutePath.toString());
+            JSch.setLogger(new MyLogger());
         } catch (Exception e) {
             String errorMessage = format("Can't connect to host '%s@%s:%s' by using private key '%s'.", user, host, port, privateKeyFileAbsolutePath);
             throw makeAgentException(errorMessage, e);
@@ -139,4 +142,23 @@ public class SecureShellAgent extends AbstractAgent {
             return format("{'host'='%s'}", session.getHost());
         }
     }
+    
+    public static class MyLogger implements com.jcraft.jsch.Logger {
+    static java.util.Hashtable name=new java.util.Hashtable();
+    static{
+      name.put(new Integer(DEBUG), "DEBUG: ");
+      name.put(new Integer(INFO), "INFO: ");
+      name.put(new Integer(WARN), "WARN: ");
+      name.put(new Integer(ERROR), "ERROR: ");
+      name.put(new Integer(FATAL), "FATAL: ");
+    }
+    public boolean isEnabled(int level){
+      return true;
+    }
+    public void log(int level, String message){
+      System.err.print(name.get(new Integer(level)));
+      System.err.println(message);
+    }
+  }
+
 }

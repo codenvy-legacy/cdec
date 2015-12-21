@@ -48,9 +48,6 @@ public class TestSecureShellAgent {
     public void setUp() throws IOException, InterruptedException {
         sshd = SshServerFactory.createSshd();
         sshd.start();
-        String env = SimpleCommand.createCommand("env").execute();
-        LoggerFactory.getLogger(TestSecureShellAgent.class).info("env: " + env + "\n----------- wait about 18 minutes to study the problem 'algorithm negotiation fail'");
-        Thread.sleep(1000000);  // TODO [ndp] wait about 18 minutes to study the problem 'algorithm negotiation fail'
     }
 
     @Test
