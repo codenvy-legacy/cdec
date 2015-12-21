@@ -17,8 +17,11 @@
  */
 package com.codenvy.im.agent;
 
+import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.testhelper.ssh.SshServerFactory;
+
 import org.apache.sshd.SshServer;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -42,9 +45,12 @@ public class TestSecureShellAgent {
     private SecureShellAgent testAgent;
 
     @BeforeClass
-    public void setUp() throws IOException {
+    public void setUp() throws IOException, InterruptedException {
         sshd = SshServerFactory.createSshd();
         sshd.start();
+        String env = SimpleCommand.createCommand("env").execute();
+        LoggerFactory.getLogger(TestSecureShellAgent.class).info("env: " + env + "\n----------- wait about 18 minutes to study the problem 'algorithm negotiation fail'");
+        Thread.sleep(1000000);  // TODO [ndp] wait about 18 minutes to study the problem 'algorithm negotiation fail'
     }
 
     @Test
