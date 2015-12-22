@@ -449,7 +449,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                       .collect(Collectors.toList()));
         }
 
-        // force applying updated puppet config on puppet agent of API node
+        // force applying updated puppet config on puppet agent
         commands.add(createForcePuppetAgentCommand());
 
         // wait until API server restarts

@@ -583,7 +583,7 @@ public class TestCDECArtifact extends BaseTest {
 
         Command command = spyCDECMultiServerHelper.getUpdateConfigCommand(testConfig, properties);
         List<Command> commands = ((MacroCommand) command).getCommands();
-        assertEquals(commands.size(), 7);
+        assertEquals(commands.size(), 8);
         assertTrue(commands.get(0).toString().matches("\\{'command'='sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back ; sudo cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
                    commands.get(0).toString());
 
@@ -603,9 +603,10 @@ public class TestCDECArtifact extends BaseTest {
                      "| sed 's|$host_url *= *\"[^\"]*\"|$host_url = \"a\"|g' " +
                      "| sed 's|~n|\\n|g' > tmp.tmp " +
                      "&& sudo mv tmp.tmp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(4).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='data.dev.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
-        assertEquals(commands.get(5).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='api.dev.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
-        assertEquals(commands.get(6).toString(), "Wait until artifact 'codenvy' becomes alive");
+        assertEquals(commands.get(4).toString(), "{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(5).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='data.dev.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(6).toString(), format("{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; exit 0;', 'agent'='{'host'='api.dev.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(commands.get(7).toString(), "Wait until artifact 'codenvy' becomes alive");
     }
 
     @Test

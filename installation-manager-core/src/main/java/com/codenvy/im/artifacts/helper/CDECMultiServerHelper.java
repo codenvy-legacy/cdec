@@ -743,6 +743,9 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                                       .collect(Collectors.toList()));
         }
 
+        // force applying updated puppet config on puppet agent on master node
+        commands.add(createForcePuppetAgentCommand());
+
         // force applying updated puppet config on puppet agent at the all nodes (don't take into account additional nodes)
         final List<NodeConfig> nodes = extractConfigsFrom(config);
         for (NodeConfig node : nodes) {

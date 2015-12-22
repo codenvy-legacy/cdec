@@ -32,20 +32,23 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 # change Codenvy hostname
-executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "data.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "api.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "site.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "runner1.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "builder1.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "datasource.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "analytics.codenvy"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "master.codenvy"
+
 executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
 
-    # TODO [ndp] remove
-    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@api.codenvy "sudo cat /home/codenvy/codenvy-data/conf/general.properties")
-    log ${OUTPUT}
-    OUTPUT=$(ssh -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key vagrant@codenvy "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties")
-    log ${OUTPUT}
-sleep 10m        # TODO [ndp] remove
-
 # verify changes on api node
+executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service
+executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
 auth "admin" "new-password" "http://${NEW_HOST_URL}"
