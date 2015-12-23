@@ -20,6 +20,7 @@ package com.codenvy.im.testhelper.ssh;
 import com.codenvy.im.BaseTest;
 import com.google.common.collect.ImmutableSet;
 import org.apache.sshd.SshServer;
+import org.apache.sshd.common.util.SecurityUtils;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.shell.ProcessShellFactory;
 
@@ -62,6 +63,10 @@ public class SshServerFactory {
      * Get SSH server with shell support bound to separate port
      */
     public static SshServer createSshd() {
+        if (java.security.Security.getProvider(SecurityUtils.BOUNCY_CASTLE) != null) {
+            java.security.Security.removeProvider(SecurityUtils.BOUNCY_CASTLE);
+        }
+
         SshServer sshd = SshServer.setUpDefaultServer();
         sshd.setPort(TEST_SSH_PORT);
 
