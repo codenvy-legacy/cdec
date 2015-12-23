@@ -63,6 +63,8 @@ public class SshServerFactory {
      * Get SSH server with shell support bound to separate port
      */
     public static SshServer createSshd() {
+        // it is needed to fix test execution on Jenkins so as it registers own JCE Provider when usese 'Ssh Plugin'
+        // before running tests, and it leads to error 'Algorithm negotiation fail' (issue CDEC-469).
         if (java.security.Security.getProvider(SecurityUtils.BOUNCY_CASTLE) != null) {
             java.security.Security.removeProvider(SecurityUtils.BOUNCY_CASTLE);
         }
