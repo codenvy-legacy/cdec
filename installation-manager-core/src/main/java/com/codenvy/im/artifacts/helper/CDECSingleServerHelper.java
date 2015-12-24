@@ -449,6 +449,22 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                       .collect(Collectors.toList()));
         }
 
+        if (properties.containsKey(Config.HOST_URL)) {
+            String oldHostName = config.getHostUrl();
+            String newHostName = properties.get(Config.HOST_URL);
+
+            if (! newHostName.equals(oldHostName)) {
+                commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));
+                commands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
+                commands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
+                commands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
+                                                  + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName)));  // add new host name to dns_alt_names
+
+                commands.add(createCommand("sudo systemctl restart puppetmaster"));
+                commands.add(createCommand("sudo systemctl restart puppet"));
+            }
+        }
+
         // force applying updated puppet config on puppet agent
         commands.add(createForcePuppetAgentCommand());
 
