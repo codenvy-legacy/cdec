@@ -19,11 +19,13 @@ package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.MacroCommand;
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -94,14 +96,19 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
                                               node.getHost()),
                                        node));
 
+            // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
+            commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'", node));
+
             // start puppet agent
             commands.add(createCommand("sudo systemctl start puppet", node));
 
             // force applying updated puppet config at the adding node
             commands.add(createForcePuppetAgentCommand(node));
 
-            // wait until docker on additional node is installed by puppet
-            commands.add(createWaitServiceActiveCommand("docker", node));
+            // wait until docker on additional node is installed by puppet; interrupt on puppet puppet errors;
+            commands.add(new PuppetErrorInterrupter(createWaitServiceActiveCommand("docker", node),
+                                                    node,
+                                                    configManager));
 
             // --- register node in the swarm
             // add node dns to the $swarm_nodes as a separate row
@@ -194,7 +201,7 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
         String additionalNodes = config.getValueWithoutSubstitution(Config.SWARM_NODES);   // don't substitute enclosed variables like the "$host_url"
 
         if (additionalNodes != null && additionalNodes.contains(dns)) {
-            return NodeConfig.NodeType.NODE;
+            return NodeConfig.NodeType.MACHINE;
         }
 
         return null;

@@ -21,11 +21,15 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
+import com.google.common.collect.ImmutableList;
+import com.sun.javafx.UnmodifiableArrayList;
+import com.sun.javafx.collections.UnmodifiableListSet;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -107,17 +111,22 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
                                               node.getHost()),
                                        node));
 
+            // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
+            commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'", node));
+
             // start puppet agent
             commands.add(createCommand("sudo systemctl start puppet", node));
 
-            // wait until server on additional node is installed
-            commands.add(createCommand("doneState=\"Installing\"; " +
-                                       "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
-                                       "while [ \"${doneState}\" != \"Installed\" ]; do " +
-                                       "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
-                                       "    sleep 30; " +
-                                       "done",
-                                       node));
+            // wait until server on additional node is installed; interrupt on puppet errors;
+            commands.add(new PuppetErrorInterrupter(createCommand("doneState=\"Installing\"; " +
+                                                                  "testFile=\"/home/codenvy/codenvy-tomcat/logs/catalina.out\"; " +
+                                                                  "while [ \"${doneState}\" != \"Installed\" ]; do " +
+                                                                  "    if sudo test -f ${testFile}; then doneState=\"Installed\"; fi; " +
+                                                                  "    sleep 30; " +
+                                                                  "done",
+                                                                  node),
+                                                    node,
+                                                    configManager));
 
             // force applying updated puppet config on puppet agent of API node
             commands.add(createForcePuppetAgentCommand(apiNode));

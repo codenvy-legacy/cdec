@@ -37,7 +37,7 @@ public class NodeConfig {
         DATASOURCE,
         ANALYTICS,
         API,
-        NODE  // for Codenvy 4.0
+        MACHINE  // for Codenvy 4.0
     }
 
     private String host;
@@ -106,12 +106,13 @@ public class NodeConfig {
 
     @Override
     public String toString() {
-        return format("{'host':'%1$s', 'port':'%2$s', 'user':'%3$s', 'privateKeyFile':'%4$s', 'type':'%5$s'}",
-                      host,
-                      port,
-                      user,
-                      privateKeyFile,
-                      type);
+        StringBuilder result = new StringBuilder(format("{'host':'%1$s', 'port':'%2$s'", host, port));
+        if (user != null) {
+            result.append(format(", 'user':'%1$s'", user));
+        }
+                             
+        return result.append(format(", 'privateKeyFile':'%1$s', 'type':'%2$s'}", privateKeyFile, type))
+                     .toString();
     }
 
     /**

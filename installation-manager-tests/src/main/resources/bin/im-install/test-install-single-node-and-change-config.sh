@@ -32,7 +32,7 @@ executeIMCommand "im-password" "password" "new-password"
 auth "admin" "new-password"
 
 # change Codenvy hostname
-executeSshCommand "sudo sed -i 's/ codenvy/ codenvy test.codenvy/' /etc/hosts"  # TODO [ndp] CDEC-470
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
 executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
 
 # verify changes on api node

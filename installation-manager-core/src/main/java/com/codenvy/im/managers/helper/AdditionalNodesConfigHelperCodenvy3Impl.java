@@ -20,8 +20,10 @@ package com.codenvy.im.managers.helper;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 
 import static com.google.common.base.Joiner.on;
@@ -29,11 +31,8 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public class AdditionalNodesConfigHelperCodenvy3Impl extends AdditionalNodesConfigHelper {
-
-    private static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_CODENVY_PROPERTIES = ImmutableMap.of(
-        NodeConfig.NodeType.BUILDER, Config.ADDITIONAL_BUILDERS,
-        NodeConfig.NodeType.RUNNER, Config.ADDITIONAL_RUNNERS
-                                                                                                               );
+    
+    private static final List<AdditionalNode> ADDITIONAL_NODES = ImmutableList.of(AdditionalNode.BUILDER, AdditionalNode.RUNNER);
 
     private static final String ADDITIONAL_NODE_URL_TEMPLATE = "http://%1$s:8080/%2$s/internal/%2$s";
 
@@ -55,8 +54,8 @@ public class AdditionalNodesConfigHelperCodenvy3Impl extends AdditionalNodesConf
     }
 
     @Override
-    public Map<NodeConfig.NodeType, String> getAdditionalNodesCodenvyProperties() {
-        return ADDITIONAL_NODES_CODENVY_PROPERTIES;
+    public List<AdditionalNode> getAdditionalNodes() {
+        return ADDITIONAL_NODES;
     }
 
     @Override

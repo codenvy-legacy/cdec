@@ -19,6 +19,7 @@ package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.NodeConfig;
+
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -33,6 +34,58 @@ import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
 public abstract class AdditionalNodesConfigHelper {
+
+    private static final String NODE = "node";
+
+    enum AdditionalNode {        
+        RUNNER(NodeConfig.NodeType.RUNNER, Config.ADDITIONAL_RUNNERS, NodeConfig.NodeType.RUNNER.toString().toLowerCase()),
+        BUILDER(NodeConfig.NodeType.BUILDER, Config.ADDITIONAL_BUILDERS, NodeConfig.NodeType.BUILDER.toString().toLowerCase()),
+        MACHINE(NodeConfig.NodeType.MACHINE, Config.SWARM_NODES, NODE);
+        
+        private NodeConfig.NodeType type;
+        private String property;
+        private String dnsPrefix;
+        
+        private AdditionalNode(NodeConfig.NodeType type, String property, String dnsPrefix) {
+            this.type = type;
+            this.property = property;
+            this.dnsPrefix = dnsPrefix;
+        }
+        
+        public NodeConfig.NodeType getType() {
+            return type;
+        }
+
+        
+        public String getProperty() {
+            return property;
+        }
+        
+        public String getDnsPrefix() {
+            return dnsPrefix;
+        }
+        
+        @Nullable
+        public static String getProperty(NodeConfig.NodeType type) {
+            for (AdditionalNode item : AdditionalNode.values()) {
+                if (item.getType().equals(type)) {
+                    return item.getProperty();
+                }
+            }
+            
+            return null;
+        }
+
+        public static Object getDnsPrefixes(List<AdditionalNode> additionalNodes) {
+            List<String> dnsPrefixes = new ArrayList<>();
+            
+            for (AdditionalNode item : additionalNodes) {
+                dnsPrefixes.add(item.getDnsPrefix());
+            }
+            
+            return dnsPrefixes;
+        }
+    }
 
     private Config config;
 
@@ -50,12 +103,11 @@ public abstract class AdditionalNodesConfigHelper {
      */
     @Nullable
     public NodeConfig.NodeType recognizeNodeTypeFromConfigBy(String dns) {
-        for (Map.Entry<NodeConfig.NodeType, String> entry : getAdditionalNodesCodenvyProperties().entrySet()) {
-            String additionalNodesProperty = entry.getValue();
-            String additionalNodes = config.getValueWithoutSubstitution(additionalNodesProperty);
+        for (AdditionalNode item : getAdditionalNodes()) {
+            String additionalNodes = config.getValueWithoutSubstitution(item.getProperty());
 
             if (additionalNodes != null && additionalNodes.contains(dns)) {
-                return entry.getKey();
+                return item.getType();
             }
         }
 
@@ -78,11 +130,11 @@ public abstract class AdditionalNodesConfigHelper {
      *         if dns doesn't comply with convention '<supported_node_type><number>(base_node_domain)'
      */
     public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException {
-        for (Map.Entry<NodeConfig.NodeType, String> entry : getAdditionalNodesCodenvyProperties().entrySet()) {
-            NodeConfig.NodeType type = entry.getKey();
+        for (AdditionalNode item : getAdditionalNodes()) {
+            NodeConfig.NodeType type = item.getType();
 
             String baseNodeDomain = getBaseNodeDomain(type, config);
-            String typeString = type.toString().toLowerCase();
+            String typeString = item.getDnsPrefix();
             String regex = format("^%s\\d+%s$",
                                   typeString,
                                   baseNodeDomain);
@@ -95,7 +147,7 @@ public abstract class AdditionalNodesConfigHelper {
         throw new IllegalArgumentException(format("Illegal DNS name '%s' of additional node. " +
                                                   "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '%s'",
                                                   dns,
-                                                  getAdditionalNodesCodenvyProperties().keySet().toString().toLowerCase()));
+                                                  AdditionalNode.getDnsPrefixes(getAdditionalNodes()).toString().toLowerCase()));
     }
 
     /**
@@ -111,7 +163,7 @@ public abstract class AdditionalNodesConfigHelper {
      */
     @Nullable
     public String getPropertyNameBy(NodeConfig.NodeType nodeType) {
-        return getAdditionalNodesCodenvyProperties().get(nodeType);
+        return AdditionalNode.getProperty(nodeType);
     }
 
     /**
@@ -245,7 +297,7 @@ public abstract class AdditionalNodesConfigHelper {
     /**
      * @return names of properties of config file which hold additional node urls
      */
-    public abstract Map<NodeConfig.NodeType, String> getAdditionalNodesCodenvyProperties();
+    public abstract List<AdditionalNode> getAdditionalNodes();
 
     /**
      * @return char which is used to separate urls of additional nodes in puppet config

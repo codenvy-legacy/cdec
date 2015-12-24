@@ -211,7 +211,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
 
     @Test
     public void testGetPuppetLogFile() {
-        PuppetErrorInterrupter puppetErrorInterrupter = new PuppetErrorInterrupter(null, null ,null);
+        PuppetErrorInterrupter puppetErrorInterrupter = new PuppetErrorInterrupter(null, (List<NodeConfig>) null ,null);
         assertEquals(puppetErrorInterrupter.getPuppetLogFile().toString(), "/var/log/puppet/puppet-agent.log");
     }
 

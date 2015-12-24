@@ -72,14 +72,18 @@ public class PuppetErrorInterrupter implements Command {
     /** Map PuppetError{node, type, date} -> Set<logLine>  */
     protected Map<PuppetError, Set<LocalDateTime>> registeredErrors = new HashMap<>();   // protected access for testing propose
 
-    public PuppetErrorInterrupter(Command command, ConfigManager configManager) {
-        this(command, null, configManager);
-    }
-
     public PuppetErrorInterrupter(Command command, List<NodeConfig> nodes, ConfigManager configManager) {
         this.command = command;
         this.nodes = nodes;
         this.configManager = configManager;
+    }
+
+    public PuppetErrorInterrupter(Command command, ConfigManager configManager) {
+        this(command, (List<NodeConfig>) null, configManager);
+    }
+
+    public PuppetErrorInterrupter(Command command, NodeConfig node, ConfigManager configManager) {
+        this(command, Collections.singletonList(node), configManager);
     }
 
     @Override

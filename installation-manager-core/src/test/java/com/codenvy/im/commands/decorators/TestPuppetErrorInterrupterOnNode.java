@@ -277,7 +277,7 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
     }
 
     public PuppetErrorInterrupter getSpyInterrupter() {
-        return spy(new PuppetErrorInterrupter(mockCommand, Collections.singletonList(testNode), mockConfigManager));
+        return spy(new PuppetErrorInterrupter(mockCommand, testNode, mockConfigManager));
     }
 
 }

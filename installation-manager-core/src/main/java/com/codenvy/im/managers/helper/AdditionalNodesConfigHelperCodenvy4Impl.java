@@ -18,10 +18,11 @@
 package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.managers.Config;
-import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
@@ -29,8 +30,7 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class AdditionalNodesConfigHelperCodenvy4Impl extends AdditionalNodesConfigHelper {
 
-    private static final Map<NodeConfig.NodeType, String> ADDITIONAL_NODES_CODENVY_PROPERTIES = ImmutableMap.of(
-            NodeConfig.NodeType.NODE, Config.SWARM_NODES);
+    private static final List<AdditionalNode> ADDITIONAL_NODES = ImmutableList.of(AdditionalNode.MACHINE);
 
     private static final String ADDITIONAL_NODE_URL_TEMPLATE = "%1$s:2375";
 
@@ -67,8 +67,8 @@ public class AdditionalNodesConfigHelperCodenvy4Impl extends AdditionalNodesConf
     }
 
     @Override
-    public Map<NodeConfig.NodeType, String> getAdditionalNodesCodenvyProperties() {
-        return ADDITIONAL_NODES_CODENVY_PROPERTIES;
+    public List<AdditionalNode> getAdditionalNodes() {
+        return ADDITIONAL_NODES;
     }
 
     @Override
