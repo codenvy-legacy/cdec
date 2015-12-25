@@ -37,7 +37,7 @@ EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
                        "${JDK_URL}|Cookie:oraclelicense=accept-securebackup-cookie|0"
                        "http://mirror.centos.org/centos||0");
 
-CURRENT_STEP=
+CURRENT_STEP=0
 INSTALLATION_STEPS=("Configuring system..."
                     "Installing required packages... [java]"
                     "Install the Codenvy installation manager..."
@@ -310,7 +310,7 @@ doInstallCodenvy() {
 
             # if error occurred not because of internet access lost then break installation
             # it prevents breaking installation due to a lot of puppet errors
-            local checkFailed=`echo $(</dev/shm/im_internet_access_lost)`
+            local checkFailed=`cat /tmp/im_internet_access_lost 2>/dev/null`
             if [[ ! ${exitCode} == 0 ]] && [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
                 echo "Repeating installation step "${STEP} >> install.log
                 continue;
@@ -452,7 +452,7 @@ cursorRestore() {
 updateLine() {
     local lineNumber=$1
     shift
-    echo "$@" | tr ' ' '_' > /dev/shm/im_line_${lineNumber}
+    echo "$@" > /tmp/im_line_${lineNumber} 2>/dev/null
 }
 
 updateFooter() {
@@ -463,13 +463,13 @@ updateFooter() {
         cursorUp
         
         for ((line=4; line>=1; line--));  do
-            local prev_text=`echo $(</dev/shm/im_prev_line_${line}) | tr '_' ' '`
-            local text=`echo $(</dev/shm/im_line_${line}) | tr '_' ' '`
+            local prev_text=`cat /tmp/im_prev_line_${line} 2>/dev/null`
+            local text=`cat /tmp/im_line_${line} 2>/dev/null | tail -1`
             
             if [[ ! ${prev_text} == ${text} ]]; then
                 clearLine
                 println "${text}"
-                echo $(</dev/shm/im_line_${line}) > /dev/shm/im_prev_line_${line}
+                echo "${text}" > /tmp/im_prev_line_${line} 2>/dev/null
             else
                 cursorDown
             fi
@@ -1188,7 +1188,7 @@ doCheckAvailableResourcesOnNodes() {
 
 setStepIndicator() {
     CURRENT_STEP=$1
-    echo ${CURRENT_STEP} > /dev/shm/im_current_step
+    echo ${CURRENT_STEP} > /tmp/im_current_step 2>/dev/null
     shift
 
     updateLine ${STEP_LINE} ${INSTALLATION_STEPS[${CURRENT_STEP}]}
@@ -1311,14 +1311,14 @@ initFooterPosition() {
     PROGRESS_LINE=2
     TIMER_LINE=1
     
-    echo "" > /dev/shm/im_line_1
-    echo "" > /dev/shm/im_line_2
-    echo "" > /dev/shm/im_line_3
-    echo "" > /dev/shm/im_line_4
-    echo "" > /dev/shm/im_prev_line_1
-    echo "" > /dev/shm/im_prev_line_2
-    echo "" > /dev/shm/im_prev_line_3
-    echo "" > /dev/shm/im_prev_line_4
+    echo "" > /tmp/im_line_1 2>/dev/null
+    echo "" > /tmp/im_line_2 2>/dev/null
+    echo "" > /tmp/im_line_3 2>/dev/null
+    echo "" > /tmp/im_line_4 2>/dev/null
+    echo "" > /tmp/im_prev_line_1 2>/dev/null
+    echo "" > /tmp/im_prev_line_2 2>/dev/null
+    echo "" > /tmp/im_prev_line_3 2>/dev/null
+    echo "" > /tmp/im_prev_line_4 2>/dev/null
 }
 
 updatePuppetInfo() {
@@ -1334,7 +1334,7 @@ updatePuppetInfo() {
 }
 
 runInternetAccessChecker() {
-    echo 0 > /dev/shm/im_internet_access_lost
+    echo "0" > /tmp/im_internet_access_lost 2>/dev/null
     updateInternetAccessChecker &
     INTERNET_CHECKER_PID=$!
 }
@@ -1361,8 +1361,12 @@ updateInternetAccessChecker() {
     for ((;;)); do
         doUpdateInternetAccessChecker
         local checkFailed=$?
+        local tmp=`cat /tmp/im_current_step 2>/dev/null`
 
-        CURRENT_STEP=`echo $(</dev/shm/im_current_step)`
+        if [[ "${tmp}" =~ ^[0-9]*$ ]]; then
+            CURRENT_STEP=${tmp}
+        fi
+
         if [[ ${checkFailed} == 1 ]]; then
             updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]} $(printError " Internet connection lost... reconnecting...")"
         else
@@ -1385,7 +1389,7 @@ doUpdateInternetAccessChecker() {
         fi
 
         if [[ ${checkFailed} == 1 ]]; then
-            echo ${checkFailed} > /dev/shm/im_internet_access_lost
+            echo ${checkFailed} > /tmp/im_internet_access_lost 2>/dev/null
         fi
     done
 
@@ -1445,12 +1449,17 @@ if [[ ${ARTIFACT} == "codenvy" ]]; then
 
     runPuppetInfoPrinter
     doInstallCodenvy
+    pausePuppetInfoPrinter
 fi
 
 setStepIndicator ${LAST_INSTALLATION_STEP}
+
+updateLine ${STEP_LINE} " "
+updateLine ${PUPPET_LINE} " "
+
 sleep 2
+
 pauseTimer
-pausePuppetInfoPrinter
 pauseInternetAccessChecker
 pauseFooterUpdater
 
