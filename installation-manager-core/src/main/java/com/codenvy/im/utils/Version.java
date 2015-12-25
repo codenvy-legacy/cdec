@@ -30,25 +30,42 @@ import static java.util.regex.Pattern.compile;
  */
 public class Version implements Comparable<Version> {
 
-    private static final String  MILESTONE_VERSION_PREFIX = "-M";
-    private static final Pattern VERSION                  =
+    private static final String MILESTONE_VERSION_PREFIX = "-M";
+    private static final String BETA_VERSION_PREFIX      = "-beta-";
+
+    private static final Pattern VERSION =
             compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(\\.0|\\.[1-9]+[0-9]*|)" +
-                    "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)(-RC|)(-SNAPSHOT|)$");
+                    "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
+                    "(" + BETA_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
+                    "(-RC|)" +
+                    "(-SNAPSHOT|)$");
 
     private final int     major;
     private final int     minor;
     private final int     bugFix;
     private final int     hotFix;
     private final int     milestone;
+    private final int     beta;
     private final boolean snapshot;
     private final boolean rc;
 
-    public Version(int major, int minor, int bugFix, int hotFix, int milestone, boolean rc, boolean snapshot) {
+    /**
+     * @throws IllegalArgumentException
+     */
+    public Version(int major,
+                   int minor,
+                   int bugFix,
+                   int hotFix,
+                   int milestone,
+                   int beta,
+                   boolean rc,
+                   boolean snapshot) {
         this.major = major;
         this.minor = minor;
         this.bugFix = bugFix;
         this.hotFix = hotFix;
         this.milestone = milestone;
+        this.beta = beta;
         this.snapshot = snapshot;
         this.rc = rc;
     }
@@ -73,6 +90,7 @@ public class Version implements Comparable<Version> {
 
         int hotFix = 0;
         int milestone = 0;
+        int beta = 0;
 
         String hotFixGroup = matcher.group(4);
         if (!hotFixGroup.isEmpty()) {
@@ -84,14 +102,19 @@ public class Version implements Comparable<Version> {
             milestone = parseInt(milestoneGroup.substring(MILESTONE_VERSION_PREFIX.length()));
         }
 
+        String betaGroup = matcher.group(6);
+        if (!betaGroup.isEmpty()) {
+            beta = parseInt(betaGroup.substring(BETA_VERSION_PREFIX.length()));
+        }
 
         return new Version(parseInt(matcher.group(1)),
                            parseInt(matcher.group(2)),
                            parseInt(matcher.group(3)),
                            hotFix,
                            milestone,
-                           !matcher.group(6).isEmpty(),
-                           !matcher.group(7).isEmpty());
+                           beta,
+                           !matcher.group(7).isEmpty(),
+                           !matcher.group(8).isEmpty());
     }
 
     /**
@@ -127,6 +150,9 @@ public class Version implements Comparable<Version> {
         if (milestone != version.milestone) {
             return false;
         }
+        if (beta != version.beta) {
+            return false;
+        }
         if (minor != version.minor) {
             return false;
         }
@@ -148,6 +174,7 @@ public class Version implements Comparable<Version> {
         result = 31 * result + bugFix;
         result = 31 * result + hotFix;
         result = 31 * result + milestone;
+        result = 31 * result + beta;
         result = 31 * result + (snapshot ? 1 : 0);
         result = 31 * result + (rc ? 1 : 0);
         return result;
@@ -160,14 +187,17 @@ public class Version implements Comparable<Version> {
             || (major == o.major && minor > o.minor)
             || (major == o.major && minor == o.minor && bugFix > o.bugFix)
             || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix > o.hotFix)
-            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone > o.milestone)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix
+                && (milestone == 0 && o.milestone != 0 || milestone != 0 && o.milestone != 0 && milestone > o.milestone))
             || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
-                && !rc && o.rc)
+                && (beta == 0 && o.beta != 0 || beta != 0 && o.beta != 0 && beta > o.beta))
             || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
-                && rc == o.rc && !snapshot && o.snapshot)) {
+                && beta == o.beta && !rc && o.rc)
+            || (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix && milestone == o.milestone
+                && beta == o.beta && rc == o.rc && !snapshot && o.snapshot)) {
             return 1;
         } else if (major == o.major && minor == o.minor && bugFix == o.bugFix && hotFix == o.hotFix
-                   && milestone == o.milestone && rc == o.rc && snapshot == o.snapshot) {
+                   && milestone == o.milestone && beta == o.beta && rc == o.rc && snapshot == o.snapshot) {
             return 0;
         } else {
             return -1;
@@ -180,8 +210,9 @@ public class Version implements Comparable<Version> {
         return major
                + "." + minor
                + "." + bugFix
-               + (hotFix != 0 ? "." + hotFix : "")
+               + (hotFix > 0 ? "." + hotFix : "")
                + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "")
+               + (beta > 0 ? BETA_VERSION_PREFIX + beta : "")
                + (rc ? "-RC" : "")
                + (snapshot ? "-SNAPSHOT" : "");
 

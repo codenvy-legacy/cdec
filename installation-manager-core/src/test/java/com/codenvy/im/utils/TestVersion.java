@@ -35,24 +35,26 @@ public class TestVersion {
 
     @DataProvider(name = "testValidVersion")
     public static Object[][] testValidVersion() {
-        return new Object[][]{{"0.0.1"},
-                              {"1.0.1"},
-                              {"10.3.0"},
-                              {"10.3.0.0"},
-                              {"10.3.0.1"},
-                              {"10.3.0.1-RC"},
-                              {"0.9.0"},
-                              {"1.0.0"},
-                              {"1.0.10"},
-                              {"1.0.10-RC"},
-                              {"1.0.1-SNAPSHOT"},
-                              {"1.0.1-RC-SNAPSHOT"},
-                              {"1.0.1.0-SNAPSHOT"},
-                              {"1.0.1-M1"},
-                              {"1.0.1.1-M1"},
-                              {"1.0.1-M1-SNAPSHOT"},
-                              {"1.0.1.2-M1-SNAPSHOT"},
-                              {"1.0.1.2-M1-RC-SNAPSHOT"}};
+        return new Object[][] {{"0.0.1"},
+                               {"1.0.1"},
+                               {"10.3.0"},
+                               {"10.3.0.0"},
+                               {"10.3.0.1"},
+                               {"10.3.0.1-RC"},
+                               {"0.9.0"},
+                               {"1.0.0"},
+                               {"1.0.10"},
+                               {"1.0.10-RC"},
+                               {"1.0.1-SNAPSHOT"},
+                               {"1.0.1-RC-SNAPSHOT"},
+                               {"1.0.1.0-SNAPSHOT"},
+                               {"1.0.1-M1"},
+                               {"1.0.1.1-M1"},
+                               {"1.0.1-M1-SNAPSHOT"},
+                               {"1.0.1.2-M1-SNAPSHOT"},
+                               {"1.0.1.2-beta-1-SNAPSHOT"},
+                               {"1.0.1.2-M1-beta-1-SNAPSHOT"},
+                               {"1.0.1.2-M1-RC-SNAPSHOT"}};
     }
 
     @Test(dataProvider = "testInvalidVersion")
@@ -62,43 +64,50 @@ public class TestVersion {
 
     @DataProvider(name = "testInvalidVersion")
     public static Object[][] testInvalidVersion() {
-        return new Object[][]{{"1"},
-                              {"00.1.1"},
-                              {"1.1"},
-                              {"1.1."},
-                              {"1.1.1."},
-                              {"1.01.1"},
-                              {"01.1.1"},
-                              {"1.1.01"},
-                              {"1.0.1-"},
-                              {"1.0.1-M"},
-                              {"1.0.1-M0"},
-                              {"1.0.1-M-SNAPSHOT"},
-                              {"1.0.1-M0-SNAPSHOT"},
-                              {"1.0.1--SNAPSHOT"},
-                              {"1.0.1-beta"},
-                              {"1.0.1-SNAPSHOT-RC"}};
+        return new Object[][] {{"1"},
+                               {"00.1.1"},
+                               {"1.1"},
+                               {"1.1."},
+                               {"1.1.1."},
+                               {"1.01.1"},
+                               {"01.1.1"},
+                               {"1.1.01"},
+                               {"1.0.1-"},
+                               {"1.0.1-M"},
+                               {"1.0.1-M0"},
+                               {"1.0.1-M-SNAPSHOT"},
+                               {"1.0.1-M0-SNAPSHOT"},
+                               {"1.0.1--SNAPSHOT"},
+                               {"1.0.1-beta-0"},
+                               {"1.0.1-SNAPSHOT-RC"}};
     }
 
     @Test(dataProvider = "testParseValidVersion")
-    public void testParseValidVersion(String str, int major, int minor, int bugFix, int hotFix, int milestone, boolean rc, boolean snapshot)
-            throws Exception {
-        assertEquals(Version.valueOf(str), new Version(major, minor, bugFix, hotFix, milestone, rc, snapshot));
+    public void testParseValidVersion(String str,
+                                      int major,
+                                      int minor,
+                                      int bugFix,
+                                      int hotFix,
+                                      int milestone,
+                                      int beta,
+                                      boolean rc,
+                                      boolean snapshot) throws Exception {
+        assertEquals(Version.valueOf(str), new Version(major, minor, bugFix, hotFix, milestone, beta, rc, snapshot));
     }
 
 
     @DataProvider(name = "testParseValidVersion")
     public Object[][] testParseValidVersion() {
-        return new Object[][]{
-                {"1.0.1-RC", 1, 0, 1, 0, 0, true, false},
-                {"1.0.1.0", 1, 0, 1, 0, 0, false, false},
-                {"10.150.200.1", 10, 150, 200, 1, 0, false, false},
-                {"10.150.200.24-SNAPSHOT", 10, 150, 200, 24, 0, false, true},
-                {"10.150.200-M20", 10, 150, 200, 0, 20, false, false},
-                {"10.150.200-M20-RC", 10, 150, 200, 0, 20, true, false},
-                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 0, 20, false, true},
-                {"10.150.200-M20-RC-SNAPSHOT", 10, 150, 200, 0, 20, true, true},
-        };
+        return new Object[][] {
+                {"1.0.1-RC", 1, 0, 1, 0, 0, 0, true, false},
+                {"1.0.1.0", 1, 0, 1, 0, 0, 0, false, false},
+                {"10.150.200.1", 10, 150, 200, 1, 0, 0, false, false},
+                {"10.150.200.24-SNAPSHOT", 10, 150, 200, 24, 0, 0, false, true},
+                {"10.150.200-M20", 10, 150, 200, 0, 20, 0, false, false},
+                {"10.150.200-M20-RC", 10, 150, 200, 0, 20, 0, true, false},
+                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 0, 20, 0, false, true},
+                {"10.150.200-beta-1-SNAPSHOT", 10, 150, 200, 0, 0, 1, false, true},
+                {"10.150.200-M20-RC-SNAPSHOT", 10, 150, 200, 0, 20, 0, true, true}};
     }
 
 
@@ -108,22 +117,21 @@ public class TestVersion {
     }
 
     @Test(dataProvider = "testToString")
-    public void testToString(String str, String result) throws Exception {
-        assertEquals(Version.valueOf(str).toString(), result);
+    public void testToString(String str) throws Exception {
+        assertEquals(Version.valueOf(str).toString(), str);
     }
 
     @DataProvider(name = "testToString")
     public Object[][] testToString() {
-        return new Object[][]{
-                {"10.150.200", "10.150.200"},
-                {"10.150.200.0", "10.150.200"},
-                {"10.150.200.1", "10.150.200.1"},
-                {"10.150.200-M20-SNAPSHOT", "10.150.200-M20-SNAPSHOT"},
-                {"10.150.200.20-M20-SNAPSHOT", "10.150.200.20-M20-SNAPSHOT"},
-                {"10.150.200-M20", "10.150.200-M20"},
-                {"10.150.200-SNAPSHOT", "10.150.200-SNAPSHOT"},
-                {"10.150.200-RC-SNAPSHOT", "10.150.200-RC-SNAPSHOT"},
-        };
+        return new Object[][] {
+                {"10.150.200"},
+                {"10.150.200.1"},
+                {"10.150.200-M20-SNAPSHOT"},
+                {"10.150.200.20-M20-SNAPSHOT"},
+                {"10.150.200-M20"},
+                {"10.150.200-SNAPSHOT"},
+                {"10.150.200-beta-1"},
+                {"10.150.200-RC-SNAPSHOT"}};
     }
 
 
@@ -134,7 +142,7 @@ public class TestVersion {
 
     @DataProvider(name = "testCompareTo")
     public Object[][] testCompareTo() {
-        return new Object[][]{
+        return new Object[][] {
                 {"1.0.1", "1.0.1", 0},
                 {"1.0.1", "1.0.1.0", 0},
                 {"1.0.2-M20", "1.0.2-M20", 0},
@@ -151,17 +159,18 @@ public class TestVersion {
                 {"1.0.2", "1.0.1-RC", 1},
                 {"1.0.2", "1.0.1-M20", 1},
                 {"1.0.2", "1.0.2-SNAPSHOT", 1},
-                {"1.0.2-M20", "1.0.2", 1},
                 {"1.0.2-M20", "1.0.2-M19", 1},
                 {"1.0.2-M20", "1.0.2-M20-SNAPSHOT", 1},
                 {"1.0.2-M20", "1.0.2-M20-RC", 1},
+                {"1.0.2-beta-2", "1.0.2-beta-1", 1},
 
                 {"1.0.1", "2.0.1", -1},
                 {"1.0.1", "1.1.1", -1},
                 {"1.1.1.0", "1.1.1.1", -1},
                 {"1.0.1", "1.0.2", -1},
                 {"1.0.1-SNAPSHOT", "1.0.1", -1},
-        };
+                {"1.0.2-M20", "1.0.2", -1},
+                {"1.0.2-beta-2", "1.0.2", -1}};
     }
 
     @Test(dataProvider = "testIsSuitedFor")
@@ -173,7 +182,7 @@ public class TestVersion {
 
     @DataProvider(name = "testIsSuitedFor")
     public static Object[][] testIsSuitedFor() {
-        return new Object[][]{
+        return new Object[][] {
                 {"1.0.1", "1\\.0\\.1", true},
                 {"1.0.1", "1\\.0\\.(.*)", true},
                 {"1.0.1", "1\\.(.*)\\.1", true},
@@ -181,6 +190,8 @@ public class TestVersion {
                 {"1.0.1", "(.*)\\.(.*)\\.1", true},
                 {"1.0.1", "(.*)\\.(.*)\\.(.*)", true},
                 {"1.1.1-SNAPSHOT", "1\\.1\\.0|1\\.1\\.1\\-SNAPSHOT", true},
+                {"1.1.1-beta-1", "1\\.1\\.(.*)", true},
+                {"1.1.1-M1", "1\\.1\\.(.*)", true},
                 {"1.1.0", "1\\.1\\.0|1\\.\\1\\.1-SNAPSHOT", true},
                 {"1.0.1", "1\\.0\\.2", false},
                 {"1.0.1", "1\\.1\\.(.*)", false}
@@ -191,15 +202,15 @@ public class TestVersion {
     public void testCompareToMajor(Version version, int majorToCompare, int expected) throws Exception {
         int actual = version.compareToMajor(majorToCompare);
 
-        assertEquals(actual , expected);
+        assertEquals(actual, expected);
     }
 
     @DataProvider
     public static Object[][] getDataForTestCompareToMajor() {
-        return new Object[][]{
-            {Version.valueOf("1.0.0-SNAPSHOT"), 1, 0},
-            {Version.valueOf("2.0.0"), 1, 1},
-            {Version.valueOf("1.0.0"), 2, -1}
+        return new Object[][] {
+                {Version.valueOf("1.0.0-SNAPSHOT"), 1, 0},
+                {Version.valueOf("2.0.0"), 1, 1},
+                {Version.valueOf("1.0.0"), 2, -1}
         };
     }
 
