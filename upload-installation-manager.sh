@@ -57,10 +57,12 @@ uploadCodenvyServerInstallScript() {
     FILENAME=install-codenvy.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
     DESCRIPTION="Script to install Codenvy in single-server configuration"
-    doUpload
 
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com/g' ${DESTINATION}/${FILENAME}"
+    if [[ -f ${SOURCE} ]]; then
+        doUpload
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/codenvy.com/http:\/\/updater-nightly.codenvy-dev.com/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 uploadCodenvyServerInstallMultiScript() {
@@ -68,9 +70,11 @@ uploadCodenvyServerInstallMultiScript() {
     FILENAME=install-codenvy-multi.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
     DESCRIPTION="Script to install Codenvy in multi-server configuration"
-    doUpload
 
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    if [[ -f ${SOURCE} ]]; then
+        doUpload
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 uploadCodenvyServerInstallInstallationManagerScript() {
@@ -78,10 +82,12 @@ uploadCodenvyServerInstallInstallationManagerScript() {
     FILENAME=install-im-cli.sh
     SOURCE=installation-manager-resources/src/main/resources/im-scripts/${FILENAME}
     DESCRIPTION="Script to install Codenvy installation manager"
-    doUpload
 
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/start.codenvy.com\/install-single/http:\/\/updater-nightly.codenvy-dev.com\/update\/repository\/public\/download\/install-codenvy/g' ${DESTINATION}/${FILENAME}"
+    if [[ -f ${SOURCE} ]]; then
+        doUpload
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/codenvy.com/codenvy-stg.com/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/https:\/\/start.codenvy.com\/install-single/http:\/\/updater-nightly.codenvy-dev.com\/update\/repository\/public\/download\/install-codenvy/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 uploadCodenvySingleServerInstallProperties() {
@@ -90,13 +96,14 @@ uploadCodenvySingleServerInstallProperties() {
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/codenvy-single-server.properties
     DESCRIPTION="Codenvy single-server installation properties"
-    doUpload
 
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=https:\/\/codenvy-stg.com\/update/g' ${DESTINATION}/${FILENAME}"
-
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/nightly.codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=http:\/\/updater-nightly.codenvy-dev.com\/update/g' ${DESTINATION}/${FILENAME}"
+    if [[ -f ${SOURCE} ]]; then
+        doUpload
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=https:\/\/codenvy-stg.com\/update/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/nightly.codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=http:\/\/updater-nightly.codenvy-dev.com\/update/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 uploadCodenvyMultiServerInstallProperties() {
@@ -105,39 +112,38 @@ uploadCodenvyMultiServerInstallProperties() {
     VERSION=$1
     SOURCE=installation-manager-resources/src/main/resources/codenvy-properties/${VERSION}/codenvy-multi-server.properties
     DESCRIPTION="Codenvy multi-server installation properties"
-    doUpload
 
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=https:\/\/codenvy-stg.com\/update/g' ${DESTINATION}/${FILENAME}"
-
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/nightly.codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
-    [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=http:\/\/updater-nightly.codenvy-dev.com\/update/g' ${DESTINATION}/${FILENAME}"
+    if [[ -f ${SOURCE} ]]; then
+        doUpload
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=https:\/\/codenvy-stg.com\/update/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/nightly.codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=http:\/\/updater-nightly.codenvy-dev.com\/update/g' ${DESTINATION}/${FILENAME}"
+    fi
 }
 
 doUpload() {
-    if [[ -f ${SOURCE} ]]; then
-        DESTINATION=update-server-repository/${ARTIFACT}/${VERSION}
+    DESTINATION=update-server-repository/${ARTIFACT}/${VERSION}
 
-        MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
-        SIZE=`du -b ${SOURCE} | cut -f1`
-        BUILD_TIME=`stat -c %y ${SOURCE}`
-        BUILD_TIME=${BUILD_TIME:0:19}
+    MD5=`md5sum ${SOURCE} | cut -d ' ' -f 1`
+    SIZE=`du -b ${SOURCE} | cut -f1`
+    BUILD_TIME=`stat -c %y ${SOURCE}`
+    BUILD_TIME=${BUILD_TIME:0:19}
 
-        echo "file=${FILENAME}" > .properties
-        echo "artifact=${ARTIFACT}" >> .properties
-        echo "version=${VERSION}" >> .properties
-        echo "description=${DESCRIPTION}" >> .properties
-        echo "authentication-required=false" >> .properties
-        echo "build-time="${BUILD_TIME} >> .properties
-        echo "md5=${MD5}" >> .properties
-        echo "size=${SIZE}" >> .properties
+    echo "file=${FILENAME}" > .properties
+    echo "artifact=${ARTIFACT}" >> .properties
+    echo "version=${VERSION}" >> .properties
+    echo "description=${DESCRIPTION}" >> .properties
+    echo "authentication-required=false" >> .properties
+    echo "build-time="${BUILD_TIME} >> .properties
+    echo "md5=${MD5}" >> .properties
+    echo "size=${SIZE}" >> .properties
 
-        ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
-        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
-        scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
+    ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "mkdir -p /home/${SSH_AS_USER_NAME}/${DESTINATION}"
+    scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} ${SOURCE} ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/${FILENAME}
+    scp -o StrictHostKeyChecking=no -i ${SSH_KEY_NAME} .properties ${SSH_AS_USER_NAME}@${AS_IP}:${DESTINATION}/.properties
 
-        rm .properties
-    fi
+    rm .properties
 }
 
 uploadInstallationManagerCli
