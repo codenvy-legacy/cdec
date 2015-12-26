@@ -113,13 +113,13 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                     add(createCommand(format("if ! sudo grep -Eq \" %1$s$\" /etc/hosts; then\n" +
                                              "  echo \"127.0.0.1 %1$s\" | sudo tee --append /etc/hosts > /dev/null\n" +
                                              "fi", config.getHostUrl())));
-                    
+
                     // install puppet rpm
                     add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
                     add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
                         + "then sudo yum -y -q install %s; "
                         + "fi", config.getValue(Config.PUPPET_RESOURCE_URL))));
-                        
+
                     // install and enable puppet server
                     add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_SERVER_PACKAGE))));
                     add(createCommand("sudo systemctl enable puppetmaster"));
@@ -454,6 +454,15 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             String newHostName = properties.get(Config.HOST_URL);
 
             if (! newHostName.equals(oldHostName)) {
+                propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
+                while (propertiesFiles.hasNext()) {
+                    Path file = propertiesFiles.next();
+                    commands.add(createCommand(format("sudo sed -i 's/node \"%1$s\"/node \"%2$s\"/g' %3$s",
+                                                      oldHostName,
+                                                      newHostName,
+                                                      file)));
+                }
+
                 commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));
                 commands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
                 commands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));

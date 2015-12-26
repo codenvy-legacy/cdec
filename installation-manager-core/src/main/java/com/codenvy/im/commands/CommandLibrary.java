@@ -18,6 +18,7 @@
 package com.codenvy.im.commands;
 
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
@@ -368,11 +369,11 @@ public class CommandLibrary {
     }
 
     /**
-     * Creates command to force running puppet agent.
+     * Creates command to force running puppet agent. Log destination defined by constant PuppetErrorInterrupter.PATH_TO_PUPPET_LOG
      */
     private static String getForcePuppetAgentCommand() {
-        return "sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay; " + // make sure there is no "--detailed-exitcodes" option
-               "exit 0;";
+        return format("sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay --logdest=%s; exit 0;", // make sure there is no "--detailed-exitcodes" option
+        PuppetErrorInterrupter.PATH_TO_PUPPET_LOG);
     }
 
     public static Command createTailCommand(Path file, int lineNumber, boolean needSudo) {

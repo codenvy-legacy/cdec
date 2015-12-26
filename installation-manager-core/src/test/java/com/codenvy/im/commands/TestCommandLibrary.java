@@ -345,7 +345,7 @@ public class TestCommandLibrary extends BaseTest {
     public void testCreateForcePuppetAgentCommand() throws AgentException {
         Command testCommand = CommandLibrary.createForcePuppetAgentCommand(testApiNode);
         assertEquals(testCommand.toString(), format("{" +
-                                             "'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay;" +
+                                             "'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay --logdest=/var/log/puppet/puppet-agent.log;" +
                                              " exit 0;', " +
                                              "'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
