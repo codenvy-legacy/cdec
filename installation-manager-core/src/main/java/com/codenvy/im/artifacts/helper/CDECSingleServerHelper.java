@@ -449,33 +449,39 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                       .collect(Collectors.toList()));
         }
 
-        if (properties.containsKey(Config.HOST_URL)) {
-            String oldHostName = config.getHostUrl();
-            String newHostName = properties.get(Config.HOST_URL);
-
-            if (! newHostName.equals(oldHostName)) {
-                propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
-                while (propertiesFiles.hasNext()) {
-                    Path file = propertiesFiles.next();
-                    commands.add(createCommand(format("sudo sed -i 's/node \"%1$s\"/node \"%2$s\"/g' %3$s",
-                                                      oldHostName,
-                                                      newHostName,
-                                                      file)));
-                }
-
-                commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));
-                commands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
-                commands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
-                commands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
-                                                  + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName)));  // add new host name to dns_alt_names
-
-                commands.add(createCommand("sudo systemctl restart puppetmaster"));
-                commands.add(createCommand("sudo systemctl restart puppet"));
+        String oldHostName = config.getHostUrl();
+        String newHostName = properties.get(Config.HOST_URL);
+        if (newHostName == null || newHostName.equals(oldHostName)) {
+            // force applying updated puppet config on puppet agent
+            commands.add(createForcePuppetAgentCommand());
+        } else {
+            // update hostname in puppet configuration as well
+            propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
+            while (propertiesFiles.hasNext()) {
+                Path file = propertiesFiles.next();
+                commands.add(createCommand(format("sudo sed -i 's/node \"%1$s\"/node \"%2$s\"/g' %3$s",
+                                                  oldHostName,
+                                                  newHostName,
+                                                  file)));
             }
-        }
 
-        // force applying updated puppet config on puppet agent
-        commands.add(createForcePuppetAgentCommand());
+            commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));
+            commands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
+            commands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
+            commands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
+                                              + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName)));  // add new host name to dns_alt_names
+
+            commands.add(createCommand("sudo systemctl restart puppetmaster"));
+            commands.add(createCommand("sudo systemctl restart puppet"));
+
+            // wait until there is changed configuration on API server
+            commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties\"; " +
+                                              "while true; do " +
+                                              "    if sudo grep \"api.endpoint=http://%s/api\" ${testFile}; then break; fi; " +
+                                              "    sleep 5; " +  // sleep 5 sec
+                                              "done; " +
+                                              "sleep 15; # delay to involve into start of rebooting api server", newHostName)));
+        }
 
         // wait until API server restarts
         commands.add(new WaitOnAliveArtifactCommand(original));

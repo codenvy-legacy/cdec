@@ -576,7 +576,8 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(9).toString(), "{'command'='sudo grep \"dns_alt_names = .*,new.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new/' /etc/puppet/puppet.conf; fi', 'agent'='LocalAgent'}");
         assertEquals(commands.get(10).toString(), "{'command'='sudo systemctl restart puppetmaster', 'agent'='LocalAgent'}");
         assertEquals(commands.get(11).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(12).toString(), "{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay --logdest=/var/log/puppet/puppet-agent.log; exit 0;', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(12).toString(), "{'command'='testFile=\"/home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties\"; while true; do     if sudo grep \"api.endpoint=http://new/api\" ${testFile}; then break; fi;     sleep 5; done; "
+                                                  + "sleep 15; # delay to involve into start of rebooting api server', 'agent'='LocalAgent'}");
         assertEquals(commands.get(13).toString(), "Wait until artifact 'codenvy' becomes alive");
     }
 
