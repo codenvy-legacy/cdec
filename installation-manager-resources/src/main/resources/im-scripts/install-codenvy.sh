@@ -308,12 +308,18 @@ doInstallCodenvy() {
                 exitCode=$?
             fi
 
+            if [[ ${exitCode} == 0 ]]; then
+                break;
+            fi
+
             # if error occurred not because of internet access lost then break installation
             # it prevents breaking installation due to a lot of puppet errors
             local checkFailed=`cat /tmp/im_internet_access_lost 2>/dev/null`
-            if [[ ! ${exitCode} == 0 ]] && [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
+            if [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
                 echo "Repeating installation step "${STEP} >> install.log
                 continue;
+            else
+                validateExitCode ${exitCode}
             fi
 
             break;
@@ -1453,8 +1459,6 @@ if [[ ${ARTIFACT} == "codenvy" ]]; then
 fi
 
 setStepIndicator ${LAST_INSTALLATION_STEP}
-
-updateLine ${STEP_LINE} " "
 updateLine ${PUPPET_LINE} " "
 
 sleep 2
