@@ -273,7 +273,7 @@ updateDownloadProgress() {
         local percent=$(( ${size}*100/${totalSize} ))
 
         doUpdateDownloadProgress ${percent}
-        sleep 1
+        sleep 1 2>/dev/null
     done
 }
 
@@ -308,12 +308,18 @@ doInstallCodenvy() {
                 exitCode=$?
             fi
 
+            if [[ ${exitCode} == 0 ]]; then
+                break;
+            fi
+
             # if error occurred not because of internet access lost then break installation
             # it prevents breaking installation due to a lot of puppet errors
             local checkFailed=`cat /tmp/im_internet_access_lost 2>/dev/null`
-            if [[ ! ${exitCode} == 0 ]] && [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
+            if [[ ! ${STEP} == 9 ]] && [[ ${checkFailed} == 1 ]]; then
                 echo "Repeating installation step "${STEP} >> install.log
                 continue;
+            else
+                validateExitCode ${exitCode}
             fi
 
             break;
@@ -475,7 +481,7 @@ updateFooter() {
             fi
         done
 
-        sleep 1
+        sleep 1 2>/dev/null
     done
 }
 
@@ -1231,7 +1237,7 @@ updateTimer() {
 
         updateLine ${TIMER_LINE} "Elapsed time: "${M}"m "${S}"s"
 
-        sleep 1
+        sleep 1 2>/dev/null
     done
 }
 
@@ -1329,7 +1335,7 @@ updatePuppetInfo() {
         else
             updateLine ${PUPPET_LINE} ""
         fi
-        sleep 1
+        sleep 1 2>/dev/null
     done
 }
 
@@ -1373,7 +1379,7 @@ updateInternetAccessChecker() {
             updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]}"
         fi
        
-        sleep 1m
+        sleep 1m 2>/dev/null
     done
 }
 
@@ -1453,8 +1459,6 @@ if [[ ${ARTIFACT} == "codenvy" ]]; then
 fi
 
 setStepIndicator ${LAST_INSTALLATION_STEP}
-
-updateLine ${STEP_LINE} " "
 updateLine ${PUPPET_LINE} " "
 
 sleep 2

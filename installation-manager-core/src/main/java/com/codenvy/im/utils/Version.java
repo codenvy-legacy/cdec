@@ -225,7 +225,16 @@ public class Version implements Comparable<Version> {
         }
     }
 
-    public int compareToMajor(int majorToCompare) {
+    private int compareToMajor(int majorToCompare) {
         return Integer.compare(this.major, majorToCompare);
     }
+
+    public boolean is3Major() {
+        return compareToMajor(3) == 0;
+    }
+
+    public boolean is4Major() {
+        return compareToMajor(4) == 0;
+    }
+
 }
