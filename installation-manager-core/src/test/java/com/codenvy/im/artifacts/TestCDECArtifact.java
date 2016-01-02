@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,10 +74,10 @@ public class TestCDECArtifact extends BaseTest {
     public static final String INITIAL_OS_VERSION = OSUtils.VERSION;
     public static final String SYSTEM_USER_NAME   = System.getProperty("user.name");
 
-    public static final String BASE_TMP_DIR = "target/" + TestCDECArtifact.class.getSimpleName();
-    public static final String TMP_CODENVY  = BASE_TMP_DIR + "/codenvy";
-    public static final String ETC_PUPPET   = BASE_TMP_DIR + "/etc/puppet";
-
+    public static final String BASE_TMP_DIR      = "target/" + TestCDECArtifact.class.getSimpleName();
+    public static final String TMP_CODENVY       = BASE_TMP_DIR + "/codenvy";
+    public static final String ETC_PUPPET        = BASE_TMP_DIR + "/etc/puppet";
+    public static final String CODENVY_4_VERSION = "4.0.0-beta-2";
 
     @Mock
     private HttpTransport mockTransport;
@@ -416,19 +417,59 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testGetBackupSingleServerCommand() throws Exception {
+    public void testGetBackup3SingleServerCommand() throws Exception {
         prepareSingleNodeEnv(spyConfigManager, mockTransport);
 
         BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
                                                       .setBackupDirectory("some_dir");
 
         backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
+        Command backupCommand = spyCdecArtifact.getBackupCommand(backupConfig);
+        assertNotNull(backupCommand);
 
-        assertNotNull(spyCdecArtifact.getBackupCommand(backupConfig));
+        List<Command> commands = ((MacroCommand) backupCommand).getCommands();
+        assertEquals(commands.size(), 18);
+
+        assertEquals(commands.get(0).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(1).toString(), "{'command'='mkdir -p /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(2).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop puppet.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(3).toString(), "{'command'='/bin/systemctl status crond.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop crond.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(4).toString(), "Repeat 2 times: {'command'='/bin/systemctl status codenvy.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop codenvy.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(5).toString(), "{'command'='/bin/systemctl status slapd.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop slapd.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(6).toString(), "{'command'='mkdir -p /tmp/codenvy/codenvy/ldap', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(7).toString(), "{'command'='sudo slapcat > /tmp/codenvy/codenvy/ldap/ldap.ldif', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(8).toString(), "{'command'='mkdir -p /tmp/codenvy/codenvy/ldap_admin', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(9).toString(), "{'command'='sudo slapcat -b 'null' > /tmp/codenvy/codenvy/ldap_admin/ldap.ldif', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(10).toString(), "{'command'='mkdir -p /tmp/codenvy/codenvy/mongo', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(11).toString(), "{'command'='/usr/bin/mongodump -unull -pnull -o /tmp/codenvy/codenvy/mongo --authenticationDatabase admin --quiet', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(12).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy/mongo/admin', 'agent'='LocalAgent'}");
+        assertTrue(commands.get(13).toString().matches("\\{'command'='if test -f some_dir/codenvy_backup_.*.tar; then    tar -C /tmp/codenvy/codenvy  -rf some_dir/codenvy_backup_.*.tar .;else    tar -C /tmp/codenvy/codenvy  -cf some_dir/codenvy_backup_.*.tar .;fi;', 'agent'='LocalAgent'\\}"), "Actual command: " + commands.get(13).toString());
+        assertTrue(commands.get(14).toString().matches("\\{'command'='if sudo test -f some_dir/codenvy_backup_.*.tar; then    sudo tar -C /home/codenvy/codenvy-data  -rf some_dir/codenvy_backup_.*.tar fs/.;else    sudo tar -C /home/codenvy/codenvy-data  -cf some_dir/codenvy_backup_.*.tar fs/.;fi;', 'agent'='LocalAgent'\\}"), "Actual command: " + commands.get(14).toString());
+        assertEquals(commands.get(15).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start puppet.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(16).toString(), "Wait until artifact 'codenvy' becomes alive");
+        assertEquals(commands.get(17).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
     }
 
     @Test
-    public void testGetRestoreSingleServerCommand() throws Exception {
+    public void testGetBackup4SingleServerCommand() throws Exception {
+        prepareSingleNodeEnv(spyConfigManager, mockTransport);
+        doReturn(new Config(ImmutableMap.of("host_url", "hostname",
+                                            Config.VERSION, CODENVY_4_VERSION)))
+            .when(spyConfigManager).loadInstalledCodenvyConfig();
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupDirectory("some_dir");
+
+        backupConfig.setBackupFile(backupConfig.generateBackupFilePath().toString());
+        Command backupCommand = spyCdecArtifact.getBackupCommand(backupConfig);
+        assertNotNull(backupCommand);
+
+        List<Command> commands = ((MacroCommand) backupCommand).getCommands();
+        assertEquals(commands.size(), 16);
+    }
+
+    @Test
+    public void testGetRestore3SingleServerCommand() throws Exception {
         prepareSingleNodeEnv(spyConfigManager, mockTransport);
 
         Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
@@ -437,11 +478,58 @@ public class TestCDECArtifact extends BaseTest {
                                                       .setBackupFile(testingBackup.toString())
                                                       .setBackupDirectory(testingBackup.getParent().toString());
 
-        assertNotNull(spyCdecArtifact.getRestoreCommand(backupConfig));
+        Command restoreCommand = spyCdecArtifact.getRestoreCommand(backupConfig);
+        assertNotNull(restoreCommand);
+
+        List<Command> commands = ((MacroCommand) restoreCommand).getCommands();
+        assertEquals(commands.size(), 21);
+
+        assertEquals(commands.get(0).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop puppet.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(1).toString(), "{'command'='/bin/systemctl status crond.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop crond.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(2).toString(), "{'command'='/bin/systemctl status codenvy.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop codenvy.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(3).toString(), "{'command'='/bin/systemctl status slapd.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop slapd.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(4).toString(), "{'command'='sudo rm -rf /var/lib/ldap', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(5).toString(), "{'command'='sudo mkdir -p /var/lib/ldap', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(6).toString(), "{'command'='sudo slapadd -q </tmp/codenvy/codenvy/ldap/ldap.ldif', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(7).toString(), "{'command'='sudo chown -R ldap:ldap /var/lib/ldap', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(8).toString(), "{'command'='sudo rm -rf /var/lib/ldapcorp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(9).toString(), "{'command'='sudo mkdir -p /var/lib/ldapcorp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(10).toString(), "{'command'='sudo slapadd -q -b 'null' </tmp/codenvy/codenvy/ldap_admin/ldap.ldif', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(11).toString(), "{'command'='sudo chown -R ldap:ldap /var/lib/ldapcorp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(12).toString(), "{'command'='/usr/bin/mongo -u null -p null --authenticationDatabase admin --quiet --eval 'db.getMongo().getDBNames().forEach(function(d){if (d!=\"admin\") db.getSiblingDB(d).dropDatabase()})'', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(13).toString(), "{'command'='/usr/bin/mongorestore -unull -pnull /tmp/codenvy/codenvy/mongo --authenticationDatabase admin --drop --quiet', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(14).toString(), "{'command'='sudo rm -rf /home/codenvy/codenvy-data/fs', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(15).toString(), "{'command'='sudo cp -r /tmp/codenvy/codenvy/fs /home/codenvy/codenvy-data', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(16).toString(), "{'command'='sudo chown -R codenvy:codenvy /home/codenvy/codenvy-data/fs', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(17).toString(), "{'command'='/bin/systemctl status slapd.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start slapd.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(18).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start puppet.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(19).toString(), "Wait until artifact 'codenvy' becomes alive");
+        assertEquals(commands.get(20).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
     }
 
     @Test
-    public void testGetRestoreMultiServerCommandFromFullBackup() throws Exception {
+    public void testGetRestore4SingleServerCommand() throws Exception {
+        prepareSingleNodeEnv(spyConfigManager, mockTransport);
+        doReturn(new Config(ImmutableMap.of("host_url", "hostname",
+                                            Config.VERSION, CODENVY_4_VERSION)))
+            .when(spyConfigManager).loadInstalledCodenvyConfig();
+
+
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
+
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupFile(testingBackup.toString())
+                                                      .setBackupDirectory(testingBackup.getParent().toString());
+
+        Command restoreCommand = spyCdecArtifact.getRestoreCommand(backupConfig);
+        assertNotNull(restoreCommand);
+
+        List<Command> commands = ((MacroCommand) restoreCommand).getCommands();
+        assertEquals(commands.size(), 17);
+    }
+
+    @Test
+    public void testGetRestore3MultiServerCommandFromFullBackup() throws Exception {
         Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
 
         prepareMultiNodeEnv(spyConfigManager, mockTransport);
@@ -455,8 +543,42 @@ public class TestCDECArtifact extends BaseTest {
         assertTrue(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"), "Actual result: " + result);  // check presence of restore FS commands
         assertTrue(result.toString().contains("mongorestore"), "Actual result: " + result);  // check presence of restore MONGO and MONGO_ANALYTICS commands
         assertTrue(result.toString().contains("sudo slapadd -q"), "Actual result: " + result);  // check presence of restore LDAP commands
+
+        List<Command> commands = ((MacroCommand) result).getCommands();
+        assertEquals(commands.size(), 43);
     }
 
+    @Test
+    public void testGetRestore4MultiServerCommandFromFullBackup() throws Exception {
+        Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/full_backup.tar").getPath());
+
+        prepareMultiNodeEnv(spyConfigManager, mockTransport);
+
+        doReturn(new Config(new HashMap<String, String>() {{
+            put("api_host_name", "api.example.com");
+            put("data_host_name", "data.example.com");
+            put("analytics_host_name", "analytics.example.com");
+            put("host_url", "hostname");
+            put(Config.PUPPET_MASTER_HOST_NAME, "master.example.com");
+            put(Config.VERSION, CODENVY_4_VERSION);
+        }})).when(spyConfigManager).loadInstalledCodenvyConfig();
+        
+        
+        BackupConfig backupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                      .setBackupFile(testingBackup.toString())
+                                                      .setBackupDirectory(testingBackup.getParent().toString());
+
+        Command result = spyCdecArtifact.getRestoreCommand(backupConfig);
+        assertNotNull(result);
+        assertTrue(result.toString().contains("sudo rm -rf /home/codenvy/codenvy-data/data/fs"), "Actual result: " + result);  // check presence of restore FS commands
+        assertTrue(result.toString().contains("mongorestore"), "Actual result: " + result);  // check presence of restore MONGO and MONGO_ANALYTICS commands
+        assertTrue(result.toString().contains("sudo slapadd -q"), "Actual result: " + result);  // check presence of restore LDAP commands
+
+
+        List<Command> commands = ((MacroCommand) result).getCommands();
+        assertEquals(commands.size(), 37);
+    }
+    
     @Test
     public void testGetRestoreMultiServerCommandFromEmptyBackup() throws Exception {
         Path testingBackup = Paths.get(getClass().getClassLoader().getResource("backups/empty_backup.tar").getPath());

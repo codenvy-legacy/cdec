@@ -18,7 +18,9 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.agent.AgentException;
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.UnsupportedArtifactVersionException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
 import com.codenvy.im.managers.helper.NodeManagerHelper;
@@ -38,13 +40,14 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 @Singleton
 public class NodeManager {
-    private ConfigManager configManager;
-
+    private final ConfigManager                   configManager;
     private final Map<Integer, NodeManagerHelper> HELPERS;
+    private final Artifact                        cdecArtifact;
 
     @Inject
     public NodeManager(ConfigManager configManager, CDECArtifact cdecArtifact) throws IOException {
         this.configManager = configManager;
+        this.cdecArtifact = cdecArtifact;
 
         HELPERS = ImmutableMap.of(
             3, new NodeManagerHelperCodenvy3Impl(configManager, cdecArtifact),
@@ -121,12 +124,17 @@ public class NodeManager {
         return createCommand(command, node);
     }
 
+    /**
+     * @throws IOException, UnsupportedArtifactVersionException
+     */
     protected NodeManagerHelper getHelper() throws IOException {
         Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
-        if (codenvyVersion.compareToMajor(4) < 0) {
+        if (codenvyVersion.is3Major()) {
             return HELPERS.get(3);
-        } else {
+        } else if (codenvyVersion.is4Major()) {
             return HELPERS.get(4);
+        } else {
+            throw new UnsupportedArtifactVersionException(cdecArtifact, codenvyVersion);
         }
     }
 }

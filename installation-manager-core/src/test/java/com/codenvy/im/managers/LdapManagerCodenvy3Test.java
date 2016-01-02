@@ -17,9 +17,11 @@
  */
 package com.codenvy.im.managers;
 
+import com.codenvy.im.artifacts.UnsupportedArtifactVersionException;
 import com.codenvy.im.testhelper.ldap.BaseLdapTest;
 import com.codenvy.im.testhelper.ldap.EmbeddedADS;
 import com.codenvy.im.utils.HttpTransport;
+import com.google.common.collect.ImmutableMap;
 import org.apache.directory.server.core.partition.impl.btree.jdbm.JdbmPartition;
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
@@ -93,6 +95,17 @@ public class LdapManagerCodenvy3Test extends BaseLdapTest {
     public void shouldReturnNumberOfUsers() throws Exception {
         assertEquals(spyLdapManager.getNumberOfUsers(), 2);
     }
+
+    @Test(expectedExceptions = UnsupportedArtifactVersionException.class,
+        expectedExceptionsMessageRegExp = "Version '1.0.0' of artifact 'codenvy' is not supported")
+    public void shouldThrowUnsupportedArtifactVersionExceptionWhenGetRootPrincipal() throws Exception {
+        LdapManager spyLdapManager = spy(new LdapManager(mockConfigManager, mockTransport));
+        doReturn(new Config(ImmutableMap.of(Config.VERSION, UNSUPPORTED_VERSION)))
+            .when(mockConfigManager).loadInstalledCodenvyConfig();
+
+        spyLdapManager.getRootPrincipal();
+    }
+
 
     protected void importLdapData(EmbeddedADS ads) throws Exception {
         // Import codenvy 3 ldap user db

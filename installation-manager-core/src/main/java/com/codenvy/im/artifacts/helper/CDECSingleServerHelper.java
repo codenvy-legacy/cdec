@@ -306,12 +306,16 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createCommand(format("mkdir -p %s", ldapUserBackupPath.getParent())));
         commands.add(createCommand(format("sudo slapcat > %s", ldapUserBackupPath)));
 
-        // dump LDAP_ADMIN db into {backup_directory}/ldap_admin/ldap.ldif file
-        Path ldapAdminBackupPath = getComponentTempPath(tempDir, LDAP_ADMIN);
-        commands.add(createCommand(format("mkdir -p %s", ldapAdminBackupPath.getParent())));
-        commands.add(createCommand(format("sudo slapcat -b '%s' > %s",
-                                          codenvyConfig.getValue(Config.ADMIN_LDAP_DN),
-                                          ldapAdminBackupPath)));
+
+        Version codenvyVersion = Version.valueOf(codenvyConfig.getValue(Config.VERSION));
+        if (codenvyVersion.is3Major()) {
+            // dump LDAP_ADMIN db into {backup_directory}/ldap_admin/ldap.ldif file
+            Path ldapAdminBackupPath = getComponentTempPath(tempDir, LDAP_ADMIN);
+            commands.add(createCommand(format("mkdir -p %s", ldapAdminBackupPath.getParent())));
+            commands.add(createCommand(format("sudo slapcat -b '%s' > %s",
+                                              codenvyConfig.getValue(Config.ADMIN_LDAP_DN),
+                                              ldapAdminBackupPath)));
+        }
 
         // dump MONGO data into {backup_directory}/mongo dir
         Path mongoBackupPath = getComponentTempPath(tempDir, MONGO);
@@ -385,15 +389,18 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             commands.add(createCommand("sudo chown -R ldap:ldap /var/lib/ldap"));
         }
 
-        // restore LDAP_ADMIN db from {temp_backup_directory}/ldap_admin/ladp.ldif file
-        Path ldapAdminBackupPath = getComponentTempPath(tempDir, LDAP_ADMIN);
-        if (Files.exists(ldapAdminBackupPath)) {
-            commands.add(createCommand("sudo rm -rf /var/lib/ldapcorp"));
-            commands.add(createCommand("sudo mkdir -p /var/lib/ldapcorp"));
-            commands.add(createCommand(format("sudo slapadd -q -b '%s' <%s",
-                                              codenvyConfig.getValue(Config.ADMIN_LDAP_DN),
-                                              ldapAdminBackupPath)));
-            commands.add(createCommand("sudo chown -R ldap:ldap /var/lib/ldapcorp"));
+        Version codenvyVersion = Version.valueOf(codenvyConfig.getValue(Config.VERSION));
+        if (codenvyVersion.is3Major()) {
+            // restore LDAP_ADMIN db from {temp_backup_directory}/ldap_admin/ladp.ldif file
+            Path ldapAdminBackupPath = getComponentTempPath(tempDir, LDAP_ADMIN);
+            if (Files.exists(ldapAdminBackupPath)) {
+                commands.add(createCommand("sudo rm -rf /var/lib/ldapcorp"));
+                commands.add(createCommand("sudo mkdir -p /var/lib/ldapcorp"));
+                commands.add(createCommand(format("sudo slapadd -q -b '%s' <%s",
+                                                  codenvyConfig.getValue(Config.ADMIN_LDAP_DN),
+                                                  ldapAdminBackupPath)));
+                commands.add(createCommand("sudo chown -R ldap:ldap /var/lib/ldapcorp"));
+            }
         }
 
         // restore mongo from {temp_backup_directory}/mongo folder
@@ -410,6 +417,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                               codenvyConfig.getValue(Config.MONGO_ADMIN_PASSWORD),
                                               mongoBackupPath)));
         }
+
         // restore filesystem data from {backup_file}/fs folder
         Path fsBackupPath = getComponentTempPath(tempDir, FS);
         if (Files.exists(fsBackupPath)) {

@@ -198,20 +198,14 @@ public class TestVersion {
         };
     }
 
-    @Test(dataProvider = "getDataForTestCompareToMajor")
-    public void testCompareToMajor(Version version, int majorToCompare, int expected) throws Exception {
-        int actual = version.compareToMajor(majorToCompare);
+    @Test
+    public void testIsCertainMajor() throws Exception {
+        assertFalse(Version.valueOf("2.0.0").is3Major());
+        assertTrue(Version.valueOf("3.14.0-SNAPSHOT").is3Major());
 
-        assertEquals(actual, expected);
-    }
+        assertFalse(Version.valueOf("3.0.0").is4Major());
+        assertTrue(Version.valueOf("4.0.0-beta-2-SNAPSHOT").is4Major());
 
-    @DataProvider
-    public static Object[][] getDataForTestCompareToMajor() {
-        return new Object[][] {
-                {Version.valueOf("1.0.0-SNAPSHOT"), 1, 0},
-                {Version.valueOf("2.0.0"), 1, 1},
-                {Version.valueOf("1.0.0"), 2, -1}
-        };
     }
 
 }

@@ -55,6 +55,7 @@ public class BaseTest {
     public static final    Path   PUPPET_CONF_FILE    = Paths.get("target", "puppet", Config.PUPPET_CONF_FILE_NAME).toAbsolutePath();
     public static final    String TEST_VERSION_STR    = "3.3.0";
     public static final    String INITIAL_OS_VERSION  = OSUtils.VERSION;
+    protected static final String UNSUPPORTED_VERSION = "1.0.0";
 
     @BeforeMethod
     public void clear() throws Exception {

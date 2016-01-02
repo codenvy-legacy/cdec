@@ -66,4 +66,9 @@ public class RepeatCommand implements Command {
     public String getDescription() {
         return "Repeat " + tries + " times: " + command.getDescription();
     }
+
+    @Override
+    public String toString() {
+        return "Repeat " + tries + " times: " + command.toString();
+    }
 }
