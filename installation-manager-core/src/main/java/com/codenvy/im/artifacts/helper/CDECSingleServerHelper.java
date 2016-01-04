@@ -335,6 +335,8 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(createPackCommand(Paths.get("/home/codenvy/codenvy-data"), backupFile, "fs/.", true));
 
         // start services
+        commands.add(createStartServiceCommand("slapd"));
+        commands.add(createStartServiceCommand("codenvy"));
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server starts
@@ -428,6 +430,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
 
         // start services
         commands.add(createStartServiceCommand("slapd"));
+        commands.add(createStartServiceCommand("codenvy"));
         commands.add(createStartServiceCommand("puppet"));
 
         // wait until API server restarts

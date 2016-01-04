@@ -428,7 +428,7 @@ public class TestCDECArtifact extends BaseTest {
         assertNotNull(backupCommand);
 
         List<Command> commands = ((MacroCommand) backupCommand).getCommands();
-        assertEquals(commands.size(), 18);
+        assertEquals(commands.size(), 20);
 
         assertEquals(commands.get(0).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
         assertEquals(commands.get(1).toString(), "{'command'='mkdir -p /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
@@ -445,9 +445,11 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(12).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy/mongo/admin', 'agent'='LocalAgent'}");
         assertTrue(commands.get(13).toString().matches("\\{'command'='if test -f some_dir/codenvy_backup_.*.tar; then    tar -C /tmp/codenvy/codenvy  -rf some_dir/codenvy_backup_.*.tar .;else    tar -C /tmp/codenvy/codenvy  -cf some_dir/codenvy_backup_.*.tar .;fi;', 'agent'='LocalAgent'\\}"), "Actual command: " + commands.get(13).toString());
         assertTrue(commands.get(14).toString().matches("\\{'command'='if sudo test -f some_dir/codenvy_backup_.*.tar; then    sudo tar -C /home/codenvy/codenvy-data  -rf some_dir/codenvy_backup_.*.tar fs/.;else    sudo tar -C /home/codenvy/codenvy-data  -cf some_dir/codenvy_backup_.*.tar fs/.;fi;', 'agent'='LocalAgent'\\}"), "Actual command: " + commands.get(14).toString());
-        assertEquals(commands.get(15).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start puppet.service; fi; ', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(16).toString(), "Wait until artifact 'codenvy' becomes alive");
-        assertEquals(commands.get(17).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(15).toString(), "{'command'='/bin/systemctl status slapd.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start slapd.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(16).toString(), "{'command'='/bin/systemctl status codenvy.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start codenvy.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(17).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start puppet.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(18).toString(), "Wait until artifact 'codenvy' becomes alive");
+        assertEquals(commands.get(19).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
     }
 
     @Test
@@ -465,7 +467,7 @@ public class TestCDECArtifact extends BaseTest {
         assertNotNull(backupCommand);
 
         List<Command> commands = ((MacroCommand) backupCommand).getCommands();
-        assertEquals(commands.size(), 16);
+        assertEquals(commands.size(), 18);
     }
 
     @Test
@@ -482,7 +484,7 @@ public class TestCDECArtifact extends BaseTest {
         assertNotNull(restoreCommand);
 
         List<Command> commands = ((MacroCommand) restoreCommand).getCommands();
-        assertEquals(commands.size(), 21);
+        assertEquals(commands.size(), 22);
 
         assertEquals(commands.get(0).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop puppet.service; fi; ', 'agent'='LocalAgent'}");
         assertEquals(commands.get(1).toString(), "{'command'='/bin/systemctl status crond.service; if [ $? -eq 0 ]; then   sudo /bin/systemctl stop crond.service; fi; ', 'agent'='LocalAgent'}");
@@ -502,9 +504,10 @@ public class TestCDECArtifact extends BaseTest {
         assertEquals(commands.get(15).toString(), "{'command'='sudo cp -r /tmp/codenvy/codenvy/fs /home/codenvy/codenvy-data', 'agent'='LocalAgent'}");
         assertEquals(commands.get(16).toString(), "{'command'='sudo chown -R codenvy:codenvy /home/codenvy/codenvy-data/fs', 'agent'='LocalAgent'}");
         assertEquals(commands.get(17).toString(), "{'command'='/bin/systemctl status slapd.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start slapd.service; fi; ', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(18).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start puppet.service; fi; ', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(19).toString(), "Wait until artifact 'codenvy' becomes alive");
-        assertEquals(commands.get(20).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(18).toString(), "{'command'='/bin/systemctl status codenvy.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start codenvy.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(19).toString(), "{'command'='/bin/systemctl status puppet.service; if [ $? -ne 0 ]; then   sudo /bin/systemctl start puppet.service; fi; ', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(20).toString(), "Wait until artifact 'codenvy' becomes alive");
+        assertEquals(commands.get(21).toString(), "{'command'='rm -rf /tmp/codenvy/codenvy', 'agent'='LocalAgent'}");
     }
 
     @Test
@@ -525,7 +528,7 @@ public class TestCDECArtifact extends BaseTest {
         assertNotNull(restoreCommand);
 
         List<Command> commands = ((MacroCommand) restoreCommand).getCommands();
-        assertEquals(commands.size(), 17);
+        assertEquals(commands.size(), 18);
     }
 
     @Test
