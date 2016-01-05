@@ -22,8 +22,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Names;
-
 import org.eclipse.che.commons.schedule.executor.ScheduleModule;
 import org.eclipse.che.inject.DynaModule;
 

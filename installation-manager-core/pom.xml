@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>3.14.0-SNAPSHOT</version>
+        <version>4.0.0-beta-5-SNAPSHOT</version>
     </parent>
     <artifactId>installation-manager-core</artifactId>
     <name>Codenvy :: IM :: Installation Manager Core</name>
@@ -119,13 +119,6 @@
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
             <artifactId>che-core-api-auth</artifactId>
-            <!-- exclude to solve conflict with 'org.everrest:everrest-assured' artifact-->
-            <exclusions>
-                <exclusion>
-                    <artifactId>httpcore</artifactId>
-                    <groupId>org.apache.httpcomponents</groupId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.eclipse.che.core</groupId>
@@ -187,6 +180,16 @@
             <groupId>org.everrest</groupId>
             <artifactId>everrest-assured</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>commons-logging</artifactId>
+                    <groupId>commons-logging</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>httpcore</artifactId>
+                    <groupId>org.apache.httpcomponents</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
