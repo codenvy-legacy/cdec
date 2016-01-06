@@ -22,12 +22,14 @@ SAAS_SERVER="https://nightly.codenvy-stg.com"
 TEST_LOG="installation-manager-test.log"
 SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
 MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
+AIO_CODENVY4_VAGRANT_FILE="../vagrant/aio-codenvy4/CentOS71/Vagrantfile"
 HOST_URL="codenvy"
 NEW_HOST_URL="test.codenvy"
 
 AVAILABLE_CODENVY_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/codenvy)
 PREV_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)","3[^"]*".*\]/\1/'`
-LATEST_CODENVY_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)".*/\1/'`
+LATEST_CODENVY3_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)".*/\1/'`
+LATEST_CODENVY4_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(4[^"]*\)".*/\1/'`
 
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`

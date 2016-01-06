@@ -104,7 +104,7 @@ vagrantDestroy() {
 validateInstalledCodenvyVersion() {
     VERSION=$1
 
-    [[ -z ${VERSION} ]] && VERSION=${LATEST_CODENVY_VERSION}
+    [[ -z ${VERSION} ]] && VERSION=${LATEST_CODENVY3_VERSION}
     logStartCommand "validateInstalledCodenvyVersion "${VERSION}
 
     executeIMCommand "im-install" "--list"
@@ -183,6 +183,10 @@ auth() {
 
 authOnSite() {
     doAuth $1 $2 "org" $3
+}
+
+authWithoutRealmAndServerDns() {
+    doAuth $1 $2
 }
 
 doAuth() {

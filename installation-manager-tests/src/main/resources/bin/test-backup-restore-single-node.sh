@@ -22,8 +22,8 @@ printAndLog "TEST CASE: Backup and restore single-node Codenvy On Premise"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 # install Codenvy
-installCodenvy ${PREV_CODENVY_VERSION}
-validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
+installCodenvy ${PREV_CODENVY3_VERSION}
+validateInstalledCodenvyVersion ${PREV_CODENVY3_VERSION}
 auth "admin" "password"
 
 # backup at start
@@ -109,13 +109,13 @@ validateExpectedString ".*\"name\"\:\"my-minimalistic-factory\".*"
 authOnSite "user-1" "pwd123ABC"
 
 # update
-executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
-executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
+executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY3_VERSION}"
+executeIMCommand "im-install" "codenvy" "${LATEST_CODENVY3_VERSION}"
+validateInstalledCodenvyVersion ${LATEST_CODENVY3_VERSION}
 
 # restore state at start
 executeIMCommand "--valid-exit-code=1" "im-restore" ${BACKUP_AT_START}
-validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY_VERSION}'\".*\"status\".\:.\"ERROR\".*"
+validateExpectedString ".*\"Version.of.backed.up.artifact.'${PREV_CODENVY3_VERSION}'.doesn't.equal.to.restoring.version.'${LATEST_CODENVY3_VERSION}'\".*\"status\".\:.\"ERROR\".*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

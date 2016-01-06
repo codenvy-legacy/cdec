@@ -21,14 +21,14 @@
 printAndLog "TEST CASE: Update multi-nodes Codenvy from binary"
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-installCodenvy ${PREV_CODENVY_VERSION}
-validateInstalledCodenvyVersion ${PREV_CODENVY_VERSION}
+installCodenvy ${PREV_CODENVY3_VERSION}
+validateInstalledCodenvyVersion ${PREV_CODENVY3_VERSION}
 auth "admin" "password"
 
-executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY_VERSION}"
+executeIMCommand "im-download" "codenvy" "${LATEST_CODENVY3_VERSION}"
 
 # put correct config into binaries
-BINARIES="/home/vagrant/codenvy-im-data/updates/codenvy/${LATEST_CODENVY_VERSION}/codenvy-${LATEST_CODENVY_VERSION}.zip"
+BINARIES="/home/vagrant/codenvy-im-data/updates/codenvy/${LATEST_CODENVY3_VERSION}/codenvy-${LATEST_CODENVY3_VERSION}.zip"
 executeSshCommand "rm -rf /tmp/codenvy"
 executeSshCommand "unzip ${BINARIES} -d /tmp/codenvy"
 
@@ -38,14 +38,14 @@ LATEST_PUPPET_VERSION=${OUTPUT}
 executeSshCommand "cp /etc/puppet/manifests/nodes/multi_server/base_configurations.pp /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp"
 executeSshCommand "cp /etc/puppet/manifests/nodes/multi_server/custom_configurations.pp /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp"
 executeSshCommand "cp /etc/puppet/manifests/nodes/multi_server/nodes.pp /tmp/codenvy/manifests/nodes/multi_server/nodes.pp"
-executeSshCommand "sed -i s/${PREV_CODENVY_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp"
-executeSshCommand "sed -i s/${PREV_CODENVY_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp"
+executeSshCommand "sed -i s/${PREV_CODENVY3_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/multi_server/base_configurations.pp"
+executeSshCommand "sed -i s/${PREV_CODENVY3_VERSION}/${LATEST_PUPPET_VERSION}/g /tmp/codenvy/manifests/nodes/multi_server/custom_configurations.pp"
 executeSshCommand "sudo yum install zip -y -q"
 executeSshCommand "cd /tmp/codenvy && zip -r /tmp/codenvy.zip ."
 
 # install from local folder
-executeIMCommand "im-install" "--binaries=/tmp/codenvy.zip" "codenvy" "${LATEST_CODENVY_VERSION}"
-validateInstalledCodenvyVersion ${LATEST_CODENVY_VERSION}
+executeIMCommand "im-install" "--binaries=/tmp/codenvy.zip" "codenvy" "${LATEST_CODENVY3_VERSION}"
+validateInstalledCodenvyVersion ${LATEST_CODENVY3_VERSION}
 auth "admin" "password"
 
 printAndLog "RESULT: PASSED"

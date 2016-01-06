@@ -25,8 +25,8 @@ vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 installImCliClient
 validateInstalledImCliClientVersion
 
-executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY_VERSION}"
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY_VERSION}.not.found\".*"
+executeIMCommand "--valid-exit-code=1" "im-install" "codenvy" "${LATEST_CODENVY3_VERSION}"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY3_VERSION}\".*\"status\".\:.\"FAILURE\".*\"message\".\:.\"Binaries.to.install.codenvy\:${LATEST_CODENVY3_VERSION}.not.found\".*"
 
 executeIMCommand "--valid-exit-code=1" "im-install" "unknown"
 validateExpectedString ".*Artifact..unknown..not.found*"
