@@ -43,7 +43,7 @@ public class LdapManagerHelperCodenvy4Impl extends LdapManagerHelper {
         Config config = configManager.loadInstalledCodenvyConfig();
         return format("%s=%s,%s",
                config.getValue(Config.USER_LDAP_USER_DN),
-               config.getValue(Config.ADMIN_LDAP_USER_NAME),
+               config.getValue(Config.ADMIN_LDAP_MAIL),
                config.getValue(Config.USER_LDAP_USER_CONTAINER_DN));
     }
 

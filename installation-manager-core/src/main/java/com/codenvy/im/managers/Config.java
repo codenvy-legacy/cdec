@@ -74,6 +74,7 @@ public class Config {
     public static final String ADMIN_LDAP_DN        = "admin_ldap_dn";
     public static final String ADMIN_LDAP_USER_NAME = "admin_ldap_user_name";
     public static final String ADMIN_LDAP_PASSWORD  = "admin_ldap_password";
+    public static final String ADMIN_LDAP_MAIL      = "admin_ldap_mail";
 
     public static final String USER_LDAP_USER_CONTAINER_DN = "user_ldap_user_container_dn";
     public static final String USER_LDAP_OBJECT_CLASSES    = "user_ldap_object_classes";

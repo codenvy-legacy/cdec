@@ -42,12 +42,11 @@ dn: uid=admin@codenvy.onprem,ou=users,dc=codenvy-enterprise,dc=com
 mail: admin@codenvy.onprem
 initials: admin@codenvy.onprem
 uid: admin@codenvy.onprem
-givenName: admin@codenvy.onprem
+givenName: Admin
 objectClass: inetOrgPerson
-sn: Prod
-cn: Admin
+sn: Codenvy
+cn: admin
 userPassword:: cGFzc3dvcmQ=
-displayName: Production Admin
 structuralObjectClass: inetOrgPerson
 employeeType: system/admin
 employeeType: system/manager
