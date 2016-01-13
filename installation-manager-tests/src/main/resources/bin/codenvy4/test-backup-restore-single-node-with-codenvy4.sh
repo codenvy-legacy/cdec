@@ -19,7 +19,7 @@
 . ./lib.sh
 
 printAndLog "TEST CASE: Backup and restore single-node Codenvy 4.x On Premise"
-vagrantUp ${AIO_CODENVY4_VAGRANT_FILE}
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 # install Codenvy 4.x
 installCodenvy ${LATEST_CODENVY4_VERSION}

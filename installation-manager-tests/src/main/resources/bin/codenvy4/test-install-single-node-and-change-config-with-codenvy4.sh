@@ -20,7 +20,7 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Install the latest single-node Codenvy 4.x On Premise"
-vagrantUp ${AIO_CODENVY4_VAGRANT_FILE}
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installCodenvy ${LATEST_CODENVY4_VERSION}
 validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}

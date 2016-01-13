@@ -20,9 +20,6 @@ UPDATE_SERVER="http://updater-nightly.codenvy-dev.com"
 UPDATE_SERVICE="${UPDATE_SERVER}/update"
 SAAS_SERVER="https://nightly.codenvy-stg.com"
 TEST_LOG="installation-manager-test.log"
-SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
-MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
-AIO_CODENVY4_VAGRANT_FILE="../vagrant/aio-codenvy4/CentOS71/Vagrantfile"
 HOST_URL="codenvy"
 NEW_HOST_URL="test.codenvy"
 
@@ -34,3 +31,8 @@ LATEST_CODENVY4_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(4[^"]*
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
+
+SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
+MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
+MULTI_NODE_WITH_ADDITIONAL_NODES_VAGRANT_FILE="../vagrant/multi-with-additional-nodes/CentOS71/Vagrantfile"
+SINGLE_CODENVY4_WITH_ADDITIONAL_NODES_VAGRANT_FILE="../vagrant/single-codenvy4-with-additional-nodes/CentOS71/Vagrantfile"

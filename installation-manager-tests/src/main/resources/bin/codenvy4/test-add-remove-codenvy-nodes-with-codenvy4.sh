@@ -19,7 +19,7 @@
 . ./lib.sh
 
 printAndLog "TEST CASE: Add and remove Codenvy 4.x All-In-One nodes"
-vagrantUp ${AIO_CODENVY4_VAGRANT_FILE}
+vagrantUp ${SINGLE_CODENVY4_WITH_ADDITIONAL_NODES_VAGRANT_FILE}
 
 # install Codenvy 4.x
 installCodenvy ${LATEST_CODENVY4_VERSION}

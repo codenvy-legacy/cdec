@@ -19,7 +19,7 @@
 . ./lib.sh
 
 printAndLog "TEST CASE: Add and remove Codenvy nodes"
-vagrantUp ${MULTI_NODE_VAGRANT_FILE}
+vagrantUp ${MULTI_NODE_WITH_ADDITIONAL_NODES_VAGRANT_FILE}
 
 installCodenvy
 validateInstalledCodenvyVersion
