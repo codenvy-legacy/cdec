@@ -35,70 +35,35 @@ BACKUP_AT_START=${OUTPUT}
 executeIMCommand "im-password" "password" "new-password"
 authWithoutRealmAndServerDns "admin" "new-password"
 
-# TODO [ndp] check backup/restore factories
+# create user "user-1"
+doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://${HOST_URL}/api/user/create?token=${TOKEN}"
+fetchJsonParameter "id"
+USER_ID=${OUTPUT}
 
-#doPost "application/json" "{\"name\":\"account-1\"}" "http://codenvy/api/account?token=${TOKEN}"
-#fetchJsonParameter "id"
-#ACCOUNT_ID=${OUTPUT}
+authWithoutRealmAndServerDns "user-1" "pwd123ABC"
 
-#doPost "application/json" "{
-#  "environments": {
-#    "test": {
-#      "name": "workspace-1",
-#      "recipe": null,
-#      "machineConfigs": [
-#        {
-#          "statusChannel": null,
-#          "name": "dev-machine",
-#          "type": "docker",
-#          "source": {
-#            "location": "your_host/ide/api/recipe/recipe_ubuntu/script",
-#            "type": "recipe"
-#          },
-#          "dev": true,
-#          "outputChannel": null,
-#          "memorySize": 1024
-#        }
-#      ]
-#    }
-#  },
-#  "projects": [],
-#  "name": "workspace-1",
-#  "attributes": {
-#    "fake_attr": "attr_value"
-#  },
-#  "defaultEnvName": "workspace-1",
-#  "temporary": true,
-#  "id": null,
-#  "status": null,
-#  "owner": null,
-#  "description": null,
-#  "commands": [
-#    {
-#      "commandLine": "mvn clean install",
-#      "name": "MCI",
-#      "type": null,
-#      "workingDir": null
-#    }
-#  ],
-#  "links": []
-#}" "http://codenvy/api/workspace/config?account=null&token=${TOKEN}"
+# create workspace "workspace-1"
+doPost "application/json" "{\"environments\":{\"workspace-1\":{\"name\":\"workspace-1\",\"recipe\":null,\"machineConfigs\":[{\"name\":\"ws-machine\",\"limits\":{\"memory\":1000},\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}},\"name\":\"workspace-1\",\"attributes\":{},\"projects\":[],\"defaultEnvName\":\"workspace-1\",\"description\":null,\"commands\":[],\"links\":[]}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
+fetchJsonParameter "id"
+WORKSPACE_ID=${OUTPUT}
 
-#doPost "application/json" "{\"name\":\"workspace-1\",\"accountId\":\"${ACCOUNT_ID}\"}" "http://codenvy/api/workspace?token=${TOKEN}"
-#fetchJsonParameter "id"
-#WORKSPACE_ID=${OUTPUT}
+# run workspace "workspace-1"
+doPost "application/json" "" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
-#doPost "application/json" "{\"type\":\"blank\",\"visibility\":\"public\"}" "http://codenvy/api/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
+# verify is workspace running
+doSleep "5m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
+doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
+validateExpectedString ".*\"status\":\"RUNNING\".*"
 
-#doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://codenvy/api/user/create?token=${TOKEN}"
-#fetchJsonParameter "id"
-#USER_ID=${OUTPUT}
+# create project "project-1" in workspace "workspace-1"
+doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{\"maven.version\":[\"1.0-SNAPSHOT\"], \"maven.packaging\":[\"jar\"], \"maven.source.folder\":[\"src/main/java\"], \"maven.test.source.folder\":[\"src/test/java\"], \"maven.artifactId\":[\"project-1\"], \"maven.groupId\":[\"project-1\"]}, \"type\":\"maven\", \"source\":{\"location\":null, \"type\":null, \"parameters\":{}}, \"contentRoot\":null, \"modules\":[], \"path\":null, \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/project?token=${TOKEN}"
+doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{\"maven.version\":[\"1.0-SNAPSHOT\"], \"maven.packaging\":[\"jar\"], \"maven.source.folder\":[\"src/main/java\"], \"maven.test.source.folder\":[\"src/test/java\"], \"maven.artifactId\":[\"project-1\"], \"maven.groupId\":[\"project-1\"]}, \"type\":\"maven\", \"source\":{\"location\":null, \"type\":null, \"parameters\":{}}, \"contentRoot\":null, \"modules\":[], \"path\":null, \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/ext/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
+doSleep "8m" "Wait until WorkspaceFsBackupScheduler store project-1 data on docker machine to file system storage /home/codenvy/codenvy-data/fs"
 
-#doPost "application/json" "{\"userId\":\"${USER_ID}\",\"roles\":[\"account/owner\"]}" "http://codenvy/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
-#fetchJsonParameter "id"
-#ACCOUNT_ID=${OUTPUT}
-
-#authOnSite "user-1" "pwd123ABC"
+# create factory from template "minimal"
+doPost "application/json" "{\"v\": \"4.0\",\"workspace\": {\"projects\": [{\"links\": [],\"name\": \"Spring\",\"attributes\": {\"languageVersion\": [\"1.6\"],\"language\": [\"java\"]},\"type\": \"maven\", \"source\": {\"location\": \"https://github.com/codenvy-templates/web-spring-java-simple.git\",\"type\": \"git\",\"parameters\": {\"keepVcs\": \"false\", \"branch\": \"3.1.0\"}},\"modules\": [],\"path\": \"/Spring\",\"mixins\": [\"git\"],\"problems\": []}], \"defaultEnvName\": \"wss\",\"name\": \"wss\",\"environments\": {\"wss\": {\"machineConfigs\": [{\"dev\": true,\"limits\": {\"memory\":2048},\"source\": {\"location\": \"http://dev.box.com/api/recipe/recipe_ubuntu/script\",\"type\": \"recipe\"}, \"name\": \"dev-machine\",\"type\": \"docker\"}],\"name\": \"wss\"}},\"links\": []}}" "http://${HOST_URL}/api/factory?token=${TOKEN}"
+fetchJsonParameter "id"
+FACTORY_ID=${OUTPUT}
 
 # backup with modifications
 executeIMCommand "im-backup"
@@ -111,18 +76,18 @@ executeIMCommand "im-restore" ${BACKUP_AT_START}
 # check if data at start was restored correctly
 authWithoutRealmAndServerDns "admin" "password"
 
-# TODO [ndp] workaround error '{"message":"User not found admin"}'
-#doGet "http://codenvy/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-#validateExpectedString ".*Account.with.id.${ACCOUNT_ID}.was.not.found.*"
+doGet "http://${HOST_URL}/api/user/${USER_ID}?token=${TOKEN}"
+validateExpectedString ".*User.*not.found.*"
 
-#doGet "http://codenvy/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-#validateExpectedString ".*Workspace.*not.found.*"
+doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
+validateExpectedString ".*Workspace.not.found.*"
 
-#doGet "http://codenvy/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-#validateExpectedString ".*Workspace.*not.found.*"
+# verify that there is no project-1 on file system
+executeSshCommand "sudo ls /home/codenvy/codenvy-data/fs"
+validateExpectedString ""
 
-#doGet "http://codenvy/api/user/${USER_ID}?token=${TOKEN}"
-#validateExpectedString ".*User.*not.found.*"
+doGet "http://${HOST_URL}/api/factory/${FACTORY_ID}?token=${TOKEN}"
+validateExpectedString ".*Factory.*not.found.*"
 
 # restore state after modifications
 executeIMCommand "im-restore" ${BACKUP_WITH_MODIFICATIONS}
@@ -130,19 +95,20 @@ executeIMCommand "im-restore" ${BACKUP_WITH_MODIFICATIONS}
 # check if modified data was restored correctly
 authWithoutRealmAndServerDns "admin" "new-password"
 
-#doGet "http://codenvy/api/account/${ACCOUNT_ID}?token=${TOKEN}"
-#validateExpectedString ".*account-1.*"
+doGet "http://${HOST_URL}/api/user/${USER_ID}?token=${TOKEN}"
+validateExpectedString ".*user-1.*"
 
-#doGet "http://codenvy/api/project/${WORKSPACE_ID}?token=${TOKEN}"
-#validateExpectedString ".*project-1.*"
+authWithoutRealmAndServerDns "user-1" "pwd123ABC"
 
-#doGet "http://codenvy/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
-#validateExpectedString ".*workspace-1.*"
+doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
+validateExpectedString ".*project-1.*workspace-1.*"
 
-#doGet "http://codenvy/api/user/${USER_ID}?token=${TOKEN}"
-#validateExpectedString ".*user-1.*"
+# verify that there is project-1 on file system
+executeSshCommand "sudo ls -R /home/codenvy/codenvy-data/fs"
+validateExpectedString ".*/home/codenvy/codenvy-data/fs/[0-9a-z/]*/${WORKSPACE_ID}.*project-1\:\spom.xml.src.*"
 
-#authOnSite "user-1" "pwd123ABC"
+doGet "http://${HOST_URL}/api/factory/${FACTORY_ID}?token=${TOKEN}"
+validateExpectedString ".*\"name\"\:\"wss\".*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

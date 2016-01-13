@@ -151,7 +151,7 @@ installCodenvy() {
     EXIT_CODE=$?
     validateExitCode ${EXIT_CODE} ${VALID_CODE} --installCodenvy
 
-    sleep 5m
+    doSleep 5m
     logEndCommand "installCodenvy"
 }
 
@@ -358,6 +358,17 @@ validateErrorString() {
     [[ ${OUTPUT} =~ $1 ]] && validateExitCode 1
 
     logEndCommand "validateRegex"
+}
+
+# $1 - NUMBER[SUFFIX]: Pause for NUMBER seconds.  SUFFIX may be 's' for seconds (the default), 'm' for minutes, 'h' for hours or 'd' for days.
+# $2 - description to log
+doSleep() {
+    local TIME_TO_WAIT=$1
+
+    local DESCRIPTION=$2
+    [[ ! -z ${DESCRIPTION} ]] && log ${DESCRIPTION}
+
+    executeSshCommand "sleep $TIME_TO_WAIT"
 }
 
 #createDummyArtifactInLocalRepositoryOfIMCli() {

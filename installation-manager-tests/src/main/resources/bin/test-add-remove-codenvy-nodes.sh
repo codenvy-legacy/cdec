@@ -26,7 +26,7 @@ validateInstalledCodenvyVersion
 
 # add runner
 executeIMCommand "im-add-node" "runner2.codenvy"
-sleep 2m
+doSleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/runner/server?token=${TOKEN}"
@@ -34,7 +34,7 @@ validateExpectedString ".*http://runner2.codenvy:8080/runner/internal/runner.*"
 
 # add builder
 executeIMCommand "im-add-node" "builder2.codenvy"
-sleep 2m
+doSleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/builder/server?token=${TOKEN}"
@@ -54,7 +54,7 @@ validateExpectedString ".*Node..runner2.codenvy..has.been.already.used.*"
 
 # remove runner
 executeIMCommand "im-remove-node" "runner2.codenvy"
-sleep 2m
+doSleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/runner/server?token=${TOKEN}"
@@ -62,7 +62,7 @@ validateErrorString ".*http://runner2.codenvy:8080/runner/internal/runner.*"
 
 # remove builder
 executeIMCommand "im-remove-node" "builder2.codenvy"
-sleep 2m
+doSleep 2m
 
 auth "admin" "password"
 doGet "http://codenvy/api/admin/builder/server?token=${TOKEN}"

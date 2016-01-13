@@ -59,7 +59,7 @@ validateExpectedString ".*Node..node2.codenvy..has.been.already.used.*"
 # remove node1
 executeIMCommand "im-remove-node" "node1.codenvy"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.codenvy\".*"
-sleep 1m  # wait until Docker machine takes into account /usr/local/swarm/node_list config
+doSleep "sleep 1m"  "Wait until Docker machine takes into account /usr/local/swarm/node_list config"
 
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
@@ -68,7 +68,7 @@ validateExpectedString ".*Nodes\",\"2\".*"
 # remove node2
 executeIMCommand "im-remove-node" "node2.codenvy"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node2.codenvy\".*"
-sleep 1m  # wait until Docker machine takes into account /usr/local/swarm/node_list config
+doSleep "sleep 1m"  "Wait until Docker machine takes into account /usr/local/swarm/node_list config"
 
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
