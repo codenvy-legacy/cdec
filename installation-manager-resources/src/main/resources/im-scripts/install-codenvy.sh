@@ -273,7 +273,7 @@ updateDownloadProgress() {
         local percent=$(( ${size}*100/${totalSize} ))
 
         doUpdateDownloadProgress ${percent}
-        sleep 1 2>/dev/null
+        sleep 1 >/dev/null
     done
 }
 
@@ -481,7 +481,7 @@ updateFooter() {
             fi
         done
 
-        sleep 1 2>/dev/null
+        sleep 1 >/dev/null
     done
 }
 
@@ -1237,7 +1237,7 @@ updateTimer() {
 
         updateLine ${TIMER_LINE} "Elapsed time: "${M}"m "${S}"s"
 
-        sleep 1 2>/dev/null
+        sleep 1 >/dev/null
     done
 }
 
@@ -1335,7 +1335,7 @@ updatePuppetInfo() {
         else
             updateLine ${PUPPET_LINE} ""
         fi
-        sleep 1 2>/dev/null
+        sleep 1 >/dev/null
     done
 }
 
@@ -1379,7 +1379,7 @@ updateInternetAccessChecker() {
             updateLine ${STEP_LINE} "${INSTALLATION_STEPS[${CURRENT_STEP}]}"
         fi
        
-        sleep 1m 2>/dev/null
+        sleep 1m >/dev/null
     done
 }
 
