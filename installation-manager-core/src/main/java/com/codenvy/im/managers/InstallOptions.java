@@ -17,7 +17,7 @@
  */
 package com.codenvy.im.managers;
 
-import com.wordnik.swagger.annotations.ApiModelProperty;
+import io.swagger.annotations.ApiModelProperty;
 
 import java.util.Map;
 

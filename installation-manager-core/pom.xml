@@ -73,10 +73,6 @@
             <artifactId>jsch</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.wordnik</groupId>
-            <artifactId>swagger-annotations</artifactId>
-        </dependency>
-        <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
         </dependency>
@@ -87,6 +83,10 @@
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-annotations</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.annotation</groupId>

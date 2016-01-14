@@ -39,7 +39,6 @@
         <module>installation-manager-cli-assembly</module>
         <module>installation-manager-cli-bundle</module>
         <module>installation-manager-cli-features</module>
-        <module>installation-manager-server-api-docs</module>
         <module>installation-manager-server-war</module>
         <module>installation-manager-tests</module>
     </modules>

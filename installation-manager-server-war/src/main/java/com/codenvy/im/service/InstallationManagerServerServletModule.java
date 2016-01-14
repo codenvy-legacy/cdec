@@ -23,6 +23,7 @@ import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
 
 import org.eclipse.che.inject.DynaModule;
+import org.eclipse.che.swagger.deploy.BasicSwaggerConfigurationModule;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
 
 /** @author Dmytro Nochevnov */
@@ -42,6 +43,7 @@ public class InstallationManagerServerServletModule extends ServletModule {
 
         filterRegex("/(?!_sso/).*$").through(LoginFilter.class);
         install(new SsoClientServletModule());
+        install(new BasicSwaggerConfigurationModule());
         serve("/*").with(GuiceEverrestServlet.class);
     }
 }

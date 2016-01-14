@@ -17,11 +17,12 @@
  */
 package com.codenvy.im.managers;
 
+import io.swagger.annotations.ApiModelProperty;
+
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.TarUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.wordnik.swagger.annotations.ApiModelProperty;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.che.commons.json.JsonParseException;
