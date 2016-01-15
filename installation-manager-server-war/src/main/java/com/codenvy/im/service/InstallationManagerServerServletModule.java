@@ -19,11 +19,11 @@ package com.codenvy.im.service;
 
 import com.codenvy.auth.sso.client.LoginFilter;
 import com.codenvy.auth.sso.client.deploy.SsoClientServletModule;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.ServletModule;
 
 import org.eclipse.che.inject.DynaModule;
-import org.eclipse.che.swagger.deploy.BasicSwaggerConfigurationModule;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
 
 /** @author Dmytro Nochevnov */
@@ -43,7 +43,19 @@ public class InstallationManagerServerServletModule extends ServletModule {
 
         filterRegex("/(?!_sso/).*$").through(LoginFilter.class);
         install(new SsoClientServletModule());
-        install(new BasicSwaggerConfigurationModule());
+        install(new IMSwaggerConfigurationModule());
         serve("/*").with(GuiceEverrestServlet.class);
+    }
+
+    public class IMSwaggerConfigurationModule extends ServletModule {
+        @Override
+        protected void configureServlets() {
+            bind(io.swagger.jaxrs.config.DefaultJaxrsConfig.class).asEagerSingleton();
+            serve("/swaggerinit").with(io.swagger.jaxrs.config.DefaultJaxrsConfig.class, ImmutableMap
+                .of("api.version", "1.0",
+                    "swagger.api.title", "Installation Manager REST API",
+                    "swagger.api.basepath", "/im"
+                ));
+        }
     }
 }
