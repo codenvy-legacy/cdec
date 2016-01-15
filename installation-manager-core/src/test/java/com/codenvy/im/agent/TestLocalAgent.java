@@ -319,14 +319,14 @@ public class TestLocalAgent {
 
         doReturn(false).when(spyTestAgent).isPasswordInputRequired(command);
 
-    	final String testOutput = "command output";
-        inputStreamOfSpyProcess = new ByteArrayInputStream(testOutput.getBytes());
+    	final String TEST_OUTPUT = "command output";
+        inputStreamOfSpyProcess = new ByteArrayInputStream(TEST_OUTPUT.getBytes());
 
         errorStreamOfSpyProcess = new ByteArrayInputStream(errorOutput.getBytes());
         
         try {
             String output = spyTestAgent.execute(command);
-            assertEquals(output, testOutput);
+            assertEquals(output, TEST_OUTPUT);
         } catch (Exception e) {
         	fail("Unexpected exception: " + e.getMessage());
         }

@@ -33,7 +33,7 @@ import static java.lang.String.format;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractAgent implements Agent {
-    private final Logger log = Logger.getLogger(this.getClass().getName());
+    private final Logger LOG = Logger.getLogger(this.getClass().getName());
 
     /**
      * Map<command, error-message-regex>
@@ -49,7 +49,7 @@ public abstract class AbstractAgent implements Agent {
         }
 
         if (checkIgnoringErrors(command, errorOutput)) {
-            log.warning(format("Command '%s' faced ignoring error '%s'.", command, errorOutput));
+            LOG.warning(format("Command '%s' faced ignoring error '%s'.", command, errorOutput));
             return output;
         }
 
