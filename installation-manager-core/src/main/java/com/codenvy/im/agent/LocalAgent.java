@@ -22,11 +22,9 @@ import com.codenvy.im.console.Console;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,7 +77,7 @@ public class LocalAgent extends AbstractAgent {
             InputStream in = process.getInputStream();
             InputStream err = process.getErrorStream();
 
-            return processOutput(exitStatus, in, err);
+            return processOutput(command, exitStatus, in, err);
         } catch (Exception e) {
             String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);
@@ -94,7 +92,7 @@ public class LocalAgent extends AbstractAgent {
             InputStream in = process.getInputStream();
             InputStream err = process.getErrorStream();
 
-            return processOutput(exitStatus, in, err);
+            return processOutput(command, exitStatus, in, err);
         } catch (Exception e) {
             String errMessage = String.format("Can't execute command '%s'.", command);
             throw makeAgentException(errMessage, e);

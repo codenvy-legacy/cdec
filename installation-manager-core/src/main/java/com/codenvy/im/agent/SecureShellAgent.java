@@ -85,7 +85,7 @@ public class SecureShellAgent extends AbstractAgent {
 
             waitForChannelClosed(channel);
 
-            return processOutput(channel.getExitStatus(), in, error);
+            return processOutput(command, channel.getExitStatus(), in, error);
         } catch (Exception e) {
             String errorMessage = format("Can't execute command '%s' on node '%s'.", command, session.getHost());
             throw makeAgentException(errorMessage, e);

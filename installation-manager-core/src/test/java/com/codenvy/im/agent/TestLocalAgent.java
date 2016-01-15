@@ -18,11 +18,12 @@
 package com.codenvy.im.agent;
 
 import com.codenvy.im.console.Console;
-
+import com.google.common.collect.ImmutableMap;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.regex.Pattern;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -56,6 +58,7 @@ public class TestLocalAgent {
     private static final String TEST_PASSWORD        = "test";
     public static final  String COMMAND_WITHOUT_SUDO = "sleep 1; ls;";
     public static final  String COMMAND_WITH_SUDO    = "sudo true";
+    public static final  int    ERROR_EXIT_CODE      = 1;
 
     @Mock
     Console mockConsole;
@@ -160,7 +163,7 @@ public class TestLocalAgent {
     public void testSudoCommandWithPassingPasswordError() throws Exception {
         doReturn(TEST_PASSWORD.toCharArray()).when(spyTestAgent).obtainPassword();
         doReturn(true).when(spyTestAgent).isPasswordInputRequired(COMMAND_WITH_SUDO);
-        doReturn(-1).when(spyProcess).waitFor();
+        doReturn(ERROR_EXIT_CODE).when(spyProcess).waitFor();
         inputStreamOfSpyProcess = new ByteArrayInputStream("mock output".getBytes());
         errorStreamOfSpyProcess = new ByteArrayInputStream("mock error".getBytes());
         spyTestAgent.execute(COMMAND_WITH_SUDO);
@@ -304,6 +307,37 @@ public class TestLocalAgent {
         LocalAgent testAgent = spy(new LocalAgent());
         doThrow(new AgentException("error")).when(testAgent).getConsole();
         assertFalse(testAgent.isConsoleAccessible());
+    }
+
+    @Test(dataProvider = "getCommandErrorOutput")
+    public void shouldIgnoreCertainErrors(String command, String errorOutput) throws Exception {
+        doReturn(ImmutableMap.of("command 1", Pattern.compile("^error 1.*"),
+                                 "command 2", Pattern.compile("^error 2.*")))
+            .when(spyTestAgent).getIgnoringErrors();
+    
+        doReturn(ERROR_EXIT_CODE).when(spyProcess).waitFor();
+
+        doReturn(false).when(spyTestAgent).isPasswordInputRequired(command);
+
+    	final String testOutput = "command output";
+        inputStreamOfSpyProcess = new ByteArrayInputStream(testOutput.getBytes());
+
+        errorStreamOfSpyProcess = new ByteArrayInputStream(errorOutput.getBytes());
+        
+        try {
+            String output = spyTestAgent.execute(command);
+            assertEquals(output, testOutput);
+        } catch (Exception e) {
+        	fail("Unexpected exception: " + e.getMessage());
+        }
+    }
+    
+    @DataProvider
+    public Object[][] getCommandErrorOutput() {
+        return new Object[][]{
+            {"command 1", "error 1 "},
+            {"command 2", "error 2 "},
+        };
     }
 
     class ProcessTested extends Process {

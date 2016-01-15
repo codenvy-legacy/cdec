@@ -17,13 +17,15 @@
  */
 package com.codenvy.im.agent;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.Map;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
@@ -31,8 +33,14 @@ import static java.lang.String.format;
  * @author Anatoliy Bazko
  */
 public abstract class AbstractAgent implements Agent {
+    private final Logger log = Logger.getLogger(this.getClass().getName());
 
-    protected String processOutput(int exitStatus, InputStream in, InputStream error) throws Exception {
+    /**
+     * Map<command, error-message-regex>
+     */
+    private static final Map<String, Pattern> IGNORING_ERRORS = ImmutableMap.of();
+
+    protected String processOutput(String command, int exitStatus, InputStream in, InputStream error) throws Exception {
         String output = readOutput(in);
         String errorOutput = readOutput(error);
 
@@ -40,7 +48,20 @@ public abstract class AbstractAgent implements Agent {
             return output;
         }
 
+        if (checkIgnoringErrors(command, errorOutput)) {
+            log.warning(format("Command '%s' faced ignoring error '%s'.", command, errorOutput));
+            return output;
+        }
+
         throw new Exception(format("Output: %s; Error: %s.", output, errorOutput));
+    }
+
+    private boolean checkIgnoringErrors(String command, String errorOutput) {
+        if (getIgnoringErrors().containsKey(command)) {
+            return getIgnoringErrors().get(command).matcher(errorOutput).matches();
+        }
+
+        return false;
     }
 
     protected AgentException makeAgentException(String errorMessage, Exception e) {
@@ -61,4 +82,9 @@ public abstract class AbstractAgent implements Agent {
             in.close();
         }
     }
+    
+    protected Map<String, Pattern> getIgnoringErrors() {
+        return IGNORING_ERRORS;
+    }
+
 }

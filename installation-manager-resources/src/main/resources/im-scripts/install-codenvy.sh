@@ -378,6 +378,8 @@ preConfigureSystem() {
         exit 1
     fi
 
+    doCheckSystemManager
+
     doCheckInstalledPuppet
 
     sudo yum clean all &> /dev/null
@@ -691,6 +693,14 @@ doCheckInstalledPuppet() {
             println $(printWarning "NOTE: Please, uninstall it or update to package '$PUPPET_SERVER_PACKAGE', and then start installation again.")
             exit 1;
         fi 
+    fi
+}
+
+doCheckSystemManager() {
+    pidof systemd &> /dev/null;
+    if [ $? -ne 0 ]; then
+        println $(printError "ERROR: Your system doesn't use required system manager 'systemd'.")
+        exit 1;
     fi
 }
 
