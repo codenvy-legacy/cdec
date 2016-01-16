@@ -424,8 +424,10 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       true);
-        assertEquals(actualProperties.size(), 1);
+        assertEquals(actualProperties.size(), 3);
         assertEquals(actualProperties.get("a"), "b");
+        assertTrue(actualProperties.containsKey(Config.PRIVATE_KEY));
+        assertTrue(actualProperties.containsKey(Config.PUBLIC_KEY));
     }
 
     @Test
@@ -440,8 +442,10 @@ public class TestConfigManager extends BaseTest {
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
                                                                                       Version.valueOf("3.1.0"),
                                                                                       true);
-        assertEquals(actualProperties.size(), 1);
+        assertEquals(actualProperties.size(), 3);
         assertEquals(actualProperties.get("a"), "b");
+        assertTrue(actualProperties.containsKey(Config.PRIVATE_KEY));
+        assertTrue(actualProperties.containsKey(Config.PUBLIC_KEY));
     }
 
     @Test

@@ -96,6 +96,9 @@ public class Config {
     public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY  = "node_ssh_user_private_key";
     public static final String SYSTEM_LDAP_PASSWORD                = "system_ldap_password";
 
+    public static final String PUBLIC_KEY  = "public_key";
+    public static final String PRIVATE_KEY = "private_key";
+
     public static final String ADDITIONAL_BUILDERS = "additional_builders";
     public static final String ADDITIONAL_RUNNERS  = "additional_runners";
 

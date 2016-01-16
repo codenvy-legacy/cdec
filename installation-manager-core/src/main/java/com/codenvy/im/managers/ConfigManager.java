@@ -23,6 +23,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.commands.SimpleCommand;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.SshKey;
 import com.codenvy.im.utils.Version;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -471,6 +472,8 @@ public class ConfigManager {
                     if (installType == InstallType.MULTI_SERVER) {
                         setSSHAccessProperties(properties);
                     }
+                    setSshKeyParts(properties);
+
                 } else { // update
                     if (binaries != null) {
                         properties = loadConfigProperties(binaries, installType);
@@ -525,6 +528,15 @@ public class ConfigManager {
 
         properties.put(Config.NODE_SSH_USER_NAME, userName);  // set name of user to access the nodes
         properties.put(Config.NODE_SSH_USER_PRIVATE_KEY, sshKey);  // set private key of ssh user
+    }
+
+    /**
+     * Generates and sets private and public parts of the ssh key.
+     */
+    protected void setSshKeyParts(Map<String, String> properties) throws IOException {
+        SshKey sshKey = new SshKey();
+        properties.put(Config.PUBLIC_KEY, sshKey.getPublicPart());
+        properties.put(Config.PRIVATE_KEY, sshKey.getPrivatePart().replace("\n", "\\n"));
     }
 
     protected String readSSHKey(Path pathToIdRsa) throws IOException {
