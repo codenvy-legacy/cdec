@@ -697,7 +697,8 @@ doCheckInstalledPuppet() {
 }
 
 doCheckSystemManager() {
-    pidof systemd &> /dev/null;
+    # we need to provide full path /sbin/pidof to avoid ssh error "bash: pidof: command not found" in integration tests
+    /sbin/pidof systemd &> /dev/null;
     if [ $? -ne 0 ]; then
         println $(printError "ERROR: Your system doesn't use required system manager 'systemd'.")
         exit 1;
