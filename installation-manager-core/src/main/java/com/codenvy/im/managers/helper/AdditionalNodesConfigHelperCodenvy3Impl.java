@@ -21,12 +21,9 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
-import java.util.Map;
 
-import static com.google.common.base.Joiner.on;
 import static java.lang.String.format;
 
 /** @author Dmytro Nochevnov */
@@ -71,6 +68,11 @@ public class AdditionalNodesConfigHelperCodenvy3Impl extends AdditionalNodesConf
         }
 
         return ConfigManager.getBaseNodeDomain(baseNode).toLowerCase();
+    }
+
+    @Override
+    public List<String> getAdditionalNodes(String additionalNodesProperty) {
+        return getNodes(additionalNodesProperty);   // there is no default node dns in additionalNodesProperty in Codenvy 3.x config
     }
 
 }

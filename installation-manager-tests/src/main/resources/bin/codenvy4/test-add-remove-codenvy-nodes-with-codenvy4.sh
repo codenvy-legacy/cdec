@@ -65,13 +65,18 @@ executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
 validateExpectedString ".*Nodes\",\"2\".*"
 
+# change Codenvy hostname to verify if puppet.conf file will be successfully updated
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts"
+executeSshCommand "sudo sed -i 's/ codenvy/ test.codenvy/' /etc/hosts" "node2.codenvy"
+executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
+
 # remove node2
 executeIMCommand "im-remove-node" "node2.codenvy"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node2.codenvy\".*"
 doSleep "1m"  "Wait until Docker machine takes into account /usr/local/swarm/node_list config"
 
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
-doGet "http://${HOST_URL}:23750/info"
+doGet "http://${NEW_HOST_URL}:23750/info"
 validateExpectedString ".*Nodes\",\"1\".*"
 
 # remove already removed node1

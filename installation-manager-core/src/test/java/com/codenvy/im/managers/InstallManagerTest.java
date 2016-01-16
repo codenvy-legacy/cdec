@@ -72,6 +72,8 @@ public class InstallManagerTest extends BaseTest {
     private ConfigManager configManager;
     @Mock
     private HttpTransport transport;
+    @Mock
+    private NodeManager nodeManager;
 
     private Artifact       cdecArtifact;
     private Artifact       installManagerArtifact;
@@ -87,7 +89,7 @@ public class InstallManagerTest extends BaseTest {
         MockitoAnnotations.initMocks(this);
 
         installManagerArtifact = spy(new InstallManagerArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, transport, configManager));
-        cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager));
+        cdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager, nodeManager));
 
         installManager = spy(new InstallManager(new HashSet<>(Arrays.asList(installManagerArtifact, cdecArtifact))));
     }

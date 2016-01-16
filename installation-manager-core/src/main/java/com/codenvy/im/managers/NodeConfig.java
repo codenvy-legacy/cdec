@@ -46,7 +46,12 @@ public class NodeConfig {
     private Path privateKeyFile = Paths.get("~/.ssh/id_rsa");  // there should be absolute path to file
     private NodeType type;
 
-    public NodeConfig(NodeType type, String host, @Nullable String user) {
+    public NodeConfig(NodeType type, String host) {
+        this.type = type;
+        this.host = host;
+    }
+
+    public NodeConfig(NodeType type, String host, String user) {
         this.type = type;
         this.host = host;
         this.user = user;

@@ -19,6 +19,7 @@ package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -35,7 +36,9 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
@@ -59,7 +62,7 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
 
     private static final String              TEST_NODE_DNS  = "node1.hostname";
     private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.MACHINE;
-    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS, null);
+    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
 
     private static final String ADDITIONAL_NODES_PROPERTY_NAME = Config.SWARM_NODES;
     private static final String TEST_VALUE_WITH_NODE           = TEST_NODE_DNS + ":2375";
@@ -131,6 +134,68 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
         assertEquals(commands.get(14).toString(), "{'command'='sudo puppet agent --onetime --ignorecache --no-daemonize --no-usecacheonfailure --no-splay --logdest=/var/log/puppet/puppet-agent.log; exit 0;', 'agent'='LocalAgent'}");
         assertEquals(commands.get(15).toString(), "{'command'='doneState=\"Checking\"; while [ \"${doneState}\" != \"Done\" ]; do     curl http://hostname:23750/info | grep 'node1.hostname';     if [ $? -eq 0 ]; then doneState=\"Done\";     else sleep 5;     fi; done', "
                                                   + "'agent'='LocalAgent'}");
+    }
+
+    @Test
+    public void testGetUpdatePuppetConfigCommandWhenNodeListIsEmpty() throws Exception {
+        prepareSingleNodeEnv(mockConfigManager);
+        Command result = spyHelperCodenvy4.getUpdatePuppetConfigCommand("hostname", "new.hostname");
+        assertNotNull(result);
+        assertEquals(result.getDescription(), CommandLibrary.EMPTY_COMMAND.getDescription());
+    }
+
+    @Test
+    public void testGetUpdatePuppetConfigCommand() throws Exception {
+        final String oldHostName = "hostname";
+        final String newHostName = "new.hostname";
+        prepareSingleNodeEnv(mockConfigManager);
+
+        Map<String, String> properties = new HashMap<String, String>() {{
+            put("host_url", "hostname");
+            put(Config.VERSION, TEST_VERSION_STR);
+            put(Config.SWARM_NODES, format("$host_url:2375\n"
+                                           + "node1.%1$s:2375\n"
+                                           + "node2.%1$s:2375", oldHostName));
+        }};
+        doReturn(new Config(properties)).when(mockConfigManager).loadInstalledCodenvyConfig();
+
+        doReturn(ImmutableMap.of(Config.SWARM_NODES, ImmutableList.of("node1.hostname", "node2.hostname")))
+            .when(mockNodesConfigHelper).extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE);
+
+        doReturn(Config.SWARM_NODES).when(mockNodesConfigHelper).getPropertyNameBy(NodeConfig.NodeType.MACHINE);
+
+        Command result = spyHelperCodenvy4.getUpdatePuppetConfigCommand(oldHostName, newHostName);
+        assertNotNull(result);
+        List<Command> commands = ((MacroCommand) result).getCommands();
+        assertEquals(commands.size(), 4);
+
+        List<Command> updateNode1Commands = ((MacroCommand) commands.get(0)).getCommands();
+        assertEquals(updateNode1Commands.size(), 4);
+        assertTrue(updateNode1Commands.get(0).toString()
+                           .matches(format(
+                               "\\{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back ; sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back.[0-9]+ ; ', 'agent'='\\{'host'='node1.hostname', 'port'='22', 'user'='%1$s', 'identity'='\\[~/.ssh/id_rsa\\]'\\}'\\}",
+                               SYSTEM_USER_NAME)),
+                   "Actual command: " + updateNode1Commands.get(0).toString());
+
+        assertEquals(updateNode1Commands.get(1).toString(), format("{'command'='sudo sed -i 's/certname = hostname/certname = new.hostname/g' /etc/puppet/puppet.conf', 'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(updateNode1Commands.get(2).toString(), format("{'command'='sudo sed -i 's/server = hostname/server = new.hostname/g' /etc/puppet/puppet.conf', 'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(updateNode1Commands.get(3).toString(), format("{'command'='sudo grep \"dns_alt_names = .*,new.hostname.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new.hostname/' /etc/puppet/puppet.conf; fi', 'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+
+        assertEquals(commands.get(1).toString(), format("{'command'='sudo systemctl restart puppet', 'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+
+        List<Command> updateNode2Commands = ((MacroCommand) commands.get(2)).getCommands();
+        assertEquals(updateNode2Commands.size(), 4);
+        assertTrue(updateNode2Commands.get(0).toString()
+                                      .matches(format(
+                                          "\\{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back ; sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back.[0-9]+ ; ', 'agent'='\\{'host'='node2.hostname', 'port'='22', 'user'='%1$s', 'identity'='\\[~/.ssh/id_rsa\\]'\\}'\\}",
+                                          SYSTEM_USER_NAME)),
+                   "Actual command: " + updateNode2Commands.get(0).toString());
+
+        assertEquals(updateNode2Commands.get(1).toString(), format("{'command'='sudo sed -i 's/certname = hostname/certname = new.hostname/g' /etc/puppet/puppet.conf', 'agent'='{'host'='node2.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(updateNode2Commands.get(2).toString(), format("{'command'='sudo sed -i 's/server = hostname/server = new.hostname/g' /etc/puppet/puppet.conf', 'agent'='{'host'='node2.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        assertEquals(updateNode2Commands.get(3).toString(), format("{'command'='sudo grep \"dns_alt_names = .*,new.hostname.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new.hostname/' /etc/puppet/puppet.conf; fi', 'agent'='{'host'='node2.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
+        
+        assertEquals(commands.get(3).toString(), format("{'command'='sudo systemctl restart puppet', 'agent'='{'host'='node2.hostname', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
     }
 
     @Test(expectedExceptions = NodeException.class, expectedExceptionsMessageRegExp = "error")

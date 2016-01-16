@@ -24,7 +24,6 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -49,13 +48,14 @@ import static org.testng.Assert.assertTrue;
 /** @author Dmytro Nochevnov */
 public class TestCommandLibrary extends BaseTest {
     public static final String SYSTEM_USER_NAME = System.getProperty("user.name");
-    public static NodeConfig testApiNode    = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
-    public static NodeConfig testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
+
+    public static NodeConfig testApiNode  = new NodeConfig(NodeConfig.NodeType.API, "localhost");
+    public static NodeConfig testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1");
 
     @BeforeMethod
     public void setup() {
-        testApiNode = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
-        testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null);
+        testApiNode = new NodeConfig(NodeConfig.NodeType.API, "localhost");
+        testDataNode = new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1");
     }
 
     @Test
@@ -168,7 +168,7 @@ public class TestCommandLibrary extends BaseTest {
                                               "]",
                                               SYSTEM_USER_NAME);
 
-        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
+        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
 
         Command testCommand = createFileRestoreOrBackupCommand("testFile", node);
         assertEquals(testCommand.toString(), expectedCommandString);

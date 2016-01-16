@@ -91,4 +91,7 @@ public abstract class CDECArtifactHelper {
     public String getPuppetDir() {
         return "/etc/puppet";
     }
+
+    /** @return list of commands to update puppet.conf files of puppet server and puppet agent */
+    public abstract Command getUpdatePuppetConfigCommand(Config config, String oldHostName, String newHostName);
 }

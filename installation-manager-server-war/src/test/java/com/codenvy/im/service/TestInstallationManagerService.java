@@ -34,6 +34,7 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3Impl;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy4Impl;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
@@ -46,7 +47,6 @@ import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -415,9 +415,9 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetNodeConfigForMultiNode() throws IOException {
+    public void testGetNodeConfigForMultiNodeCodenvy3() throws IOException {
         Config testConfig = new Config(new LinkedHashMap<>(ImmutableMap.of(
-                "builder_host_name", "builder1.dev.com",
+                Config.VERSION, "3.0.0",
                 "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
                 "analytics_host_name", "analytics.dev.com",
                 "additional_builders", "",
@@ -430,7 +430,6 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
                                          + "  \"host_url\" : \"local.dev.com\",\n"
-                                         + "  \"builder_host_name\" : \"builder1.dev.com\",\n"
                                          + "  \"additional_builders\" : [ ],\n"
                                          + "  \"analytics_host_name\" : \"analytics.dev.com\",\n"
                                          + "  \"additional_runners\" : [ \"runner1.dev.com\", \"runner2.dev.com\" ]\n"
@@ -449,9 +448,10 @@ public class TestInstallationManagerService extends BaseTest {
     }
 
     @Test
-    public void testGetNodeConfigWhenSingleNode() throws IOException {
+    public void testGetNodeConfigWhenSingleNodeCodenvy3() throws IOException {
         Config config = mock(Config.class);
         doReturn("local").when(config).getHostUrl();
+        doReturn("3.0.0").when(config).getValue(Config.VERSION);
         doReturn(null).when(config).getAllValues(Config.ADDITIONAL_BUILDERS,
                                                  String.valueOf(AdditionalNodesConfigHelperCodenvy3Impl.ADDITIONAL_NODE_DELIMITER));
         doReturn(null).when(config).getAllValues(Config.ADDITIONAL_RUNNERS,
@@ -464,6 +464,25 @@ public class TestInstallationManagerService extends BaseTest {
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{\n" +
                                          "  \"host_url\" : \"local\"\n" +
+                                         "}");
+    }
+
+    @Test
+    public void testGetNodeConfigWhenSingleNodeCodenvy4() throws IOException {
+        Config config = mock(Config.class);
+        doReturn("local").when(config).getHostUrl();
+        doReturn("4.0.0").when(config).getValue(Config.VERSION);
+        doReturn(ImmutableList.of("$host_url:2375", "node1.codenvy:2375", "node2.codenvy:2375")).when(config).getAllValues(Config.SWARM_NODES,
+                                                                        String.valueOf(AdditionalNodesConfigHelperCodenvy4Impl.ADDITIONAL_NODE_DELIMITER));
+
+        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);
+
+        Response result = service.getNodesList();
+        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(result.getEntity(), "{\n" +
+                                         "  \"host_url\" : \"local\",\n" +
+                                         "  \"swarm_nodes\" : [ \"node1.codenvy\", \"node2.codenvy\" ]\n" +
                                          "}");
     }
 

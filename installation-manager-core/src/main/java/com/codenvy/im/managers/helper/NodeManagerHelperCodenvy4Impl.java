@@ -18,6 +18,7 @@
 package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
 import com.codenvy.im.managers.Config;
@@ -25,7 +26,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
-import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -181,7 +181,7 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
             throw new NodeException(e.getMessage(), e);
         }
 
-        return new MacroCommand(commands, "Remove node commands");        
+        return new MacroCommand(commands, "Remove node commands");
     }
 
     @Override
@@ -193,6 +193,36 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
     @Override
     public AdditionalNodesConfigHelper getNodesConfigHelper(Config config) {
         return new AdditionalNodesConfigHelperCodenvy4Impl(config);
+    }
+
+    @Override
+    public Command getUpdatePuppetConfigCommand(String oldHostName, String newHostName) throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+
+        List<Command> commands = new ArrayList<>();
+
+        AdditionalNodesConfigHelper nodesConfigHelper = getNodesConfigHelper(config);
+        List<String> additionalNodes = nodesConfigHelper.extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE).get(nodesConfigHelper.getPropertyNameBy(NodeConfig.NodeType.MACHINE));
+        if (additionalNodes == null) {
+            return CommandLibrary.EMPTY_COMMAND;
+        }
+
+        for (String dns : additionalNodes) {
+            NodeConfig node = new NodeConfig(NodeConfig.NodeType.MACHINE, dns);
+
+            List<Command> nodeCommands = new ArrayList<>();
+
+            nodeCommands.add(createFileBackupCommand("/etc/puppet/puppet.conf", node));
+            nodeCommands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName), node));
+            nodeCommands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName), node));
+            nodeCommands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
+                                              + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName), node));  // add new host name to dns_alt_names
+
+            commands.add(new MacroCommand(nodeCommands, format("Commands to update puppet.conf file in additional node '%s'", dns)));
+            commands.add(createCommand("sudo systemctl restart puppet", node));
+        }
+
+        return new MacroCommand(commands, "Commands to update puppet.conf file in additional nodes.");
     }
 
     @Override 

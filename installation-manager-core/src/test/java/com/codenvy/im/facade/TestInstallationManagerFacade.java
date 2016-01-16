@@ -44,7 +44,6 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
@@ -203,7 +202,7 @@ public class TestInstallationManagerFacade extends BaseTest {
 
     @Test
     public void testAddNode() throws IOException {
-        doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com", null)).when(nodeManager).add("builder.node.com");
+        doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com")).when(nodeManager).add("builder.node.com");
         assertEquals(toJson(installationManagerFacade.addNode("builder.node.com")), "{\n" +
                                                                                     "  \"type\" : \"BUILDER\",\n" +
                                                                                     "  \"host\" : \"builder.node.com\"\n" +
@@ -221,7 +220,7 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Test
     public void testRemoveNode() throws IOException {
         final String TEST_NODE_DNS = "builder.node.com";
-        final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS, null);
+        final NodeConfig TEST_NODE = new NodeConfig(NodeConfig.NodeType.BUILDER, TEST_NODE_DNS);
         doReturn(TEST_NODE).when(nodeManager).remove(TEST_NODE_DNS);
 
         assertEquals(toJson(installationManagerFacade.removeNode(TEST_NODE_DNS)), "{\n" +

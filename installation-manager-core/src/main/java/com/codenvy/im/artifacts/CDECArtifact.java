@@ -27,6 +27,7 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
@@ -37,7 +38,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.api.core.rest.shared.dto.ApiInfo;
 
 import javax.inject.Named;
@@ -64,6 +64,8 @@ public class CDECArtifact extends AbstractArtifact {
             InstallType.SINGLE_SERVER, new CDECSingleServerHelper(this, configManager),
             InstallType.MULTI_SERVER, new CDECMultiServerHelper(this, configManager));
 
+    private final NodeManager nodeManager;
+
     protected final String assemblyProperties;
 
     @Inject
@@ -71,9 +73,11 @@ public class CDECArtifact extends AbstractArtifact {
                         @Named("installation-manager.download_dir") String downloadDir,
                         @Named("installation-manager.assembly_properties") String assemblyProperties,
                         HttpTransport transport,
-                        ConfigManager configManager) {
+                        ConfigManager configManager,
+                        NodeManager nodeManager) {
         super(NAME, updateEndpoint, downloadDir, transport, configManager);
         this.assemblyProperties = assemblyProperties;
+        this.nodeManager = nodeManager;
     }
 
     /** {@inheritDoc} */
@@ -247,7 +251,18 @@ public class CDECArtifact extends AbstractArtifact {
             throw new PropertiesNotFoundException(nonexistentProperties);
         }
 
-        CDECArtifactHelper helper = getHelper(configManager.detectInstallationType());
+        InstallType installType = configManager.detectInstallationType();
+        CDECArtifactHelper helper = getHelper(installType);
+
+        String currentHostName = config.getHostUrl();
+        String newHostName = propertiesToUpdate.get(Config.HOST_URL);
+        if (newHostName != null && !newHostName.equals(currentHostName)) {
+            Command commands = helper.getUpdatePuppetConfigCommand(config, currentHostName, newHostName);
+            commands.execute();
+
+            nodeManager.updatePuppetConfig(currentHostName, newHostName);
+        }
+
         Command commands = helper.getUpdateConfigCommand(config, propertiesToUpdate);
         commands.execute();
     }

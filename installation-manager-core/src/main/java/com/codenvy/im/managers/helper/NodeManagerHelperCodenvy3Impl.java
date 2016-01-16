@@ -17,8 +17,10 @@
  */
 package com.codenvy.im.managers.helper;
 
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.commands.WaitOnAliveArtifactCommand;
 import com.codenvy.im.commands.decorators.PuppetErrorInterrupter;
@@ -27,9 +29,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
-import com.google.common.collect.ImmutableList;
-import com.sun.javafx.UnmodifiableArrayList;
-import com.sun.javafx.collections.UnmodifiableListSet;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -48,12 +47,8 @@ import static java.lang.String.format;
  */
 public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
 
-    private CDECArtifact cdecArtifact;
-
-
-    public NodeManagerHelperCodenvy3Impl(ConfigManager configManager, CDECArtifact cdecArtifact) {
+    public NodeManagerHelperCodenvy3Impl(ConfigManager configManager) {
         super(configManager);
-        this.cdecArtifact = cdecArtifact;
     }
 
     /**
@@ -141,7 +136,7 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
                                        apiNode));
 
             // wait until API server restarts
-            commands.add(new WaitOnAliveArtifactCommand(cdecArtifact));
+            commands.add(new WaitOnAliveArtifactCommand(ArtifactFactory.createArtifact(CDECArtifact.NAME)));
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }
@@ -183,7 +178,7 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
                                        apiNode));
 
             // wait until API server restarts
-            commands.add(new WaitOnAliveArtifactCommand(cdecArtifact));
+            commands.add(new WaitOnAliveArtifactCommand(ArtifactFactory.createArtifact(CDECArtifact.NAME)));
 
             // remove out-date puppet agent's certificate
             commands.add(createCommand(format("sudo puppet cert clean %s", node.getHost())));
@@ -205,8 +200,17 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
         }
     }
 
+    /**
+     * @return empty command because we don't need to update puppet.conf on additional nodes in Codenvy 3.x
+     */
+    @Override
+    public Command getUpdatePuppetConfigCommand(String oldHostName, String newHostName) {
+        return CommandLibrary.EMPTY_COMMAND;
+    }
+
     @Override
     public AdditionalNodesConfigHelper getNodesConfigHelper(Config config) {
         return new AdditionalNodesConfigHelperCodenvy3Impl(config);
     }
+
 }

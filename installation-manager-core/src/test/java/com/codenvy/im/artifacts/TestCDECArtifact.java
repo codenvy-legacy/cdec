@@ -30,6 +30,7 @@ import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
@@ -83,6 +84,8 @@ public class TestCDECArtifact extends BaseTest {
     private HttpTransport mockTransport;
     @Mock
     private Command       mockCommand;
+    @Mock
+    private NodeManager   mockNodeManager;
 
     private CDECArtifactHelper spyCDECSingleServerHelper;
     private CDECArtifactHelper spyCDECMultiServerHelper;
@@ -94,7 +97,7 @@ public class TestCDECArtifact extends BaseTest {
         initMocks(this);
 
         spyConfigManager = spy(new ConfigManager(UPDATE_API_ENDPOINT, ETC_PUPPET, mockTransport));
-        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, mockTransport, spyConfigManager));
+        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, mockTransport, spyConfigManager, mockNodeManager));
         spyCDECSingleServerHelper = spy(new CDECSingleServerHelper(spyCdecArtifact, spyConfigManager));
         spyCDECMultiServerHelper = spy(new CDECMultiServerHelper(spyCdecArtifact, spyConfigManager));
 
@@ -600,10 +603,12 @@ public class TestCDECArtifact extends BaseTest {
     }
 
     @Test
-    public void testChangeCodenvyConfig() throws IOException {
-        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "c");
+    public void testUpdateCodenvyConfig() throws IOException {
+        String newHostName = "c";
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, newHostName);
 
-        Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "a", "property2", "b"));
+        String oldHostName = "a";
+        Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, oldHostName, "property2", "b"));
         doReturn(testConfig).when(spyConfigManager).loadInstalledCodenvyConfig();
 
         doReturn(InstallType.MULTI_SERVER).when(spyConfigManager).detectInstallationType();
@@ -612,6 +617,7 @@ public class TestCDECArtifact extends BaseTest {
 
         spyCdecArtifact.updateConfig(properties);
         verify(spyCDECMultiServerHelper).getUpdateConfigCommand(testConfig, properties);
+        verify(mockNodeManager).updatePuppetConfig(oldHostName, newHostName);
     }
 
     @Test
@@ -653,8 +659,11 @@ public class TestCDECArtifact extends BaseTest {
 
     @Test
     public void testGetChangeSingleServerHostnameCommand() throws IOException {
-        Config testConfig = new Config(ImmutableMap.of(Config.HOST_URL, "old"));
-        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, "new");
+        String oldHostName = "old";
+        String newHostName = "new";
+        ImmutableMap<String, String> currentCodenvyProperties = ImmutableMap.of(Config.HOST_URL, oldHostName);
+        Config testConfig = new Config(currentCodenvyProperties);
+        Map<String, String> properties = ImmutableMap.of(Config.HOST_URL, newHostName);
 
         doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_PP)).when(spyConfigManager).getPuppetConfigFile(Config.SINGLE_SERVER_PP);
         doReturn(Paths.get("/etc/puppet/" + Config.SINGLE_SERVER_BASE_CONFIG_PP)).when(spyConfigManager).getPuppetConfigFile(
@@ -663,10 +672,24 @@ public class TestCDECArtifact extends BaseTest {
 
         CDECSingleServerHelper testHelper = new CDECSingleServerHelper(spyCdecArtifact, spyConfigManager);
 
-        Command command = testHelper.getUpdateConfigCommand(testConfig, properties);
+        MacroCommand updatePuppetConfigCommand = (MacroCommand) testHelper.getUpdatePuppetConfigCommand(testConfig, oldHostName, newHostName);
+        List<Command> commands = updatePuppetConfigCommand.getCommands();
+        assertEquals(commands.size(), 8);
+        assertEquals(commands.get(0).toString(), "{'command'='sudo sed -i 's/node \"old\"/node \"new\"/g' /etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(1).toString(), "{'command'='sudo sed -i 's/node \"old\"/node \"new\"/g' /etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}");
 
-        List<Command> commands = ((MacroCommand) command).getCommands();
-        assertEquals(commands.size(), 14);
+        assertTrue(commands.get(2).toString().matches("\\{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back ; sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
+                   "Actual command: " + commands.get(4).toString());
+        assertEquals(commands.get(3).toString(), "{'command'='sudo sed -i 's/certname = old/certname = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(4).toString(), "{'command'='sudo sed -i 's/server = old/server = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(5).toString(), "{'command'='sudo grep \"dns_alt_names = .*,new.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new/' /etc/puppet/puppet.conf; fi', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(6).toString(), "{'command'='sudo systemctl restart puppetmaster', 'agent'='LocalAgent'}");
+        assertEquals(commands.get(7).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
+
+
+        MacroCommand updateCodenvyConfigCommand = (MacroCommand) testHelper.getUpdateConfigCommand(testConfig, properties);
+        commands = updateCodenvyConfigCommand.getCommands();
+        assertEquals(commands.size(), 6);
         assertTrue(commands.get(0).toString().matches(
                 "\\{'command'='sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp /etc/puppet/manifests/nodes/single_server/base_config.pp.back ; " +
                 "sudo cp /etc/puppet/manifests/nodes/single_server/base_config.pp /etc/puppet/manifests/nodes/single_server/base_config.pp.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
@@ -691,19 +714,9 @@ public class TestCDECArtifact extends BaseTest {
                      "| sed 's|~n|\\n|g' > tmp.tmp " +
                      "&& sudo mv tmp.tmp /etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}");
 
-        assertEquals(commands.get(4).toString(), "{'command'='sudo sed -i 's/node \"old\"/node \"new\"/g' /etc/puppet/manifests/nodes/single_server/base_config.pp', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(5).toString(), "{'command'='sudo sed -i 's/node \"old\"/node \"new\"/g' /etc/puppet/manifests/nodes/single_server/single_server.pp', 'agent'='LocalAgent'}");
-
-        assertTrue(commands.get(6).toString().matches("\\{'command'='sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back ; sudo cp /etc/puppet/puppet.conf /etc/puppet/puppet.conf.back.[0-9]+ ; ', 'agent'='LocalAgent'\\}"),
-                   "Actual command: " + commands.get(4).toString());
-        assertEquals(commands.get(7).toString(), "{'command'='sudo sed -i 's/certname = old/certname = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(8).toString(), "{'command'='sudo sed -i 's/server = old/server = new/g' /etc/puppet/puppet.conf', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(9).toString(), "{'command'='sudo grep \"dns_alt_names = .*,new.*\" /etc/puppet/puppet.conf; if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,new/' /etc/puppet/puppet.conf; fi', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(10).toString(), "{'command'='sudo systemctl restart puppetmaster', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(11).toString(), "{'command'='sudo systemctl restart puppet', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(12).toString(), "{'command'='testFile=\"/home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties\"; while true; do     if sudo grep \"api.endpoint=http://new/api\" ${testFile}; then break; fi;     sleep 5; done; "
+        assertEquals(commands.get(4).toString(), "{'command'='testFile=\"/home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties\"; while true; do     if sudo grep \"api.endpoint=http://new/api\" ${testFile}; then break; fi;     sleep 5; done; "
                                                   + "sleep 15; # delay to involve into start of rebooting api server', 'agent'='LocalAgent'}");
-        assertEquals(commands.get(13).toString(), "Wait until artifact 'codenvy' becomes alive");
+        assertEquals(commands.get(5).toString(), "Wait until artifact 'codenvy' becomes alive");
     }
 
     @Test

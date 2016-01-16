@@ -32,7 +32,6 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -446,7 +445,7 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
      * {@inheritDoc}
      */
     @Override
-    public Command getUpdateConfigCommand(Config config, Map<String, String> properties) throws IOException {
+    public Command getUpdateConfigCommand(Config config, Map<String, String> propertiesToUpdate) throws IOException {
         List<Command> commands = new ArrayList<>();
 
         // modify codenvy single server config
@@ -455,36 +454,16 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             Path file = propertiesFiles.next();
 
             commands.add(createFileBackupCommand(file));
-            commands.addAll(properties.entrySet().stream()
+            commands.addAll(propertiesToUpdate.entrySet().stream()
                                       .map(entry -> createPropertyReplaceCommand(file, "$" + entry.getKey(), entry.getValue()))
                                       .collect(Collectors.toList()));
         }
 
         String oldHostName = config.getHostUrl();
-        String newHostName = properties.get(Config.HOST_URL);
+        String newHostName = propertiesToUpdate.get(Config.HOST_URL);
         if (newHostName == null || newHostName.equals(oldHostName)) {
-            // force applying updated puppet config on puppet agent
             commands.add(createForcePuppetAgentCommand());
         } else {
-            // update hostname in puppet configuration as well
-            propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
-            while (propertiesFiles.hasNext()) {
-                Path file = propertiesFiles.next();
-                commands.add(createCommand(format("sudo sed -i 's/node \"%1$s\"/node \"%2$s\"/g' %3$s",
-                                                  oldHostName,
-                                                  newHostName,
-                                                  file)));
-            }
-
-            commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));
-            commands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
-            commands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
-            commands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
-                                              + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName)));  // add new host name to dns_alt_names
-
-            commands.add(createCommand("sudo systemctl restart puppetmaster"));
-            commands.add(createCommand("sudo systemctl restart puppet"));
-
             // wait until there is changed configuration on API server
             commands.add(createCommand(format("testFile=\"/home/codenvy/codenvy-data/cloud-ide-local-configuration/general.properties\"; " +
                                               "while true; do " +
@@ -524,5 +503,31 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
         commands.add(new PuppetErrorInterrupter(new WaitOnAliveArtifactCommand(original), configManager));
 
         return new MacroCommand(commands, "Re-install Codenvy binaries");
+    }
+
+    @Override
+    public Command getUpdatePuppetConfigCommand(Config config, String oldHostName, String newHostName) {
+        List<Command> commands = new ArrayList<>();
+
+        // update "node <hostname>" statement in puppet manifest file
+        Iterator<Path> propertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
+        while (propertiesFiles.hasNext()) {
+            Path file = propertiesFiles.next();
+            commands.add(createCommand(format("sudo sed -i 's/node \"%1$s\"/node \"%2$s\"/g' %3$s",
+                                              oldHostName,
+                                              newHostName,
+                                              file)));
+        }
+
+        commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));
+        commands.add(createCommand(format("sudo sed -i 's/certname = %1$s/certname = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
+        commands.add(createCommand(format("sudo sed -i 's/server = %1$s/server = %2$s/g' /etc/puppet/puppet.conf", oldHostName, newHostName)));
+        commands.add(createCommand(format("sudo grep \"dns_alt_names = .*,%1$s.*\" /etc/puppet/puppet.conf; "
+                                          + "if [ $? -ne 0 ]; then sudo sed -i 's/dns_alt_names = .*/&,%1$s/' /etc/puppet/puppet.conf; fi", newHostName)));  // add new host name to dns_alt_names
+
+        commands.add(createCommand("sudo systemctl restart puppetmaster"));
+        commands.add(createCommand("sudo systemctl restart puppet"));
+
+        return new MacroCommand(commands, "Update puppet.conf commands");
     }
 }

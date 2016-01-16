@@ -19,7 +19,6 @@ package com.codenvy.im.managers;
 
 import com.codenvy.im.BaseTest;
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.UnsupportedArtifactVersionException;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
@@ -49,15 +48,13 @@ public class TestNodeManager extends BaseTest {
     @Mock
     private ConfigManager     mockConfigManager;
     @Mock
-    private CDECArtifact      mockCdecArtifact;
-    @Mock
     private Command           mockCommand;
     @Mock
     private NodeManagerHelper mockHelperCodenvy;
 
-    private static final String              TEST_NODE_DNS       = "localhost";
-    private static final NodeConfig.NodeType TEST_NODE_TYPE      = NodeConfig.NodeType.RUNNER;
-    private static final NodeConfig          TEST_NODE           = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS, null);
+    private static final String              TEST_NODE_DNS  = "localhost";
+    private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
+    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
 
     private static final String ADDITIONAL_RUNNERS_PROPERTY_NAME = "additional_runners";
 
@@ -67,7 +64,7 @@ public class TestNodeManager extends BaseTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyManager = spy(new NodeManager(mockConfigManager, mockCdecArtifact));
+        spyManager = spy(new NodeManager(mockConfigManager));
 
         doReturn(mockHelperCodenvy).when(spyManager).getHelper();
 
@@ -127,6 +124,20 @@ public class TestNodeManager extends BaseTest {
         doReturn(TEST_NODE).when(mockHelperCodenvy).recognizeNodeConfigFromDns(TEST_NODE_DNS);
 
         assertEquals(spyManager.remove(TEST_NODE_DNS), TEST_NODE);
+        verify(mockCommand).execute();
+    }
+
+    @Test
+    public void testUpdatePuppetConfig() throws Exception {
+        final String oldHostName = "hostname";
+        final String newHostName = "new.hostname";
+
+        doReturn(new Config(ImmutableMap.of(Config.VERSION, "4.0.0")))
+            .when(mockConfigManager).loadInstalledCodenvyConfig();
+
+        doReturn(mockCommand).when(mockHelperCodenvy).getUpdatePuppetConfigCommand(oldHostName, newHostName);
+
+        spyManager.updatePuppetConfig(oldHostName, newHostName);
         verify(mockCommand).execute();
     }
 
@@ -193,10 +204,9 @@ public class TestNodeManager extends BaseTest {
     @Test(expectedExceptions = UnsupportedArtifactVersionException.class,
         expectedExceptionsMessageRegExp = "Version '1.0.0' of artifact 'codenvy' is not supported")
     public void shouldThrowUnsupportedArtifactVersionExceptionWhenAdd() throws Exception {
-        NodeManager manager = new NodeManager(mockConfigManager, mockCdecArtifact);
+        NodeManager manager = new NodeManager(mockConfigManager);
         doReturn(new Config(ImmutableMap.of(Config.VERSION, UNSUPPORTED_VERSION)))
             .when(mockConfigManager).loadInstalledCodenvyConfig();
-        doReturn("codenvy").when(mockCdecArtifact).getName();
 
         manager.add(TEST_NODE_DNS);
     }
@@ -204,10 +214,9 @@ public class TestNodeManager extends BaseTest {
     @Test(expectedExceptions = UnsupportedArtifactVersionException.class,
         expectedExceptionsMessageRegExp = "Version '1.0.0' of artifact 'codenvy' is not supported")
     public void shouldThrowUnsupportedArtifactVersionExceptionWhenRemove() throws Exception {
-        NodeManager manager = new NodeManager(mockConfigManager, mockCdecArtifact);
+        NodeManager manager = new NodeManager(mockConfigManager);
         doReturn(new Config(ImmutableMap.of(Config.VERSION, UNSUPPORTED_VERSION)))
             .when(mockConfigManager).loadInstalledCodenvyConfig();
-        doReturn("codenvy").when(mockCdecArtifact).getName();
 
         manager.remove(TEST_NODE_DNS);
     }

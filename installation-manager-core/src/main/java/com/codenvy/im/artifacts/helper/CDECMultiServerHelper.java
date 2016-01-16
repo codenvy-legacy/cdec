@@ -33,7 +33,6 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.utils.TarUtils;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -794,5 +793,10 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
         commands.add(new PuppetErrorInterrupter(new WaitOnAliveArtifactCommand(original), nodes, configManager));
 
         return new MacroCommand(commands, "Re-install Codenvy binaries");
+    }
+
+    @Override
+    public Command getUpdatePuppetConfigCommand(Config config, String oldHostName, String newHostName) {
+        return CommandLibrary.EMPTY_COMMAND;
     }
 }

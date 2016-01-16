@@ -21,6 +21,7 @@ import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.helper.CDECArtifactHelper;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.IllegalVersionException;
@@ -54,11 +55,14 @@ public class TestCDECArtifactGetInstalledVersion extends BaseTest {
     private ConfigManager      configManager;
     @Mock
     private CDECArtifactHelper mockHelper;
+    @Mock
+    private NodeManager        nodeManager;
+
 
     @BeforeMethod
     public void setUp() throws Exception {
         initMocks(this);
-        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager));
+        spyCdecArtifact = spy(new CDECArtifact(UPDATE_API_ENDPOINT, DOWNLOAD_DIR, ASSEMBLY_PROPERTIES, transport, configManager, nodeManager));
     }
 
     @Test

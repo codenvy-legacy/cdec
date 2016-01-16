@@ -18,7 +18,7 @@
 package com.codenvy.im.managers;
 
 import com.codenvy.im.agent.AgentException;
-import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.UnsupportedArtifactVersionException;
 import com.codenvy.im.commands.Command;
@@ -42,15 +42,13 @@ import static java.lang.String.format;
 public class NodeManager {
     private final ConfigManager                   configManager;
     private final Map<Integer, NodeManagerHelper> HELPERS;
-    private final Artifact                        cdecArtifact;
 
     @Inject
-    public NodeManager(ConfigManager configManager, CDECArtifact cdecArtifact) throws IOException {
+    public NodeManager(ConfigManager configManager) throws IOException {
         this.configManager = configManager;
-        this.cdecArtifact = cdecArtifact;
 
         HELPERS = ImmutableMap.of(
-            3, new NodeManagerHelperCodenvy3Impl(configManager, cdecArtifact),
+            3, new NodeManagerHelperCodenvy3Impl(configManager),
             4, new NodeManagerHelperCodenvy4Impl(configManager)
         );
     }
@@ -109,6 +107,17 @@ public class NodeManager {
         return removingNode;
     }
 
+    public void updatePuppetConfig(String oldHostName, String newHostName) throws IOException {
+        Version codenvyVersion = Version.valueOf(configManager.loadInstalledCodenvyConfig().getValue(Config.VERSION));
+
+        if (! codenvyVersion.is4Major()) {
+            return;
+        }
+
+        Command updatePuppetConfigCommand = getHelper().getUpdatePuppetConfigCommand(oldHostName, newHostName);
+        updatePuppetConfigCommand.execute();
+    }
+
     protected void validate(NodeConfig node) throws NodeException {
         String testCommand = "sudo ls";
         try {
@@ -134,7 +143,8 @@ public class NodeManager {
         } else if (codenvyVersion.is4Major()) {
             return HELPERS.get(4);
         } else {
-            throw new UnsupportedArtifactVersionException(cdecArtifact, codenvyVersion);
+            throw new UnsupportedArtifactVersionException(ArtifactFactory.createArtifact(CDECArtifact.NAME), codenvyVersion);
         }
     }
+
 }

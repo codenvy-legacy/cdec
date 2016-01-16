@@ -70,4 +70,7 @@ public abstract class NodeManagerHelper {
     }
 
     public abstract AdditionalNodesConfigHelper getNodesConfigHelper(Config config);
+
+    /** Update puppet.conf on additional nodes */
+    public abstract Command getUpdatePuppetConfigCommand(String oldHostName, String newHostName) throws IOException;
 }

@@ -20,7 +20,6 @@ package com.codenvy.im.commands;
 import com.codenvy.im.agent.AgentException;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
-
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -86,8 +85,8 @@ public class TestMacroCommand {
         String command = "command";
         String description = "description";
         List<NodeConfig> nodes = ImmutableList.of(
-                new NodeConfig(NodeConfig.NodeType.API, "localhost", null),
-                new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null)
+                new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+                new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
                                                  );
 
         String user = System.getProperty("user.name");
@@ -111,8 +110,8 @@ public class TestMacroCommand {
                                               SYSTEM_USER_NAME);
 
         List<NodeConfig> nodes = ImmutableList.of(
-                new NodeConfig(NodeConfig.NodeType.API, "localhost", null),
-                new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1", null)
+                new NodeConfig(NodeConfig.NodeType.API, "localhost"),
+                new NodeConfig(NodeConfig.NodeType.DATA, "127.0.0.1")
                                                  );
 
         Command testCommand = MacroCommand.createCommand("testCommand", nodes);

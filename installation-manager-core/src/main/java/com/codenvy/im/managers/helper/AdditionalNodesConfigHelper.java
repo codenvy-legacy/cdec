@@ -19,7 +19,6 @@ package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.NodeConfig;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -35,6 +34,8 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public abstract class AdditionalNodesConfigHelper {
 
+    protected Config config;
+
     private static final String NODE = "node";
 
     enum AdditionalNode {        
@@ -45,8 +46,10 @@ public abstract class AdditionalNodesConfigHelper {
         private NodeConfig.NodeType type;
         private String property;
         private String dnsPrefix;
+
+        protected Config config;
         
-        private AdditionalNode(NodeConfig.NodeType type, String property, String dnsPrefix) {
+        AdditionalNode(NodeConfig.NodeType type, String property, String dnsPrefix) {
             this.type = type;
             this.property = property;
             this.dnsPrefix = dnsPrefix;
@@ -56,7 +59,6 @@ public abstract class AdditionalNodesConfigHelper {
             return type;
         }
 
-        
         public String getProperty() {
             return property;
         }
@@ -86,8 +88,6 @@ public abstract class AdditionalNodesConfigHelper {
             return dnsPrefixes;
         }
     }
-
-    private Config config;
 
     public AdditionalNodesConfigHelper(Config config) {
         this.config = config;
@@ -140,7 +140,7 @@ public abstract class AdditionalNodesConfigHelper {
                                   baseNodeDomain);
 
             if (dns != null && dns.toLowerCase().matches(regex)) {
-                return new NodeConfig(type, dns, null);
+                return new NodeConfig(type, dns);
             }
         }
 
@@ -181,7 +181,7 @@ public abstract class AdditionalNodesConfigHelper {
      */
     public String getValueWithNode(NodeConfig addingNode) throws IllegalArgumentException, IllegalStateException {
         String additionalNodesProperty = getPropertyNameBy(addingNode.getType());
-        List<String> nodesUrls = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
+        List<String> nodesUrls = getNodes(additionalNodesProperty);
         if (nodesUrls == null) {
             throw new IllegalStateException(format("Additional nodes property '%s' isn't found in Codenvy config", additionalNodesProperty));
         }
@@ -211,7 +211,7 @@ public abstract class AdditionalNodesConfigHelper {
      */
     public String getValueWithoutNode(NodeConfig removingNode) throws IllegalArgumentException {
         String additionalNodesProperty = getPropertyNameBy(removingNode.getType());
-        List<String> nodesUrls = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
+        List<String> nodesUrls = getNodes(additionalNodesProperty);
         if (nodesUrls == null) {
             throw new IllegalStateException(format("Additional nodes property '%s' isn't found in Codenvy config", additionalNodesProperty));
         }
@@ -227,6 +227,13 @@ public abstract class AdditionalNodesConfigHelper {
     }
 
     /**
+     * @return list of additional nodes extracted from value of "additionalNodesProperty" of config. May include dns of default node.
+     */
+    public List<String> getNodes(String additionalNodesProperty) {
+        return config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
+    }
+
+    /**
      * @return for given additional node type: Map[{additionalNodesPropertyName}, {List<String> of additionalNodesDns}]
      */
     @Nullable
@@ -234,7 +241,7 @@ public abstract class AdditionalNodesConfigHelper {
         Map<String, List<String>> result = new HashMap<>();
 
         String additionalNodesProperty = getPropertyNameBy(nodeType);
-        List<String> nodesUrls = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
+        List<String> nodesUrls = getAdditionalNodes(additionalNodesProperty);
         if (nodesUrls == null) {
             return null;
         }
@@ -251,6 +258,12 @@ public abstract class AdditionalNodesConfigHelper {
 
         return result;
     }
+
+    /**
+     * @return list of additional nodes extracted from value of "additionalNodesProperty" of config. Bypass default node.
+     */
+    @Nullable
+    abstract public List<String> getAdditionalNodes(String additionalNodesProperty);
 
     /**
      * @return link like "http://builder3.example.com:8080/builder/internal/builder", or "http://runner3.example.com:8080/runner/internal/runner"

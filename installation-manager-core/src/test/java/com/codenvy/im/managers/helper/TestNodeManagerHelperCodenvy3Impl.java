@@ -18,8 +18,8 @@
 package com.codenvy.im.managers.helper;
 
 import com.codenvy.im.BaseTest;
-import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.commands.Command;
+import com.codenvy.im.commands.CommandLibrary;
 import com.codenvy.im.commands.MacroCommand;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -56,13 +56,11 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
     @Mock
     private AdditionalNodesConfigHelper mockNodesConfigHelper;
     @Mock
-    private CDECArtifact                mockCdecArtifact;
-    @Mock
     private Command                     mockCommand;
 
     private static final String              TEST_NODE_DNS  = "runner1.hostname";
     private static final NodeConfig.NodeType TEST_NODE_TYPE = NodeConfig.NodeType.RUNNER;
-    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS, null);
+    private static final NodeConfig          TEST_NODE      = new NodeConfig(TEST_NODE_TYPE, TEST_NODE_DNS);
 
     private static final String TEST_VALUE_WITH_NODE             = "test_runner_node_url";
     private static final String ADDITIONAL_RUNNERS_PROPERTY_NAME = Config.ADDITIONAL_RUNNERS;
@@ -73,7 +71,7 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        spyHelperCodenvy3 = spy(new NodeManagerHelperCodenvy3Impl(mockConfigManager, mockCdecArtifact));
+        spyHelperCodenvy3 = spy(new NodeManagerHelperCodenvy3Impl(mockConfigManager));
 
         doReturn(ImmutableList.of(Paths.get("/etc/puppet/" + Config.MULTI_SERVER_CUSTOM_CONFIG_PP),
                                   Paths.get("/etc/puppet/" + Config.MULTI_SERVER_BASE_CONFIG_PP)).iterator())
@@ -160,7 +158,14 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
         assertEquals(commands.get(16).toString(),
                      format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if sudo grep \"test_runner_node_url$\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='api.example.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
-        assertEquals(commands.get(17).toString(), "Wait until artifact 'mockCdecArtifact' becomes alive");
+        assertEquals(commands.get(17).toString(), "Wait until artifact 'codenvy' becomes alive");
+    }
+
+    @Test
+    public void testGetUpdatePuppetConfigCommand() throws Exception {
+        Command result = spyHelperCodenvy3.getUpdatePuppetConfigCommand("hostname", "new.hostname");
+        assertNotNull(result);
+        assertEquals(result.toString(), CommandLibrary.EMPTY_COMMAND.toString());
     }
 
     @Test(expectedExceptions = NodeException.class, expectedExceptionsMessageRegExp = "error")
@@ -210,7 +215,7 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
         assertEquals(commands.get(5).toString(),
                      format("{'command'='testFile=\"/home/codenvy/codenvy-data/conf/general.properties\"; while true; do     if ! sudo grep \"runner1.hostname\" ${testFile}; then break; fi;     sleep 5; done; sleep 15; # delay to involve into start of rebooting api server', 'agent'='{'host'='api.example.com', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
-        assertEquals(commands.get(6).toString(), "Wait until artifact 'mockCdecArtifact' becomes alive");
+        assertEquals(commands.get(6).toString(), "Wait until artifact 'codenvy' becomes alive");
         assertEquals(commands.get(7).toString(), "{'command'='sudo puppet cert clean runner1.hostname', 'agent'='LocalAgent'}");
         assertEquals(commands.get(8).toString(), "{'command'='sudo systemctl restart puppetmaster', 'agent'='LocalAgent'}");
         assertEquals(commands.get(9).toString(),

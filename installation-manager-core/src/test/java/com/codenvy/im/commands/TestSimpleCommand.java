@@ -118,7 +118,7 @@ public class TestSimpleCommand {
     @Test
     public void testCreateShellCommandForNode() throws AgentException {
         String command = "test command";
-        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost", null);
+        NodeConfig node = new NodeConfig(NodeConfig.NodeType.API, "localhost");
 
         String user = System.getProperty("user.name");
         String expectedCommand = format("{'command'='%s', 'agent'='{'host'='localhost', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", command, user);

@@ -20,10 +20,10 @@ package com.codenvy.im.managers.helper;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import org.eclipse.che.commons.annotation.Nullable;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -74,5 +74,24 @@ public class AdditionalNodesConfigHelperCodenvy4Impl extends AdditionalNodesConf
     @Override
     public char getAdditionalNodeDelimiter() {
         return ADDITIONAL_NODE_DELIMITER;
+    }
+
+    /**
+     * Bypass main docker machine with url "$host_url:2375"
+     */
+    @Override
+    @Nullable
+    public List<String> getAdditionalNodes(String additionalNodesProperty) {
+        List<String> swarmNodes = config.getAllValues(additionalNodesProperty, String.valueOf(getAdditionalNodeDelimiter()));
+
+        if (swarmNodes == null) {
+            return null;
+        }
+
+        // filter main docker machine
+        return swarmNodes.stream()
+                         .filter(dns -> ! dns.startsWith(format("$%s:", Config.HOST_URL))         // filter values like "$host_url:2375"
+                                        && ! dns.startsWith(format("%s:", config.getHostUrl())))  // filter values like "codenvy:2375"
+                         .collect(Collectors.toList());
     }
 }

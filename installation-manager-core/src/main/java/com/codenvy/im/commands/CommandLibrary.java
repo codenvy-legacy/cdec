@@ -23,7 +23,6 @@ import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.google.common.collect.ImmutableList;
-
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -45,6 +44,9 @@ public class CommandLibrary {
     private static final String START    = "start";
     private static final String ACTIVE   = "active";
     private static final String INACTIVE = "inactive";
+
+    /** @return Empty command which returns empty string after execution */
+    public static final Command EMPTY_COMMAND = new EmptyCommand();
 
     public enum PatchType {
         BEFORE_UPDATE, AFTER_UPDATE
@@ -411,7 +413,6 @@ public class CommandLibrary {
         return command;
     }
 
-
     public static Command createCopyCommand(Path from, Path to, NodeConfig node, boolean useSudo) throws AgentException {
         return createCommand(getCopyCommand(from, to, useSudo), node);
     }
@@ -435,5 +436,22 @@ public class CommandLibrary {
         }
 
         return command;
+    }
+
+    private static class EmptyCommand implements Command {
+        @Override
+        public String execute() throws CommandException {
+            return "";
+        }
+
+        @Override
+        public String getDescription() {
+            return "Empty command";
+        }
+
+        @Override
+        public String toString() {
+            return getDescription();
+        }
     }
 }

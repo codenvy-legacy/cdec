@@ -26,7 +26,6 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3Impl;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
@@ -38,6 +37,9 @@ import com.codenvy.im.managers.InstallationNotStartedException;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.PropertyNotFoundException;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelper;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3Impl;
+import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy4Impl;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
@@ -58,7 +60,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
@@ -416,44 +417,59 @@ public class InstallationManagerService {
     @ApiOperation(value = "Gets Codenvy nodes configuration")
     public Response getNodesList() {
         try {
+            Map<String, Object> properties = new HashMap<>();
+
             InstallType installType = configManager.detectInstallationType();
             Config config = configManager.loadInstalledCodenvyConfig(installType);
-
-            if (InstallType.SINGLE_SERVER.equals(installType)) {
-                ImmutableMap<String, String> properties = ImmutableMap.of(Config.HOST_URL, config.getHostUrl());
+            String versionStr = config.getValue(Config.VERSION);
+            if (versionStr == null) {
                 return Response.ok(toJson(properties)).build();
             }
 
-            Map<String, Object> selectedProperties = new HashMap<>();
+            Version codenvyVersion = Version.valueOf(versionStr);
+
+
+            // add host url
+            String hostUrl = config.getHostUrl();
+            if (hostUrl != null) {
+                properties.put(Config.HOST_URL, hostUrl);
+            }
+
+            // get additional nodes dns lists of Codenvy 4.x AIO
+            if (codenvyVersion.is4Major()) {
+                AdditionalNodesConfigHelper helper = new AdditionalNodesConfigHelperCodenvy4Impl(config);
+                Map<String, List<String>> additionalMachines = helper.extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE);
+                if (additionalMachines != null) {
+                    properties.putAll(additionalMachines);
+                }
+            }
+
+            if (InstallType.SINGLE_SERVER.equals(installType)) {
+                return Response.ok(toJson(properties)).build();
+            }
 
             // filter node dns
             List<NodeConfig> nodes = NodeConfig.extractConfigsFrom(config);
             for (NodeConfig node : nodes) {
                 String nodeHostPropertyName = node.getType().toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
-                selectedProperties.put(nodeHostPropertyName, node.getHost());
+                properties.put(nodeHostPropertyName, node.getHost());
             }
 
-            // get additional nodes dns lists
-            AdditionalNodesConfigHelperCodenvy3Impl additionalNodesConfigUtil = new AdditionalNodesConfigHelperCodenvy3Impl(config);
-            Map<String, List<String>> additionalRunners = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
-            if (additionalRunners != null) {
-                selectedProperties.putAll(additionalRunners);
+            // get additional nodes dns lists of Codenvy 3.x
+            if (codenvyVersion.is3Major()) {
+                AdditionalNodesConfigHelper helper = new AdditionalNodesConfigHelperCodenvy3Impl(config);
+                Map<String, List<String>> additionalRunners = helper.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
+                if (additionalRunners != null) {
+                    properties.putAll(additionalRunners);
+                }
+
+                Map<String, List<String>> additionalBuilders = helper.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
+                if (additionalBuilders != null) {
+                    properties.putAll(additionalBuilders);
+                }
             }
 
-            Map<String, List<String>> additionalBuilders = additionalNodesConfigUtil.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
-            if (additionalBuilders != null) {
-                selectedProperties.putAll(additionalBuilders);
-            }
-
-            // TODO [ndp] CDEC-367 get additional nodes of Codenvy 4
-
-            // add host url
-            String hostUrl = config.getHostUrl();
-            if (hostUrl != null) {
-                selectedProperties.put(Config.HOST_URL, hostUrl);
-            }
-
-            return Response.ok(toJson(selectedProperties)).build();
+            return Response.ok(toJson(properties)).build();
         } catch (Exception e) {
             return handleException(e);
         }
