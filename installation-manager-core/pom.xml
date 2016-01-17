@@ -23,7 +23,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>4.0.0-beta-11-SNAPSHOT</version>
+        <version>4.0.0-beta-11</version>
     </parent>
     <artifactId>installation-manager-core</artifactId>
     <name>Codenvy :: IM :: Installation Manager Core</name>
