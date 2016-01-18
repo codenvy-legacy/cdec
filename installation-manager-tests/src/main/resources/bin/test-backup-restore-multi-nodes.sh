@@ -24,6 +24,8 @@ vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 # install Codenvy
 installCodenvy ${PREV_CODENVY3_VERSION}
 validateInstalledCodenvyVersion ${PREV_CODENVY3_VERSION}
+doSleep "2m" "Wait until mongo is installed on analytics server to avoid im-backup command error 'Can't execute command '/usr/bin/mongodump -uSuperAdmin -ppassword -o /tmp/codenvy/mongo_analytics --authenticationDatabase admin --quiet' on node 'analytics.codenvy'. Output: bash: /usr/bin/mongodump: No such file or directory"
+
 auth "admin" "password"
 
 # backup

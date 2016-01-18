@@ -151,7 +151,6 @@ installCodenvy() {
     EXIT_CODE=$?
     validateExitCode ${EXIT_CODE} ${VALID_CODE} --installCodenvy
 
-    doSleep 2m
     logEndCommand "installCodenvy"
 }
 
