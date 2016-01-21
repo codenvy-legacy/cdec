@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,16 +78,6 @@ public abstract class AdditionalNodesConfigHelper {
             
             return null;
         }
-
-        public static Object getDnsPrefixes(List<AdditionalNode> additionalNodes) {
-            List<String> dnsPrefixes = new ArrayList<>();
-            
-            for (AdditionalNode item : additionalNodes) {
-                dnsPrefixes.add(item.getDnsPrefix());
-            }
-            
-            return dnsPrefixes;
-        }
     }
 
     public AdditionalNodesConfigHelper(Config config) {
@@ -130,10 +121,12 @@ public abstract class AdditionalNodesConfigHelper {
      *         if dns doesn't comply with convention '<supported_node_type><number>(base_node_domain)'
      */
     public NodeConfig recognizeNodeConfigFromDns(String dns) throws IllegalArgumentException, IllegalStateException {
+        StringJoiner allowedDnsTemplates = new StringJoiner(", ", "[", "]");
+        
         for (AdditionalNode item : getAdditionalNodes()) {
             NodeConfig.NodeType type = item.getType();
-
             String baseNodeDomain = getBaseNodeDomain(type, config);
+                       
             String typeString = item.getDnsPrefix();
             String regex = format("^%s\\d+%s$",
                                   typeString,
@@ -142,12 +135,15 @@ public abstract class AdditionalNodesConfigHelper {
             if (dns != null && dns.toLowerCase().matches(regex)) {
                 return new NodeConfig(type, dns);
             }
+            
+            allowedDnsTemplates.add(format("'%s<number>%s'", 
+                                           typeString, 
+                                           baseNodeDomain));
         }
 
-        throw new IllegalArgumentException(format("Illegal DNS name '%s' of additional node. " +
-                                                  "Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '%s'",
-                                                  dns,
-                                                  AdditionalNode.getDnsPrefixes(getAdditionalNodes()).toString().toLowerCase()));
+        throw new IllegalArgumentException(format("Illegal DNS name '%s' of additional node. Correct DNS name templates: %s", 
+                                                  dns, 
+                                                  allowedDnsTemplates));
     }
 
     /**

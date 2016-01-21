@@ -192,7 +192,7 @@ public class TestAdditionalNodesConfigHelperCodenvy4 {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Illegal DNS name 'node2.another.com' of additional node. Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '.*'")
+          expectedExceptionsMessageRegExp = "Illegal DNS name 'node2.another.com' of additional node. Correct DNS name templates: \\['node<number>.some.com'\\]")
     public void testRecognizeNodeConfigFromDnsWhenDnsDoesNotComplyBaseNodeDomain() {
         doReturn("some.com").when(mockConfig).getHostUrl();
         spyConfigUtil.recognizeNodeConfigFromDns("node2.another.com");

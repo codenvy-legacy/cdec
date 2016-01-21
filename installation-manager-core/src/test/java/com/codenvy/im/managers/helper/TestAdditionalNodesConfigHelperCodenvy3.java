@@ -206,7 +206,7 @@ public class TestAdditionalNodesConfigHelperCodenvy3 {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
-          expectedExceptionsMessageRegExp = "Illegal DNS name 'runner2.another.com' of additional node. Correct name template is '<prefix><number><base_node_domain>' where supported prefix is one from the list '.*'")
+          expectedExceptionsMessageRegExp = "Illegal DNS name 'runner2.another.com' of additional node. Correct DNS name templates: \\['builder<number>.some.com', 'runner<number>.some.com'\\]")
     public void testRecognizeNodeConfigFromDnsWhenDnsDoesNotComplyBaseNodeDomain() {
         doReturn("builder1.some.com").when(mockConfig).getValue(
                 NodeConfig.NodeType.BUILDER.toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX);
