@@ -421,13 +421,6 @@ public class InstallationManagerService {
 
             InstallType installType = configManager.detectInstallationType();
             Config config = configManager.loadInstalledCodenvyConfig(installType);
-            String versionStr = config.getValue(Config.VERSION);
-            if (versionStr == null) {
-                return Response.ok(toJson(properties)).build();
-            }
-
-            Version codenvyVersion = Version.valueOf(versionStr);
-
 
             // add host url
             String hostUrl = config.getHostUrl();
@@ -436,7 +429,8 @@ public class InstallationManagerService {
             }
 
             // get additional nodes dns lists of Codenvy 4.x AIO
-            if (codenvyVersion.is4Major()) {
+            String codenvyVersionStr = config.getValue(Config.VERSION);
+            if (Version.is4Major(codenvyVersionStr)) {
                 AdditionalNodesConfigHelper helper = new AdditionalNodesConfigHelperCodenvy4Impl(config);
                 Map<String, List<String>> additionalMachines = helper.extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE);
                 if (additionalMachines != null) {
@@ -456,7 +450,7 @@ public class InstallationManagerService {
             }
 
             // get additional nodes dns lists of Codenvy 3.x
-            if (codenvyVersion.is3Major()) {
+            if (Version.is3Major(codenvyVersionStr)) {
                 AdditionalNodesConfigHelper helper = new AdditionalNodesConfigHelperCodenvy3Impl(config);
                 Map<String, List<String>> additionalRunners = helper.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
                 if (additionalRunners != null) {

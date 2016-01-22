@@ -28,6 +28,9 @@ import static org.testng.Assert.assertTrue;
  * @author Anatoliy Bazko
  */
 public class TestVersion {
+
+    public static final String INVALID_VERSION_STR = "invalid_version";
+
     @Test(dataProvider = "testValidVersion")
     public void testValidVersion(String version) throws Exception {
         assertTrue(Version.isValidVersion(version), "Version is invalid: " + version);
@@ -201,11 +204,20 @@ public class TestVersion {
     @Test
     public void testIsCertainMajor() throws Exception {
         assertFalse(Version.valueOf("2.0.0").is3Major());
+        assertFalse(Version.is3Major(null));
+        assertFalse(Version.is3Major("4.0.0"));
+        assertFalse(Version.is3Major(INVALID_VERSION_STR));  // shouldn't throw "IllegalArgumentException"
+
         assertTrue(Version.valueOf("3.14.0-SNAPSHOT").is3Major());
+        assertTrue(Version.is3Major("3.14.0"));
 
         assertFalse(Version.valueOf("3.0.0").is4Major());
-        assertTrue(Version.valueOf("4.0.0-beta-2-SNAPSHOT").is4Major());
+        assertFalse(Version.is4Major(null));
+        assertFalse(Version.is4Major("3.0.0"));
+        assertFalse(Version.is4Major(INVALID_VERSION_STR));  // shouldn't throw "IllegalArgumentException"
 
+        assertTrue(Version.valueOf("4.0.0-beta-2").is4Major());
+        assertTrue(Version.is4Major("4.0.0-beta-2-SNAPSHOT"));
     }
 
 }

@@ -218,6 +218,32 @@ public class Version implements Comparable<Version> {
 
     }
 
+    public static boolean is4Major(String versionStr) {
+        if (versionStr == null) {
+            return false;
+        }
+
+        try {
+            Version version = valueOf(versionStr);
+            return version.is4Major();
+        } catch(IllegalVersionException e) {
+            return false;
+        }
+    }
+
+    public static boolean is3Major(String versionStr) {
+        if (versionStr == null) {
+            return false;
+        }
+
+        try {
+            Version version = valueOf(versionStr);
+            return version.is3Major();
+        } catch(IllegalVersionException e) {
+            return false;
+        }
+    }
+
     static public class ReverseOrderComparator implements Comparator<Version> {
         @Override
         public int compare(Version v1, Version v2) {

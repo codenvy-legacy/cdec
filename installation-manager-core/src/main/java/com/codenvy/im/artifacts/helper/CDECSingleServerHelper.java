@@ -517,6 +517,14 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
                                               oldHostName,
                                               newHostName,
                                               file)));
+
+            // replace old hostname on new hostname in regex "^node\d+\.<hostname>$" of additional node section of puppet manifests in Codenvy 4.x
+            if (Version.is4Major(config.getValue(Config.VERSION))) {
+                commands.add(createCommand(format("sudo sed -i 's/\\^node\\\\d+\\\\.%s\\$/\\^node\\\\d+\\\\.%s\\$/g' %3$s",
+                                                  oldHostName,
+                                                  newHostName,
+                                                  file)));
+            }
         }
 
         commands.add(createFileBackupCommand("/etc/puppet/puppet.conf"));

@@ -53,7 +53,7 @@ end
 ###################
 config.vm.define :node2 do |node2_instance_config|
 hostname = 'node2'
-domain = 'codenvy'
+domain = 'test.codenvy'
 node2_instance_config.vm.host_name = hostname + '.' + domain
 node2_instance_config.vm.network :private_network, ip: "192.168.56.20"
 node2_instance_config.vm.provider :virtualbox do |vbox|
@@ -72,7 +72,7 @@ end
 config.vm.provision "shell", inline: "echo -e \"nameserver 8.8.8.8\n\" >> /etc/resolv.conf"
 config.vm.provision :hosts do |config|
 config.add_host '192.168.56.15', ['node1.codenvy']
-config.add_host '192.168.56.20', ['node2.codenvy']
+config.add_host '192.168.56.20', ['node2.test.codenvy']
 config.add_host '192.168.56.110', ['codenvy']
 end
 
