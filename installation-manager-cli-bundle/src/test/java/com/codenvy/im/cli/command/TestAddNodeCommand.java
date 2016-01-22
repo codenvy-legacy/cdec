@@ -17,6 +17,7 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.response.NodeInfo;
 
@@ -28,15 +29,20 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /** @author Dmytro Nochevnov */
 public class TestAddNodeCommand extends AbstractTestCommand {
-    private AbstractIMCommand spyCommand;
+    private static final String TEST_DNS_NAME = "test";
 
+    private AddNodeCommand          spyCommand;
     @Mock
     private IMArtifactLabeledFacade mockInstallationManagerProxy;
     @Mock
@@ -54,7 +60,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
 
     @Test
     public void testAddNode() throws Exception {
-        String TEST_DNS_NAME = "some";
         doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -74,7 +79,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
                                 + "  \"message\" : \"Server Error Exception\",\n"
                                 + "  \"status\" : \"ERROR\"\n"
                                 + "}";
-        String TEST_DNS_NAME = "some";
         doThrow(new RuntimeException("Server Error Exception"))
                 .when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
 
@@ -84,5 +88,38 @@ public class TestAddNodeCommand extends AbstractTestCommand {
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
         assertEquals(output, expectedOutput + "\n");
+    }
+
+    @Test
+    public void testCodenvy4AddNodeThrowsErrorIfConfigWrong() throws Exception {
+        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4Installed();
+        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("dns", TEST_DNS_NAME);
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertTrue(output.contains("ERROR"));
+    }
+
+    @Test
+    public void testCodenvy4AddNode() throws Exception {
+        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4Installed();
+        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
+
+        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+        commandInvoker.argument("dns", TEST_DNS_NAME);
+        commandInvoker.option("--codenvyIp", "someIp");
+
+        CommandInvoker.Result result = commandInvoker.invoke();
+        String output = result.disableAnsi().getOutputStream();
+        assertEquals(output, "{\n" +
+                             "  \"node\" : { },\n" +
+                             "  \"status\" : \"OK\"\n" +
+                             "}\n");
+
+        verify(spyCommand).updateCodenvyConfig();
+        verify(mockInstallationManagerProxy).updateArtifactConfig(any(Artifact.class), anyMap());
     }
 }

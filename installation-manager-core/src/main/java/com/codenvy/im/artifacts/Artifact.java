@@ -24,6 +24,7 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.utils.Version;
 
 import org.eclipse.che.commons.annotation.Nullable;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -64,7 +65,7 @@ public interface Artifact extends Comparable<Artifact> {
     /**
      * @return the latest version to install
      */
-    public Version getLatestInstallableVersion() throws IOException;
+    Version getLatestInstallableVersion() throws IOException;
 
     /**
      * @return true if given version of the artifact can be installed, in general case versionToInstall should be greater than current installed and

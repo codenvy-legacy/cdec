@@ -29,7 +29,7 @@ validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
 
 # add node1
-executeIMCommand "im-add-node" "node1.codenvy"
+executeIMCommand "im-add-node" "--codenvyIp 192.168.56.110" "node1.codenvy"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.codenvy\".*"
 
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750

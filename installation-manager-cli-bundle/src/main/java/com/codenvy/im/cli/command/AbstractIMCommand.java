@@ -28,6 +28,7 @@ import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.console.Console;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
+import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.DownloadArtifactStatus;
@@ -63,6 +64,7 @@ import static java.lang.String.format;
  */
 public abstract class AbstractIMCommand extends AbsCommand {
     protected IMArtifactLabeledFacade facade;
+    protected ConfigManager           configManager;
     protected PreferencesStorage      preferencesStorage;
     protected Console                 console;
 
@@ -74,6 +76,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
     public AbstractIMCommand() {
         facade = INJECTOR.getInstance(IMArtifactLabeledFacade.class);
+        configManager = INJECTOR.getInstance(ConfigManager.class);
     }
 
     @Override

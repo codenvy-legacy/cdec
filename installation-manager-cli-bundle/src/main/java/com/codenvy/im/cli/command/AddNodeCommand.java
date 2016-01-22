@@ -17,12 +17,24 @@
  */
 package com.codenvy.im.cli.command;
 
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.NodeManagerResponse;
 import com.codenvy.im.response.ResponseCode;
+import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
+import org.apache.karaf.shell.commands.Option;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Optional;
+
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
+import static com.google.api.client.repackaged.com.google.common.base.Strings.isNullOrEmpty;
 
 /**
  * @author Dmytro Nochevnov
@@ -30,14 +42,28 @@ import org.apache.karaf.shell.commands.Command;
 @Command(scope = "codenvy", name = "im-add-node", description = "Add node into Codenvy")
 public class AddNodeCommand extends AbstractIMCommand {
 
-    @Argument(name = "dns", description = "DNS name of adding node.", required = true, multiValued = false, index = 0)
+    protected static final String MACHINE_EXTRA_HOSTS = "machine_extra_hosts";
+    protected static final String DEFAULT_CODENVY_IP  = "172.17.42.1";
+
+    @Argument(name = "dns", description = "DNS name of the node to add.", required = true, multiValued = false, index = 0)
     private String dns;
+
+    @Option(name = "--codenvyIp",
+            description = "For Codenvy 4.x only. Real codenvy ip address so that docker on node would be able to communicate with it",
+            required = false)
+    private String codenvyIp;
 
     @Override
     protected void doExecuteCommand() throws Exception {
-        if (dns != null && !dns.isEmpty()) {
+        if (!isNullOrEmpty(dns)) {
             try {
                 console.showProgressor();
+
+                if (isNullOrEmpty(codenvyIp)) {
+                    validateCodenvyConfig();
+                } else {
+                    updateCodenvyConfig();
+                }
 
                 NodeInfo nodeInfo = facade.addNode(dns);
 
@@ -50,5 +76,29 @@ public class AddNodeCommand extends AbstractIMCommand {
                 console.hideProgressor();
             }
         }
+    }
+
+    protected void validateCodenvyConfig() throws IOException {
+        if (isCodenvy4Installed()) {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            String property = config.getProperties().get(MACHINE_EXTRA_HOSTS);
+
+            if (property == null || property.contains(DEFAULT_CODENVY_IP)) {
+                throw new IllegalStateException(
+                        "This is the first time you add extra node to Codenvy.\n" +
+                        "It is required to set Codenvy IP address so that docker on node would be able to communicate with it.\n" +
+                        "Use the following syntax: im-add-node --codenvyIp <REAL_CODENVY_IP_ADDRESS> <NODE_DNS>");
+            }
+        }
+    }
+
+    protected boolean isCodenvy4Installed() throws IOException {
+        Optional<Version> version = createArtifact(CDECArtifact.NAME).getInstalledVersion();
+        return version.isPresent() && version.get().is4Major();
+    }
+
+    protected void updateCodenvyConfig() throws IOException {
+        Map<String, String> props = ImmutableMap.of(MACHINE_EXTRA_HOSTS, "$host_url:" + codenvyIp);
+        facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), props);
     }
 }
