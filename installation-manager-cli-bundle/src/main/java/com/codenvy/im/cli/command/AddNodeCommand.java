@@ -42,8 +42,7 @@ import static com.google.api.client.repackaged.com.google.common.base.Strings.is
 @Command(scope = "codenvy", name = "im-add-node", description = "Add node into Codenvy")
 public class AddNodeCommand extends AbstractIMCommand {
 
-    protected static final String MACHINE_EXTRA_HOSTS = "machine_extra_hosts";
-    protected static final String DEFAULT_CODENVY_IP  = "172.17.42.1";
+    protected static final String DEFAULT_CODENVY_IP_FOR_THE_DOCKER_CONTAINER = "172.17.42.1";
 
     @Argument(name = "dns", description = "DNS name of the node to add.", required = true, multiValued = false, index = 0)
     private String dns;
@@ -81,9 +80,9 @@ public class AddNodeCommand extends AbstractIMCommand {
     protected void validateCodenvyConfig() throws IOException {
         if (isCodenvy4Installed()) {
             Config config = configManager.loadInstalledCodenvyConfig();
-            String property = config.getProperties().get(MACHINE_EXTRA_HOSTS);
+            String property = config.getProperties().get(Config.MACHINE_EXTRA_HOSTS);
 
-            if (property == null || property.contains(DEFAULT_CODENVY_IP)) {
+            if (property == null || property.contains(DEFAULT_CODENVY_IP_FOR_THE_DOCKER_CONTAINER)) {
                 throw new IllegalStateException(
                         "This is the first time you add extra node to Codenvy.\n" +
                         "It is required to set Codenvy IP address so that docker on node would be able to communicate with it.\n" +
@@ -98,7 +97,7 @@ public class AddNodeCommand extends AbstractIMCommand {
     }
 
     protected void updateCodenvyConfig() throws IOException {
-        Map<String, String> props = ImmutableMap.of(MACHINE_EXTRA_HOSTS, "$host_url:" + codenvyIp);
+        Map<String, String> props = ImmutableMap.of(Config.MACHINE_EXTRA_HOSTS, "$host_url:" + codenvyIp);
         facade.updateArtifactConfig(createArtifact(CDECArtifact.NAME), props);
     }
 }

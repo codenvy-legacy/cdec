@@ -29,12 +29,8 @@ validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
 
 # throw error that dns is incorrect
-executeIMCommand "--valid-exit-code=1" "im-add-node" "bla-bla-bla"
-validateExpectedString ".*Illegal.DNS.name.'bla-bla-bla'.of.additional.node..Correct.DNS.name.templates\:.\['node<number>.${HOST_URL}'\].*"
-
-# throw error that host is not reachable
-executeIMCommand "--valid-exit-code=1" "im-add-node" "node3.codenvy"
-validateExpectedString ".*Can.t.connect.to.host..vagrant@node3.codenvy:22.*"
+executeIMCommand "--valid-exit-code=1" "im-add-node" "node1.${HOST_URL}"
+validateExpectedString ".*This.is.the.first.time.you.add.extra.node.to.Codenvy.*It.is.required.to.set.Codenvy.IP.address.so.that.docker.on.node.would.be.able.to.communicate.with.it.*Use.the.following.syntax\:.im-add-node.--codenvyIp.<REAL_CODENVY_IP_ADDRESS>.<NODE_DNS>.*"
 
 # add node1
 executeIMCommand "im-add-node" "--codenvyIp 192.168.56.110" "node1.${HOST_URL}"
@@ -47,6 +43,14 @@ validateExpectedString ".*Nodes\",\"2\".*\[\"master.${HOST_URL}\",\"${HOST_URL}:
 # throw error that node has been already used
 executeIMCommand "--valid-exit-code=1" "im-add-node" "node1.codenvy"
 validateExpectedString ".*Node..node1.${HOST_URL}..has.been.already.used.*"
+
+# throw error that dns is incorrect
+executeIMCommand "--valid-exit-code=1" "im-add-node" "bla-bla-bla"
+validateExpectedString ".*Illegal.DNS.name.'bla-bla-bla'.of.additional.node..Correct.DNS.name.templates\:.\['node<number>.${HOST_URL}'\].*"
+
+# throw error that host is not reachable
+executeIMCommand "--valid-exit-code=1" "im-add-node" "node3.codenvy"
+validateExpectedString ".*Can.t.connect.to.host..vagrant@node3.codenvy:22.*"
 
 # change Codenvy hostname to verify if puppet.conf file will be successfully updated
 executeSshCommand "sudo sed -i 's/ ${HOST_URL}/ ${NEW_HOST_URL}/' /etc/hosts"

@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * 192.168.56.110 codenvy
  * 192.168.56.110 test.codenvy
  * 192.168.56.15 node1.codenvy
- * 192.168.56.20 node2.codenvy
+ * 192.168.56.20 node2.test.codenvy
  *
  * @author Dmytro Nochevnov
  */

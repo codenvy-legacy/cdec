@@ -104,6 +104,8 @@ public class Config {
 
     public static final String SWARM_NODES = "swarm_nodes";
 
+    public static final String MACHINE_EXTRA_HOSTS = "machine_extra_hosts";
+
     public static final List<String> MULTI_SERVER_PROPERTIES = ImmutableList.of(MULTI_SERVER_BASE_CONFIG_PP,
                                                                                 MULTI_SERVER_4_0_PROPERTIES,
                                                                                 MULTI_SERVER_BASE_4_0_PROPERTIES,
