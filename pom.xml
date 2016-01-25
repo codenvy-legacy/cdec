@@ -28,7 +28,7 @@
     </parent>
     <groupId>com.codenvy.im</groupId>
     <artifactId>codenvy-im</artifactId>
-    <version>4.0.0-beta-13</version>
+    <version>4.0.0-beta-14-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Codenvy :: IM</name>
     <modules>
@@ -45,7 +45,7 @@
     <scm>
         <connection>scm:git:git@github.com:codenvy/cdec.git</connection>
         <developerConnection>scm:git:git@github.com:codenvy/cdec.git</developerConnection>
-        <tag>4.0.0-beta-13</tag>
+        <tag>HEAD</tag>
     </scm>
     <properties>
         <maven.releases.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-releases/</maven.releases.repo.url>
