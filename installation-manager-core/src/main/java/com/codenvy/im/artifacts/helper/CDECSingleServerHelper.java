@@ -158,8 +158,6 @@ public class CDECSingleServerHelper extends CDECArtifactHelper {
             case 4:
                 return new MacroCommand(ImmutableList.of(
                     createFileRestoreOrBackupCommand("/etc/puppet/puppet.conf"),
-                    createCommand("sudo sed -i '1i[master]' /etc/puppet/puppet.conf"),
-                    createCommand(format("sudo sed -i '2i  certname = %s' /etc/puppet/puppet.conf", config.getHostUrl())),
                     createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
                                          "  dns_alt_names = puppet,%1$s\\n/g' /etc/puppet/puppet.conf", config.getHostUrl())),
                     createCommand(format("sudo sed -i 's/\\[agent\\]/" +
