@@ -104,6 +104,7 @@ setRunOptions() {
     ARTIFACT="codenvy"
     CODENVY_TYPE="single"
     SILENT=false
+    FAIR_SOURCE_LICENSE_ACCEPTED=false
     for var in "$@"; do
         if [[ "$var" == "--multi" ]]; then
             CODENVY_TYPE="multi"
@@ -119,6 +120,8 @@ setRunOptions() {
             SYSTEM_ADMIN_NAME=`echo "$var" | sed -e "s/--systemAdminName=//g"`
         elif [[ "$var" =~ --systemAdminPassword=.* ]]; then
             SYSTEM_ADMIN_PASSWORD=`echo "$var" | sed -e "s/--systemAdminPassword=//g"`
+        elif [[ "$var" =~ --fair-source-license=accept ]]; then
+            FAIR_SOURCE_LICENSE_ACCEPTED=true
         fi
     done
 
@@ -745,6 +748,9 @@ printPreInstallInfo_single() {
 
     println "Welcome. This program installs ${ARTIFACT_DISPLAY} ${VERSION}."
     println
+
+    doEnsureFairSourceLicenseAgreement
+
     println "Checking system pre-requisites..."
     println
 
@@ -778,6 +784,28 @@ printPreInstallInfo_single() {
     fi
 
     doCheckAvailablePorts_single
+}
+
+doEnsureFairSourceLicenseAgreement() {
+    if [[ ${FAIR_SOURCE_LICENSE_ACCEPTED} == true ]]; then
+        println "You have accepted the Codenvy Fair Source license agreement to "
+        println "install this software: http://codenvy.com/legal/fair-source"
+        println
+        return
+    fi
+
+    println "You must accept the Codenvy Fair Source license agreement to "
+    println "install this software: http://codenvy.com/legal/fair-source"
+    println
+    print "Accept? [y/N]: "
+    read VALUE
+
+    if [[ ${VALUE} != "y" && ${VALUE} != "Y" ]]; then
+        exit 1;
+    fi
+
+    println
+    println "You are awesome. Let's do this."
 }
 
 # parameter 1 - MIN_RAM_KB
@@ -961,6 +989,9 @@ printPreInstallInfo_multi() {
 
     println "Welcome. This program installs ${ARTIFACT_DISPLAY} ${VERSION}."
     println
+
+    doEnsureFairSourceLicenseAgreement
+
     println "Checking system pre-requisites..."
     println
 
