@@ -50,12 +50,13 @@ public class TestVersion {
                                {"1.0.10-RC"},
                                {"1.0.1-SNAPSHOT"},
                                {"1.0.1-RC-SNAPSHOT"},
+                               {"1.0.1-RC10-SNAPSHOT"},
                                {"1.0.1.0-SNAPSHOT"},
                                {"1.0.1-M1"},
                                {"1.0.1.1-M1"},
                                {"1.0.1-M1-SNAPSHOT"},
                                {"1.0.1.2-M1-SNAPSHOT"},
-                               {"1.0.1.2-beta-1-SNAPSHOT"},
+                               {"1.0.1.2-beta-10-SNAPSHOT"},
                                {"1.0.1.2-M1-beta-1-SNAPSHOT"},
                                {"1.0.1.2-M1-RC-SNAPSHOT"}};
     }

@@ -32,13 +32,14 @@ public class Version implements Comparable<Version> {
 
     private static final String MILESTONE_VERSION_PREFIX = "-M";
     private static final String BETA_VERSION_PREFIX      = "-beta-";
+    private static final String RC_VERSION_PREFIX        = "-RC";
 
     private static final Pattern VERSION =
-            compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(\\.0|\\.[1-9]+[0-9]*|)" +
-                    "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
-                    "(" + BETA_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
-                    "(-RC|)" +
-                    "(-SNAPSHOT|)$");
+        compile("^(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)\\.(0|[1-9]+[0-9]*)(\\.0|\\.[1-9]+[0-9]*|)" +
+                "(" + MILESTONE_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
+                "(" + BETA_VERSION_PREFIX + "[1-9]+[0-9]*|)" +
+                "(" + RC_VERSION_PREFIX + "[1-9]*[0-9]*|)" +
+                "(-SNAPSHOT|)$");
 
     private final int     major;
     private final int     minor;
@@ -213,7 +214,7 @@ public class Version implements Comparable<Version> {
                + (hotFix > 0 ? "." + hotFix : "")
                + (milestone > 0 ? MILESTONE_VERSION_PREFIX + milestone : "")
                + (beta > 0 ? BETA_VERSION_PREFIX + beta : "")
-               + (rc ? "-RC" : "")
+               + (rc ? RC_VERSION_PREFIX : "")
                + (snapshot ? "-SNAPSHOT" : "");
 
     }
