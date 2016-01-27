@@ -1,5 +1,5 @@
-box      = 'centos7.1-preconfigured.v8.3.box'
-url      = 'https://install.codenvycorp.com/centos7.1-preconfigured.v8.3.box'
+box      = 'centos7.2-preconfigured.v1.0'
+url      = 'https://install.codenvycorp.com/centos7.2-preconfigured.v1.0.box'
 
 ram = '1024'
 runner_ram = '1512' # should be > 1GB
@@ -127,24 +127,6 @@ end
 end
 
 ###################
-# RUNNER 2 INSTANCE
-###################
-config.vm.define :runner2 do |runner2_instance_config|
-hostname = 'runner2'
-domain = 'codenvy'
-runner2_instance_config.vm.host_name = hostname + '.' + domain
-runner2_instance_config.vm.network :private_network, ip: "192.168.56.20"
-runner2_instance_config.vm.provider :virtualbox do |vbox|
-vbox.customize [
-'modifyvm', :id,
-'--name', hostname,
-'--memory', runner_ram,
-'--cpus', cpus
-]
-end
-end
-
-###################
 # BUILDER 1 INSTANCE
 ###################
 config.vm.define :builder1 do |builder1_instance_config|
@@ -153,24 +135,6 @@ domain = 'codenvy'
 builder1_instance_config.vm.host_name = hostname + '.' + domain
 builder1_instance_config.vm.network :private_network, ip: "192.168.56.16"
 builder1_instance_config.vm.provider :virtualbox do |vbox|
-vbox.customize [
-'modifyvm', :id,
-'--name', hostname,
-'--memory', ram,
-'--cpus', cpus
-]
-end
-end
-
-###################
-# BUILDER 2 INSTANCE
-###################
-config.vm.define :builder2 do |builder2_instance_config|
-hostname = 'builder2'
-domain = 'codenvy'
-builder2_instance_config.vm.host_name = hostname + '.' + domain
-builder2_instance_config.vm.network :private_network, ip: "192.168.56.23"
-builder2_instance_config.vm.provider :virtualbox do |vbox|
 vbox.customize [
 'modifyvm', :id,
 '--name', hostname,
@@ -207,9 +171,7 @@ config.add_host '192.168.56.11', ['data.codenvy']
 config.add_host '192.168.56.13', ['api.codenvy']
 config.add_host '192.168.56.110', ['site.codenvy']
 config.add_host '192.168.56.15', ['runner1.codenvy']
-config.add_host '192.168.56.20', ['runner2.codenvy']
 config.add_host '192.168.56.16', ['builder1.codenvy']
-config.add_host '192.168.56.23', ['builder2.codenvy']
 config.add_host '192.168.56.17', ['datasource.codenvy']
 config.add_host '192.168.56.18', ['analytics.codenvy']
 config.add_host '192.168.56.110', ['codenvy']
