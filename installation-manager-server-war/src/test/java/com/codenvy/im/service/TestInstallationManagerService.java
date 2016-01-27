@@ -18,7 +18,6 @@
 package com.codenvy.im.service;
 
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
-import com.codenvy.im.BaseTest;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
@@ -51,12 +50,20 @@ import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.dto.server.DtoFactory;
+import org.everrest.assured.EverrestJetty;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.Principal;
@@ -88,7 +95,8 @@ import static org.testng.Assert.assertTrue;
 /**
  * @author Dmytro Nochevnov
  */
-public class TestInstallationManagerService extends BaseTest {
+@Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
+public class TestInstallationManagerService  {
 
     public static final String ARTIFACT_NAME      = "codenvy";
     public static final String VERSION_NUMBER     = "1.0.0";
@@ -120,6 +128,23 @@ public class TestInstallationManagerService extends BaseTest {
     private Config              mockConfig;
     @Mock
     private Artifact            mockArtifact;
+
+    protected final String BACKUP_DIR = "target/backup";
+
+    RepositoryService testedRepositoryService;
+
+    @Path("update/repository")
+    public static class RepositoryService {
+
+        @GET
+        @Path("/properties/{artifact}/{version}")
+        @Produces(MediaType.APPLICATION_JSON)
+        public Map<String, String> getArtifactProperties(@PathParam("artifact") final String artifact,
+                                                         @PathParam("version") final String version) {
+            return ImmutableMap.of(artifact, version);
+        }
+    }
+
 
     @BeforeMethod
     public void setUp() throws Exception {
