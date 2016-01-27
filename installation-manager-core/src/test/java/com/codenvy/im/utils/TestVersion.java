@@ -43,22 +43,21 @@ public class TestVersion {
                                {"10.3.0"},
                                {"10.3.0.0"},
                                {"10.3.0.1"},
-                               {"10.3.0.1-RC"},
+                               {"10.3.0.1-RC1"},
                                {"0.9.0"},
                                {"1.0.0"},
                                {"1.0.10"},
-                               {"1.0.10-RC"},
                                {"1.0.1-SNAPSHOT"},
-                               {"1.0.1-RC-SNAPSHOT"},
                                {"1.0.1-RC10-SNAPSHOT"},
                                {"1.0.1.0-SNAPSHOT"},
                                {"1.0.1-M1"},
                                {"1.0.1.1-M1"},
+                               {"1.0.1.1-M1-RC2"},
                                {"1.0.1-M1-SNAPSHOT"},
                                {"1.0.1.2-M1-SNAPSHOT"},
                                {"1.0.1.2-beta-10-SNAPSHOT"},
                                {"1.0.1.2-M1-beta-1-SNAPSHOT"},
-                               {"1.0.1.2-M1-RC-SNAPSHOT"}};
+                               {"1.0.1.2-M1-RC1-SNAPSHOT"}};
     }
 
     @Test(dataProvider = "testInvalidVersion")
@@ -81,8 +80,11 @@ public class TestVersion {
                                {"1.0.1-M0"},
                                {"1.0.1-M-SNAPSHOT"},
                                {"1.0.1-M0-SNAPSHOT"},
+                               {"1.0.1-RC-SNAPSHOT"},
+                               {"1.0.1-RC0-SNAPSHOT"},
                                {"1.0.1--SNAPSHOT"},
                                {"1.0.1-beta-0"},
+                               {"1.0.1.2-RC1-beta-1-SNAPSHOT"},
                                {"1.0.1-SNAPSHOT-RC"}};
     }
 
@@ -94,7 +96,7 @@ public class TestVersion {
                                       int hotFix,
                                       int milestone,
                                       int beta,
-                                      boolean rc,
+                                      int rc,
                                       boolean snapshot) throws Exception {
         assertEquals(Version.valueOf(str), new Version(major, minor, bugFix, hotFix, milestone, beta, rc, snapshot));
     }
@@ -103,15 +105,17 @@ public class TestVersion {
     @DataProvider(name = "testParseValidVersion")
     public Object[][] testParseValidVersion() {
         return new Object[][] {
-                {"1.0.1-RC", 1, 0, 1, 0, 0, 0, true, false},
-                {"1.0.1.0", 1, 0, 1, 0, 0, 0, false, false},
-                {"10.150.200.1", 10, 150, 200, 1, 0, 0, false, false},
-                {"10.150.200.24-SNAPSHOT", 10, 150, 200, 24, 0, 0, false, true},
-                {"10.150.200-M20", 10, 150, 200, 0, 20, 0, false, false},
-                {"10.150.200-M20-RC", 10, 150, 200, 0, 20, 0, true, false},
-                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 0, 20, 0, false, true},
-                {"10.150.200-beta-1-SNAPSHOT", 10, 150, 200, 0, 0, 1, false, true},
-                {"10.150.200-M20-RC-SNAPSHOT", 10, 150, 200, 0, 20, 0, true, true}};
+                {"1.0.1-RC1", 1, 0, 1, 0, 0, 0, 1, false},
+                {"1.0.1.0", 1, 0, 1, 0, 0, 0, 0, false},
+                {"10.150.200.1", 10, 150, 200, 1, 0, 0, 0, false},
+                {"10.150.200.24-SNAPSHOT", 10, 150, 200, 24, 0, 0, 0, true},
+                {"10.150.200-M20", 10, 150, 200, 0, 20, 0, 0, false},
+                {"10.150.200-M20-RC3", 10, 150, 200, 0, 20, 0, 3, false},
+                {"10.150.200-M20-SNAPSHOT", 10, 150, 200, 0, 20, 0, 0, true},
+                {"10.150.200-beta-10", 10, 150, 200, 0, 0, 10, 0, false},
+                {"10.150.200-beta-1-SNAPSHOT", 10, 150, 200, 0, 0, 1, 0, true},
+                {"10.150.200-RC1", 10, 150, 200, 0, 0, 0, 1, false},
+                {"10.150.200-RC11-SNAPSHOT", 10, 150, 200, 0, 0, 0, 11, true}};
     }
 
 
@@ -135,7 +139,7 @@ public class TestVersion {
                 {"10.150.200-M20"},
                 {"10.150.200-SNAPSHOT"},
                 {"10.150.200-beta-1"},
-                {"10.150.200-RC-SNAPSHOT"}};
+                {"10.150.200-RC1-SNAPSHOT"}};
     }
 
 
@@ -152,7 +156,7 @@ public class TestVersion {
                 {"1.0.2-M20", "1.0.2-M20", 0},
                 {"1.0.2-M20-SNAPSHOT", "1.0.2-M20-SNAPSHOT", 0},
                 {"1.0.2.4-M20-SNAPSHOT", "1.0.2.4-M20-SNAPSHOT", 0},
-                {"1.0.2.4-M20-RC-SNAPSHOT", "1.0.2.4-M20-RC-SNAPSHOT", 0},
+                {"1.0.2.4-RC1-SNAPSHOT", "1.0.2.4-RC1-SNAPSHOT", 0},
                 {"1.0.2-SNAPSHOT", "1.0.2-SNAPSHOT", 0},
 
                 {"2.0.1", "1.0.1", 1},
@@ -160,13 +164,15 @@ public class TestVersion {
                 {"1.0.1.1", "1.0.1", 1},
                 {"1.0.1.1", "1.0.1.0", 1},
                 {"1.0.2", "1.0.1", 1},
-                {"1.0.2", "1.0.1-RC", 1},
+                {"1.0.2", "1.0.1-RC1", 1},
                 {"1.0.2", "1.0.1-M20", 1},
                 {"1.0.2", "1.0.2-SNAPSHOT", 1},
                 {"1.0.2-M20", "1.0.2-M19", 1},
                 {"1.0.2-M20", "1.0.2-M20-SNAPSHOT", 1},
-                {"1.0.2-M20", "1.0.2-M20-RC", 1},
+                {"1.0.2-M20", "1.0.2-M20-RC1", 1},
                 {"1.0.2-beta-2", "1.0.2-beta-1", 1},
+                {"1.0.2-RC2-SNAPSHOT", "1.0.2-RC1-SNAPSHOT", 1},
+                {"1.0.2-RC1", "1.0.2-RC1-SNAPSHOT", 1},
 
                 {"1.0.1", "2.0.1", -1},
                 {"1.0.1", "1.1.1", -1},
@@ -174,7 +180,7 @@ public class TestVersion {
                 {"1.0.1", "1.0.2", -1},
                 {"1.0.1-SNAPSHOT", "1.0.1", -1},
                 {"1.0.2-M20", "1.0.2", -1},
-                {"1.0.2-beta-2", "1.0.2", -1}};
+                {"1.0.2-beta-1", "1.0.2-RC1", -1}};
     }
 
     @Test(dataProvider = "testIsSuitedFor")
@@ -195,6 +201,7 @@ public class TestVersion {
                 {"1.0.1", "(.*)\\.(.*)\\.(.*)", true},
                 {"1.1.1-SNAPSHOT", "1\\.1\\.0|1\\.1\\.1\\-SNAPSHOT", true},
                 {"1.1.1-beta-1", "1\\.1\\.(.*)", true},
+                {"1.1.1-RC1", "1\\.1\\.(.*)", true},
                 {"1.1.1-M1", "1\\.1\\.(.*)", true},
                 {"1.1.0", "1\\.1\\.0|1\\.\\1\\.1-SNAPSHOT", true},
                 {"1.0.1", "1\\.0\\.2", false},
@@ -219,6 +226,7 @@ public class TestVersion {
 
         assertTrue(Version.valueOf("4.0.0-beta-2").is4Major());
         assertTrue(Version.is4Major("4.0.0-beta-2-SNAPSHOT"));
+        assertTrue(Version.is4Major("4.0.0-RC1-SNAPSHOT"));
     }
 
 }
