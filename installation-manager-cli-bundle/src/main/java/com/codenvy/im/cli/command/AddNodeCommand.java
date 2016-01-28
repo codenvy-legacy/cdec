@@ -59,7 +59,9 @@ public class AddNodeCommand extends AbstractIMCommand {
             try {
                 console.showProgressor();
 
-                if (!isNullOrEmpty(codenvyIp)) {
+                if (isNullOrEmpty(codenvyIp)) {
+                    validateCodenvyConfig();
+                } else {
                     updateCodenvyConfig();
                 }
 
@@ -72,6 +74,20 @@ public class AddNodeCommand extends AbstractIMCommand {
                 console.printResponseExitInError(nodeManagerResponse);
             } finally {
                 console.hideProgressor();
+            }
+        }
+    }
+
+    protected void validateCodenvyConfig() throws IOException {
+        if (isCodenvy4Installed()) {
+            Config config = configManager.loadInstalledCodenvyConfig();
+            String property = config.getProperties().get(Config.MACHINE_EXTRA_HOSTS);
+
+            if (property == null || property.contains(DEFAULT_CODENVY_IP_FOR_THE_DOCKER_CONTAINER)) {
+                throw new IllegalStateException(
+                        "This is the first time you add extra node to Codenvy.\n" +
+                        "It is required to set IP of a Codenvy workspace master host.\n" +
+                        "Use the following syntax: im-add-node --codenvy-ip <CODENVY_IP_ADDRESS> <NODE_DNS>");
             }
         }
     }
