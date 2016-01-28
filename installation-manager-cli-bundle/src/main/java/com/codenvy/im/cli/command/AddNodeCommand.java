@@ -47,9 +47,10 @@ public class AddNodeCommand extends AbstractIMCommand {
     @Argument(name = "dns", description = "DNS name of the node to add.", required = true, multiValued = false, index = 0)
     private String dns;
 
-    @Option(name = "--codenvyIp",
-            description = "For Codenvy 4.x only. Real codenvy ip address so that docker on node would be able to communicate with it",
+    @Option(name = "--codenvy-ip",
+            description = "stands for IP of a Codenvy workspace master host. It must be set if workspace master does not have a real DNS that a workspace agent can resolve",
             required = false)
+            
     private String codenvyIp;
 
     @Override
@@ -58,9 +59,7 @@ public class AddNodeCommand extends AbstractIMCommand {
             try {
                 console.showProgressor();
 
-                if (isNullOrEmpty(codenvyIp)) {
-                    validateCodenvyConfig();
-                } else {
+                if (!isNullOrEmpty(codenvyIp)) {
                     updateCodenvyConfig();
                 }
 
@@ -73,20 +72,6 @@ public class AddNodeCommand extends AbstractIMCommand {
                 console.printResponseExitInError(nodeManagerResponse);
             } finally {
                 console.hideProgressor();
-            }
-        }
-    }
-
-    protected void validateCodenvyConfig() throws IOException {
-        if (isCodenvy4Installed()) {
-            Config config = configManager.loadInstalledCodenvyConfig();
-            String property = config.getProperties().get(Config.MACHINE_EXTRA_HOSTS);
-
-            if (property == null || property.contains(DEFAULT_CODENVY_IP_FOR_THE_DOCKER_CONTAINER)) {
-                throw new IllegalStateException(
-                        "This is the first time you add extra node to Codenvy.\n" +
-                        "It is required to set Codenvy IP address so that docker on node would be able to communicate with it.\n" +
-                        "Use the following syntax: im-add-node --codenvyIp <REAL_CODENVY_IP_ADDRESS> <NODE_DNS>");
             }
         }
     }

@@ -90,18 +90,6 @@ public class TestAddNodeCommand extends AbstractTestCommand {
         assertEquals(output, expectedOutput + "\n");
     }
 
-    @Test
-    public void testCodenvy4AddNodeThrowsErrorIfConfigWrong() throws Exception {
-        doReturn(Boolean.TRUE).when(spyCommand).isCodenvy4Installed();
-        doReturn(new NodeInfo()).when(mockInstallationManagerProxy).addNode(TEST_DNS_NAME);
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-        commandInvoker.argument("dns", TEST_DNS_NAME);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertTrue(output.contains("ERROR"));
-    }
 
     @Test
     public void testCodenvy4AddNode() throws Exception {
@@ -110,7 +98,7 @@ public class TestAddNodeCommand extends AbstractTestCommand {
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.argument("dns", TEST_DNS_NAME);
-        commandInvoker.option("--codenvyIp", "someIp");
+        commandInvoker.option("--codenvy-ip", "someIp");
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();

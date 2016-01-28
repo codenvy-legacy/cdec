@@ -33,7 +33,7 @@ executeIMCommand "--valid-exit-code=1" "im-add-node" "node1.${HOST_URL}"
 validateExpectedString ".*This.is.the.first.time.you.add.extra.node.to.Codenvy.*It.is.required.to.set.Codenvy.IP.address.so.that.docker.on.node.would.be.able.to.communicate.with.it.*Use.the.following.syntax\:.im-add-node.--codenvyIp.<REAL_CODENVY_IP_ADDRESS>.<NODE_DNS>.*"
 
 # add node1
-executeIMCommand "im-add-node" "--codenvyIp 192.168.56.110" "node1.${HOST_URL}"
+executeIMCommand "im-add-node" "--codenvy-ip 192.168.56.110" "node1.${HOST_URL}"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.${HOST_URL}\".*"
 
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
