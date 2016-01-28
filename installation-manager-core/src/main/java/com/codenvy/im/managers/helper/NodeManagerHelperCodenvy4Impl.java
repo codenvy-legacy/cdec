@@ -58,7 +58,7 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
 
         try {
             // add node into the autosign list of puppet master
-            commands.add(createCommand(format("if [ \"`grep \"%1$s\" /etc/puppet/autosign.conf`\" == \"\" ]; "
+            commands.add(createCommand(format("if [[ \"$(grep \"%1$s\" /etc/puppet/autosign.conf)\" == \"\" ]]; "
                                               + "then sudo sh -c \"echo -e '%1$s' >> /etc/puppet/autosign.conf\"; "
                                               + "fi",
                                               node.getHost())));
@@ -72,32 +72,35 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
 
             // install and enable puppet agent on adding node
             commands.add(createCommand("yum clean all"));   // cleanup to avoid yum install failures
-            commands.add(createCommand(format("if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; "
-                                              + "then sudo yum -y -q install %s; "
-                                              + "fi", config.getValue(Config.PUPPET_RESOURCE_URL)), node));
+            commands.add(createCommand(format("if [[ \"$(yum list installed | grep puppetlabs-release)\" == \"\" ]]; then "
+                                              + "  sudo yum -y -q install %s; "
+                                              + "fi", config.getValue(Config.PUPPET_RESOURCE_URL)),
+                                       node));
             commands.add(createCommand(format("sudo yum -y -q install %s", config.getValue(Config.PUPPET_AGENT_PACKAGE)), node));
             commands.add(createCommand("sudo systemctl enable puppet", node));
 
             // configure puppet agent
             commands.add(createFileBackupCommand("/etc/puppet/puppet.conf", node));
-            commands.add(createCommand(format("sudo sed -i 's/\\[main\\]/\\[main\\]\\n" +
-                                              "  server = %s\\n" +
-                                              "  runinterval = 420\\n" +
-                                              "  configtimeout = 600\\n/g' /etc/puppet/puppet.conf",
-                                              puppetMasterNodeDns),
-                                       node));
-
-            commands.add(createCommand(format("sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n" +
-                                              "  show_diff = true\\n" +
-                                              "  pluginsync = true\\n" +
-                                              "  report = true\\n" +
-                                              "  default_schedules = false\\n" +
-                                              "  certname = %s\\n/g' /etc/puppet/puppet.conf",
+            commands.add(createCommand(format("if [[ \"$(grep \"server = %1$s\" /etc/puppet/puppet.conf)\" == \"\" ]]; then "
+                                              + "  sudo sed -i 's/\\[main\\]/\\[main\\]\\n"
+                                              + "    server = %1$s\\n"
+                                              + "    runinterval = 420\\n"
+                                              + "    configtimeout = 600\\n/g' /etc/puppet/puppet.conf; "
+                                              + "  sudo sed -i 's/\\[agent\\]/\\[agent\\]\\n"
+                                              + "    show_diff = true\\n"
+                                              + "    pluginsync = true\\n"
+                                              + "    report = true\\n"
+                                              + "    default_schedules = false\\n"
+                                              + "    certname = %2$s\\n/g' /etc/puppet/puppet.conf; "
+                                              + "fi",
+                                              puppetMasterNodeDns,
                                               node.getHost()),
                                        node));
 
             // log puppet messages into the /var/log/puppet/puppet-agent.log file instead of /var/log/messages
-            commands.add(createCommand("sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\\n\" >> /etc/sysconfig/puppetagent'", node));
+            commands.add(createCommand("if [[ \"$(grep \"PUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\" /etc/sysconfig/puppetagent)\" == \"\" ]]; then "
+                                       + "  sudo sh -c 'echo -e \"\\nPUPPET_EXTRA_OPTS=--logdest /var/log/puppet/puppet-agent.log\" >> /etc/sysconfig/puppetagent'; "
+                                       + "fi", node));
 
             // start puppet agent
             commands.add(createCommand("sudo systemctl start puppet", node));
@@ -169,14 +172,6 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
                                   "    if ! sudo grep \"%s\" ${testFile}; then break; fi; " +
                                   "    sleep 5; " +  // sleep 5 sec
                                   "done; ", node.getHost())));
-
-            // remove out-date puppet agent's certificate
-            commands.add(createCommand(format("sudo puppet cert clean %s", node.getHost())));
-            commands.add(createCommand("sudo systemctl restart puppetmaster"));
-
-            // stop puppet agent on removing node and remove out-date certificate
-            commands.add(createCommand("sudo systemctl stop puppet", node));
-            commands.add(createCommand("sudo rm -rf /var/lib/puppet/ssl", node));
         } catch (Exception e) {
             throw new NodeException(e.getMessage(), e);
         }

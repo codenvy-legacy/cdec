@@ -88,5 +88,13 @@ validateExpectedString ".*Nodes\",\"1\".*\[\"master.${HOST_URL}\",\"${NEW_HOST_U
 executeIMCommand "--valid-exit-code=1" "im-remove-node" "node1.${HOST_URL}"
 validateExpectedString ".*Node..node1.${HOST_URL}..is.not.found.*"
 
+# add node2 again
+executeIMCommand "im-add-node" "node2.${NEW_HOST_URL}"
+validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node2.${NEW_HOST_URL}\".*"
+
+executeSshCommand "sudo systemctl stop iptables"  # open port 23750
+doGet "http://${HOST_URL}:23750/info"
+validateExpectedString ".*Nodes\",\"2\".*\[\"master.${HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*[\"node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*"
+
 printAndLog "RESULT: PASSED"
 vagrantDestroy
