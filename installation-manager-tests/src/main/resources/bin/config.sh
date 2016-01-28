@@ -32,7 +32,7 @@ AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/u
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`
 LATEST_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)".*/\1/'`
 
-SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS71/Vagrantfile"
-MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS71/Vagrantfile"
-MULTI_NODE_WITH_ADDITIONAL_NODES_VAGRANT_FILE="../vagrant/multi-with-additional-nodes/CentOS71/Vagrantfile"
-SINGLE_CODENVY4_WITH_ADDITIONAL_NODES_VAGRANT_FILE="../vagrant/single-codenvy4-with-additional-nodes/CentOS71/Vagrantfile"
+SINGLE_NODE_VAGRANT_FILE="../vagrant/single/CentOS7/Vagrantfile"
+MULTI_NODE_VAGRANT_FILE="../vagrant/multi/CentOS7/Vagrantfile"
+MULTI_NODE_WITH_ADDITIONAL_NODES_VAGRANT_FILE="../vagrant/multi-with-additional-nodes/CentOS7/Vagrantfile"
+SINGLE_CODENVY4_WITH_ADDITIONAL_NODES_VAGRANT_FILE="../vagrant/single-codenvy4-with-additional-nodes/CentOS7/Vagrantfile"
