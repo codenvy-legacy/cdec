@@ -20,9 +20,10 @@ package com.codenvy.im.managers;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import javax.validation.constraints.NotNull;
 import org.eclipse.che.commons.annotation.Nullable;
+
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -30,10 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
@@ -53,7 +51,7 @@ public class StorageManager {
     private final Path storageFile;
 
     @Inject
-    public StorageManager(@Named("installation-manager.storage_dir") String storageDir) {
+    public StorageManager(@Named("installation-manager.storage_dir") String storageDir) throws IOException {
         this.storageFile = Paths.get(storageDir).resolve(STORAGE_FILE_NAME);
     }
 
@@ -156,5 +154,4 @@ public class StorageManager {
 
         return storageFile;
     }
-
 }

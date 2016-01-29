@@ -22,6 +22,8 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+
+import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.commons.schedule.executor.ScheduleModule;
 import org.eclipse.che.inject.DynaModule;
 
@@ -31,7 +33,9 @@ public class InstallationManagerServerModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        bind(ApiExceptionMapper.class);
         bind(InstallationManagerService.class);
+        bind(LicenseService.class);
         bind(ReportSender.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(InstallManagerArtifact.class);
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(CDECArtifact.class);

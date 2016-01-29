@@ -29,6 +29,7 @@ import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.LdapManager;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
@@ -107,6 +108,8 @@ public class TestInstallationManagerFacade extends BaseTest {
     private DownloadManager            downloadManager;
     @Mock
     private ConfigManager              configManager;
+    @Mock
+    private CodenvyLicenseManager      codenvyLicenseManager;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -124,7 +127,8 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       backupManager,
                                                                       storageManager,
                                                                       installManager,
-                                                                      downloadManager));
+                                                                      downloadManager,
+                                                                      codenvyLicenseManager));
     }
 
     @Test

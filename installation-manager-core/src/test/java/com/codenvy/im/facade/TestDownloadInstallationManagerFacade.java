@@ -24,6 +24,7 @@ import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.LdapManager;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
@@ -80,6 +81,8 @@ public class TestDownloadInstallationManagerFacade {
     private InstallManager             installManager;
     @Mock
     private DownloadManager            downloadManager;
+    @Mock
+    private CodenvyLicenseManager      codenvyLicenseManager;
 
     private Artifact installManagerArtifact;
     private Artifact cdecArtifact;
@@ -101,7 +104,8 @@ public class TestDownloadInstallationManagerFacade {
                                                                    backupManager,
                                                                    storageManager,
                                                                    installManager,
-                                                                   downloadManager);
+                                                                   downloadManager,
+                                                                   codenvyLicenseManager);
         this.pathCDEC = Paths.get("./target/cdec.zip");
         this.pathIM = Paths.get("./target/im.zip");
 

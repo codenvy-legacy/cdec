@@ -20,8 +20,10 @@ package com.codenvy.im.facade;
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.event.Event;
+import com.codenvy.im.exceptions.LicenseException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
@@ -57,6 +59,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -98,9 +101,12 @@ public class InstallationManagerFacade {
     protected final StorageManager             storageManager;
     protected final InstallManager             installManager;
     protected final DownloadManager            downloadManager;
+    protected final CodenvyLicenseManager      licenseManager;
+
+
 
     private final String updateServerEndpoint;
-    private final Path downloadDir;
+    private final Path   downloadDir;
     private final String saasServerEndpoint;
 
     @Inject
@@ -116,10 +122,12 @@ public class InstallationManagerFacade {
                                      BackupManager backupManager,
                                      StorageManager storageManager,
                                      InstallManager installManager,
-                                     DownloadManager downloadManager) {
+                                     DownloadManager downloadManager,
+                                     CodenvyLicenseManager licenseManager) {
         this.saasRepositoryServiceProxy = saasRepositoryServiceProxy;
         this.installManager = installManager;
         this.downloadManager = downloadManager;
+        this.licenseManager = licenseManager;
         this.downloadDir = Paths.get(downloadDir);
         this.transport = transport;
         this.updateServerEndpoint = updateServerEndpoint;
@@ -641,5 +649,40 @@ public class InstallationManagerFacade {
      */
     public void logSaasAnalyticsEvent(Event event, @Nullable String authToken) throws IOException {
         saasRepositoryServiceProxy.logAnalyticsEvent(event, authToken);
+    }
+
+    /**
+     * @see CodenvyLicenseManager#delete()
+     */
+    public void deleteCodenvyLicense() throws LicenseException {
+        licenseManager.delete();
+    }
+
+    /**
+     * @see CodenvyLicenseManager#load()
+     */
+    public String loadCodenvyLicense() throws LicenseException {
+        return licenseManager.load();
+    }
+
+    /**
+     * @see CodenvyLicenseManager#store(String)
+     */
+    public void storeCodenvyLicense(String licenseText) throws LicenseException {
+        licenseManager.store(licenseText);
+    }
+
+    /**
+     * @see CodenvyLicenseManager#isLicenseExpired()
+     */
+    public boolean isLicenseExpired() throws LicenseException {
+        return licenseManager.isLicenseExpired();
+    }
+
+    /**
+     * @see CodenvyLicenseManager#getCustomFeatures()
+     */
+    public Map<String, String> getCustomFeatures() {
+        return licenseManager.getCustomFeatures();
     }
 }
