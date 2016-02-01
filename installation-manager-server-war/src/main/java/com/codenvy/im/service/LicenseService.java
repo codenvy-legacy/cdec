@@ -27,6 +27,7 @@ import com.codenvy.im.exceptions.LicenseException;
 import com.codenvy.im.exceptions.LicenseNotFoundException;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.google.inject.Inject;
 
 import org.eclipse.che.api.core.ApiException;
@@ -46,7 +47,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.AbstractMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status.ACCEPTED;
 import static javax.ws.rs.core.Response.Status.CREATED;
@@ -131,7 +134,13 @@ public class LicenseService {
     @Path("/properties")
     public Response getLicenseProperties() throws ApiException {
         try {
-            Map<String, String> properties = delegate.getCustomFeatures();
+            Map<CodenvyLicenseManager.LicenseFeature, String> features = delegate.getCustomFeatures();
+
+            Map<String, String> properties = features
+                    .entrySet()
+                    .stream()
+                    .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().toString(), entry.getValue()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             boolean licenseExpired = delegate.isLicenseExpired();
             properties.put("isExpired", String.valueOf(licenseExpired));

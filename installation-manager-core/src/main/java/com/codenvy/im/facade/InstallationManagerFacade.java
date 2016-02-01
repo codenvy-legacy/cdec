@@ -19,8 +19,11 @@ package com.codenvy.im.facade;
 
 import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
+import com.codenvy.im.exceptions.InvalidLicenseException;
 import com.codenvy.im.exceptions.LicenseException;
+import com.codenvy.im.exceptions.LicenseNotFoundException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.CodenvyLicenseManager;
@@ -82,6 +85,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeSet;
 
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 
@@ -486,6 +490,17 @@ public class InstallationManagerFacade {
      * @see com.codenvy.im.managers.NodeManager#add(String)
      */
     public NodeInfo addNode(@NotNull String dns) throws IOException {
+        Artifact artifact = createArtifact(CDECArtifact.NAME);
+        Version version = installManager.getInstalledArtifacts().get(artifact);
+
+        if (version == null) {
+            throw new IllegalStateException("Unknown installed Codenvy version.");
+        }
+
+        if (version.is4Major()) {
+            validateLicense();
+        }
+
         NodeConfig nodeConfig = nodeManager.add(dns);
 
         NodeInfo nodeInfo = new NodeInfo();
@@ -493,6 +508,29 @@ public class InstallationManagerFacade {
         nodeInfo.setHost(nodeConfig.getHost());
 
         return nodeInfo;
+    }
+
+    private void validateLicense() {
+        try {
+            licenseManager.validate();
+
+            CodenvyLicenseManager.LicenseType licenseType = licenseManager.getLicenseType();
+            if (licenseManager.isLicenseExpired()) {
+                switch (licenseType) {
+                    case EVALUATION_PRODUCT_KEY:
+                        throw new IllegalStateException("Your Codenvy subscription only allows a single server.");
+                    case PRODUCT_KEY:
+                    default:
+                        // do nothing
+                }
+            }
+        } catch (LicenseNotFoundException e) {
+            throw new IllegalStateException("Your Codenvy subscription only allows a single server.");
+        } catch (InvalidLicenseException e) {
+            throw new IllegalStateException("Codenvy License is invalid or has unappropriated format.");
+        } catch (LicenseException e) {
+            throw new IllegalStateException("Codenvy License can't be validated.", e);
+        }
     }
 
     /**
@@ -682,7 +720,7 @@ public class InstallationManagerFacade {
     /**
      * @see CodenvyLicenseManager#getCustomFeatures()
      */
-    public Map<String, String> getCustomFeatures() {
+    public Map<CodenvyLicenseManager.LicenseFeature, String> getCustomFeatures() {
         return licenseManager.getCustomFeatures();
     }
 }

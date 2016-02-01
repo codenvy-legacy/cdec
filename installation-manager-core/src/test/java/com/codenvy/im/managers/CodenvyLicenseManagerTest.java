@@ -167,11 +167,11 @@ public class CodenvyLicenseManagerTest {
     public void testGetCustomFeatures() throws Exception {
         codenvyLicenseManager.store(LICENCE_TEXT);
 
-        Map<String, String> customFeatures = codenvyLicenseManager.getCustomFeatures();
+        Map<CodenvyLicenseManager.LicenseFeature, String> customFeatures = codenvyLicenseManager.getCustomFeatures();
         assertEquals(customFeatures.size(), 3);
 
         for (CodenvyLicenseManager.LicenseFeature feature : CodenvyLicenseManager.LicenseFeature.values()) {
-            assertTrue(customFeatures.containsKey(feature.toString()));
+            assertTrue(customFeatures.containsKey(feature));
         }
     }
 
