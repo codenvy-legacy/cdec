@@ -179,7 +179,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
 
                     commands.add(createReplaceCommand(file,
                                                       ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
-                                                      config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+                                                      config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
 
                     for (Map.Entry<String, String> e : config.getProperties().entrySet()) {
                         String property = e.getKey();
@@ -197,7 +197,7 @@ public class CDECMultiServerHelper extends CDECArtifactHelper {
                 }
                 commands.add(
                         createReplaceCommand("/etc/puppet/" + Config.MULTI_SERVER_NODES_PP, ConfigManager.PUPPET_MASTER_DEFAULT_HOSTNAME,
-                                             config.getValue(Config.PUPPET_MASTER_HOST_NAME_PROPERTY)));
+                                             config.getValue(Config.PUPPET_MASTER_HOST_NAME)));
 
                 // make it possible to sign up nodes' certificates automatically
                 StringBuilder autosignFileContent = new StringBuilder();

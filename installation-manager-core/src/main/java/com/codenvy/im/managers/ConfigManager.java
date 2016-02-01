@@ -316,7 +316,10 @@ public class ConfigManager {
     }
 
     /**
-     * Detects which Codenvy installation type is used. The main idea is in analyzing puppet.conf to figure out in which sections
+     * Detects which Codenvy installation type is used. Uses first non-empty value of variable <b>codenvy_install_type</b>
+     * in puppet manifest files. Return it's value if it matches set of InstallType enum values: [single_server, multi_server, ...].
+     * 
+     * Workaround in case of absence of <b>codenvy_install_type</b>: analyzing puppet.conf to figure out in which sections
      * 'certname' property exists.  If method can't detect installation type then an exception will be thrown. The result totally
      * depends on implementations of {@link com.codenvy.im.artifacts.helper.CDECSingleServerHelper} and
      * {@link com.codenvy.im.artifacts.helper.CDECMultiServerHelper}.
@@ -341,9 +344,17 @@ public class ConfigManager {
      *
      * @throws UnknownInstallationTypeException
      *         if can't detect installation type
+     * @throws IOException 
      */
     @NotNull
-    public InstallType detectInstallationType() throws UnknownInstallationTypeException {
+    public InstallType detectInstallationType() throws UnknownInstallationTypeException, IOException {
+        for (InstallType installType : InstallType.values()) {
+            String codenvyInstallType = loadInstalledCodenvyProperties(installType).get(Config.CODENVY_INSTALL_TYPE);
+            if (codenvyInstallType != null && codenvyInstallType.equals(installType.toString().toLowerCase())) {
+                return installType;
+            }
+        }
+        
         try {
             HierarchicalINIConfiguration iniFile = new HierarchicalINIConfiguration();
             iniFile.load(puppetConfFile.toFile());

@@ -87,14 +87,9 @@ public class Config {
     public static final String LDAP_PORT     = "ldap_port";
     public static final String LDAP_PROTOCOL = "ldap_protocol";
 
+
     public static final String JAVA_NAMING_SECURITY_AUTHENTICATION = "java_naming_security_authentication";
     public static final String JAVA_NAMING_SECURITY_PRINCIPAL      = "java_naming_security_principal";
-    public static final String PUPPET_MASTER_HOST_NAME_PROPERTY    = "puppet_master_host_name";
-    public static final String MONGO_ADMIN_USERNAME_PROPERTY       = "mongo_admin_user_name";
-    public static final String MONGO_ADMIN_PASSWORD_PROPERTY       = "mongo_admin_pass";
-    public static final String NODE_SSH_USER_NAME_PROPERTY         = "node_ssh_user_name";
-    public static final String NODE_SSH_USER_PRIVATE_KEY_PROPERTY  = "node_ssh_user_private_key";
-    public static final String SYSTEM_LDAP_PASSWORD                = "system_ldap_password";
 
     public static final String PUBLIC_KEY  = "public_key";
     public static final String PRIVATE_KEY = "private_key";
@@ -105,6 +100,8 @@ public class Config {
     public static final String SWARM_NODES = "swarm_nodes";
 
     public static final String MACHINE_EXTRA_HOSTS = "machine_extra_hosts";
+
+    public static final String CODENVY_INSTALL_TYPE = "codenvy_install_type";
 
     public static final List<String> MULTI_SERVER_PROPERTIES = ImmutableList.of(MULTI_SERVER_BASE_CONFIG_PP,
                                                                                 MULTI_SERVER_4_0_PROPERTIES,

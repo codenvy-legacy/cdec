@@ -21,6 +21,7 @@ import com.codenvy.im.commands.Command;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.NodeConfig;
+import com.codenvy.im.managers.UnknownInstallationTypeException;
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
@@ -40,7 +41,7 @@ public abstract class NodeManagerHelper {
     public abstract Command getRemoveNodeCommand(NodeConfig node,
                                                  String property) throws IOException;
 
-    public abstract void checkInstallType() throws IllegalStateException;
+    public abstract void checkInstallType() throws IllegalStateException, UnknownInstallationTypeException, IOException;
 
     /**
      * Read all urls of additional nodes stored from the puppet master config, find out node with certain dns and return type of additional node with

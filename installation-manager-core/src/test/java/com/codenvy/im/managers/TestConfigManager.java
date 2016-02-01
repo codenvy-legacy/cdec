@@ -61,14 +61,14 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 public class TestConfigManager extends BaseTest {
 
-    private ConfigManager configManager;
+    private ConfigManager spyConfigManager;
     private HttpTransport transport;
     private Artifact spyCdec;
 
     @BeforeMethod
     public void setUp() throws Exception {
         transport = mock(HttpTransport.class);
-        configManager = spy(new ConfigManager(UPDATE_API_ENDPOINT, PUPPET_BASE_DIR, transport));
+        spyConfigManager = spy(new ConfigManager(UPDATE_API_ENDPOINT, PUPPET_BASE_DIR, transport));
 
         spyCdec = spy(ArtifactFactory.createArtifact(CDECArtifact.NAME));
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(spyCdec).getInstalledVersion();
@@ -79,13 +79,13 @@ public class TestConfigManager extends BaseTest {
         Path conf = Paths.get("target", "conf.properties");
         FileUtils.write(conf.toFile(), "user=1\npwd=2\n");
 
-        Map<String, String> m = configManager.loadConfigProperties(conf);
+        Map<String, String> m = spyConfigManager.loadConfigProperties(conf);
         assertEquals(m.size(), 2);
         assertEquals(m.get("user"), "1");
         assertEquals(m.get("pwd"), "2");
 
 
-        m = configManager.loadConfigProperties(conf.toAbsolutePath().toString());
+        m = spyConfigManager.loadConfigProperties(conf.toAbsolutePath().toString());
         assertEquals(m.size(), 2);
         assertEquals(m.get("user"), "1");
         assertEquals(m.get("pwd"), "2");
@@ -93,7 +93,7 @@ public class TestConfigManager extends BaseTest {
 
     @Test(expectedExceptions = FileNotFoundException.class, expectedExceptionsMessageRegExp = "Configuration file 'non-existed' not found")
     public void testLoadNonExistedConfigFile() throws IOException {
-        configManager.loadConfigProperties("non-existed");
+        spyConfigManager.loadConfigProperties("non-existed");
     }
 
     @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Can't load properties: error")
@@ -101,8 +101,8 @@ public class TestConfigManager extends BaseTest {
         Path confFile = Paths.get("target", "conf.properties");
         FileUtils.write(confFile.toFile(), "user=1\npwd=2\n");
 
-        doThrow(new IOException("error")).when(configManager).doLoadCodenvyProperties(any(Path.class));
-        configManager.loadConfigProperties(confFile);
+        doThrow(new IOException("error")).when(spyConfigManager).doLoadCodenvyProperties(any(Path.class));
+        spyConfigManager.loadConfigProperties(confFile);
     }
 
     @Test
@@ -114,7 +114,7 @@ public class TestConfigManager extends BaseTest {
                                              "d=3\\n4\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-single-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
+        Map<String, String> m = spyConfigManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
         assertEquals(m.size(), 4);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "2");
@@ -136,7 +136,7 @@ public class TestConfigManager extends BaseTest {
                                              "admin_ldap_dn=dc=codenvycorp,dc=com\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        Map<String, String> m = configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
+        Map<String, String> m = spyConfigManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
         assertEquals(m.size(), 6);
         assertEquals(m.get("a"), "1");
         assertEquals(m.get("b"), "\\$2");
@@ -151,7 +151,7 @@ public class TestConfigManager extends BaseTest {
     public void testLoadDefaultCdecConfigTransportError() throws Exception {
         doThrow(new IOException("error")).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
+        spyConfigManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
 
     @Test(expectedExceptions = ConfigException.class, expectedExceptionsMessageRegExp = "Can't load properties: error")
@@ -161,9 +161,9 @@ public class TestConfigManager extends BaseTest {
                                              "b=2\n");
         doReturn(properties).when(transport).download(endsWith("codenvy-multi-server-properties/3.1.0"), any(Path.class));
 
-        doThrow(new IOException("error")).when(configManager).doLoadCodenvyProperties(any(Path.class));
+        doThrow(new IOException("error")).when(spyConfigManager).doLoadCodenvyProperties(any(Path.class));
 
-        configManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
+        spyConfigManager.loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
     }
 
     @Test
@@ -172,10 +172,10 @@ public class TestConfigManager extends BaseTest {
         Map<String, String> curProps = ImmutableMap.of("a", "1", "b", "1");
         Map<String, String> newProps = ImmutableMap.of("a", "2", "b", "1", "c", "3");
 
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-        doReturn(ImmutableMap.of("a", "1", "b", "1")).when(configManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
+        doReturn(InstallType.SINGLE_SERVER).when(spyConfigManager).detectInstallationType();
+        doReturn(ImmutableMap.of("a", "1", "b", "1")).when(spyConfigManager).loadCodenvyDefaultProperties(curVersion, InstallType.SINGLE_SERVER);
 
-        Map<String, String> m = configManager.merge(curVersion, curProps, newProps);
+        Map<String, String> m = spyConfigManager.merge(curVersion, curProps, newProps);
 
         assertEquals(m.size(), 3);
         assertEquals(m.get("a"), "2");
@@ -223,9 +223,9 @@ public class TestConfigManager extends BaseTest {
                                              "  #\n" +
                                              "  #\n");
 
-        doReturn(ImmutableList.of(properties).iterator()).when(configManager)
+        doReturn(ImmutableList.of(properties).iterator()).when(spyConfigManager)
                                                          .getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
-        Map<String, String> m = configManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        Map<String, String> m = spyConfigManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
         assertEquals(m.size(), 9);
         assertEquals(m.get("aio_host_url"), "test.com");
         assertEquals(m.get("builder_max_execution_time"), "600");
@@ -258,7 +258,7 @@ public class TestConfigManager extends BaseTest {
                                               + format("zip -r %s .", binaries.toAbsolutePath().toString()));
         command.execute();
 
-        Map<String, String> m = configManager.loadConfigProperties(binaries, InstallType.SINGLE_SERVER);
+        Map<String, String> m = spyConfigManager.loadConfigProperties(binaries, InstallType.SINGLE_SERVER);
 
         assertEquals(m.size(), 2);
         assertEquals(m.get("prop1"), "1");
@@ -268,19 +268,19 @@ public class TestConfigManager extends BaseTest {
     @Test(expectedExceptions = ConfigException.class)
     public void testLoadInstalledCodenvyPropertiesErrorIfFileAbsent() throws Exception {
         Path properties = Paths.get("target/unexisted");
-        doReturn(ImmutableList.of(properties).iterator()).when(configManager)
+        doReturn(ImmutableList.of(properties).iterator()).when(spyConfigManager)
                                                          .getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
-        configManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
-        doReturn(ImmutableList.of(properties).iterator()).when(configManager)
+        spyConfigManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        doReturn(ImmutableList.of(properties).iterator()).when(spyConfigManager)
                                                          .getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
-        configManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        spyConfigManager.loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
     }
 
     @Test
     public void testGetSingleServerPropertiesFiles() throws Exception {
-        prepareSingleNodeEnv(configManager, transport);
+        prepareSingleNodeEnv(spyConfigManager, transport);
 
-        Iterator<Path> singleServerCssPropertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
+        Iterator<Path> singleServerCssPropertiesFiles = spyConfigManager.getCodenvyPropertiesFiles(InstallType.SINGLE_SERVER);
         assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
                                                  .endsWith("target/puppet/manifests/nodes/single_server/base_config.pp"));
         assertTrue(singleServerCssPropertiesFiles.next().toAbsolutePath().toString()
@@ -289,9 +289,9 @@ public class TestConfigManager extends BaseTest {
 
     @Test
     public void testGetMultiServerPropertiesFiles() throws Exception {
-        prepareMultiNodeEnv(configManager, transport);
+        prepareMultiNodeEnv(spyConfigManager, transport);
 
-        Iterator<Path> multiServerCssPropertiesFiles = configManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
+        Iterator<Path> multiServerCssPropertiesFiles = spyConfigManager.getCodenvyPropertiesFiles(InstallType.MULTI_SERVER);
         assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
                                                 .endsWith("target/puppet/manifests/nodes/multi_server/base_configurations.pp"));
         assertTrue(multiServerCssPropertiesFiles.next().toAbsolutePath().toString()
@@ -319,66 +319,82 @@ public class TestConfigManager extends BaseTest {
     @Test
     public void testLoadInstalledCodenvyConfig() throws IOException {
         Map<String, String> properties = ImmutableMap.of("a", "1", "b", "2");
-        doReturn(properties).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+        doReturn(properties).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
 
-        Config result = configManager.loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+        Config result = spyConfigManager.loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         assertEquals(result.getProperties().toString(), properties.toString());
     }
 
     @Test(expectedExceptions = UnknownInstallationTypeException.class)
     public void testDetectInstallationTypeErrorIfConfAbsent() throws Exception {
-        configManager.detectInstallationType();
+        spyConfigManager.detectInstallationType();
     }
 
     @Test
-    public void testDetectInstallationMultiType() throws Exception {
+    public void testDetectInstallationMultiTypeFromPuppetConf() throws Exception {
         createMultiNodeConf();
-        assertEquals(configManager.detectInstallationType(), InstallType.MULTI_SERVER);
+        assertEquals(spyConfigManager.detectInstallationType(), InstallType.MULTI_SERVER);
     }
 
     @Test
-    public void testDetectInstallationSingleType() throws Exception {
+    public void testDetectInstallationMultiTypeFromCodenvyConfig() throws Exception {
+        doReturn(ImmutableMap.of(Config.CODENVY_INSTALL_TYPE, "multi_server")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+        doReturn(ImmutableMap.of(Config.CODENVY_INSTALL_TYPE, "")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+
+        assertEquals(spyConfigManager.detectInstallationType(), InstallType.MULTI_SERVER);
+    }
+
+    @Test
+    public void testDetectInstallationSingleTypeFromPuppetConf() throws Exception {
         createSingleNodeConf();
-        assertEquals(configManager.detectInstallationType(), InstallType.SINGLE_SERVER);
+        assertEquals(spyConfigManager.detectInstallationType(), InstallType.SINGLE_SERVER);
+    }
+
+    @Test
+    public void testDetectInstallationSingleTypeFromCodenvyConfig() throws Exception {
+        doReturn(ImmutableMap.of(Config.CODENVY_INSTALL_TYPE, "")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+        doReturn(ImmutableMap.of(Config.CODENVY_INSTALL_TYPE, "single_server")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+
+        assertEquals(spyConfigManager.detectInstallationType(), InstallType.SINGLE_SERVER);
     }
 
     @Test(expectedExceptions = IOException.class)
     public void testFetchMasterHostNameErrorIfFileAbsent() throws Exception {
-        configManager.fetchMasterHostName();
+        spyConfigManager.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfFileEmpty() throws Exception {
-        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(new Config(new HashMap<String, String>())).when(spyConfigManager).loadInstalledCodenvyConfig();
 
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "");
-        configManager.fetchMasterHostName();
+        spyConfigManager.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfPropertyAbsent() throws Exception {
-        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(new Config(new HashMap<String, String>())).when(spyConfigManager).loadInstalledCodenvyConfig();
 
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]");
-        configManager.fetchMasterHostName();
+        spyConfigManager.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfValueEmpty() throws Exception {
-        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(new Config(new HashMap<String, String>())).when(spyConfigManager).loadInstalledCodenvyConfig();
 
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "   certname = ");
-        configManager.fetchMasterHostName();
+        spyConfigManager.fetchMasterHostName();
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
     public void testFetchMasterHostNameErrorIfBadFormat() throws Exception {
-        doReturn(new Config(new HashMap<String, String>())).when(configManager).loadInstalledCodenvyConfig();
+        doReturn(new Config(new HashMap<String, String>())).when(spyConfigManager).loadInstalledCodenvyConfig();
 
         FileUtils.write(BaseTest.PUPPET_CONF_FILE.toFile(), "[main]\n" +
                                                             "    certname  bla.bla.com\n");
-        configManager.fetchMasterHostName();
+        spyConfigManager.fetchMasterHostName();
     }
 
     @Test
@@ -388,7 +404,7 @@ public class TestConfigManager extends BaseTest {
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n" +
                                                             "[agent]\n" +
                                                             "certname=la-la.com");
-        assertEquals(configManager.fetchMasterHostName(), "master.dev.com");
+        assertEquals(spyConfigManager.fetchMasterHostName(), "master.dev.com");
     }
 
     @Test
@@ -398,12 +414,12 @@ public class TestConfigManager extends BaseTest {
                                                             "[main]\n" +
                                                             "certname= master.dev.com\n" +
                                                             "    hostprivkey= $privatekeydir/$certname.pem { mode = 640 }\n");
-        assertEquals(configManager.fetchMasterHostName(), "master.dev.com");
+        assertEquals(spyConfigManager.fetchMasterHostName(), "master.dev.com");
     }
 
     @Test
     public void testPrepareInstallPropertiesIMArtifact() throws Exception {
-        Map<String, String> properties = configManager.prepareInstallProperties(null,
+        Map<String, String> properties = spyConfigManager.prepareInstallProperties(null,
                                                                                 null,
                                                                                 null,
                                                                                 ArtifactFactory.createArtifact(InstallManagerArtifact.NAME),
@@ -416,9 +432,9 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadPropertiesFromConfigInstallUseCase() throws Exception {
         Map<String, String> properties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(properties).when(configManager).loadConfigProperties("file");
+        doReturn(properties).when(spyConfigManager).loadConfigProperties("file");
 
-        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+        Map<String, String> actualProperties = spyConfigManager.prepareInstallProperties("file",
                                                                                       null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
@@ -434,9 +450,9 @@ public class TestConfigManager extends BaseTest {
     public void testPrepareInstallPropertiesLoadDefaultPropertiesInstallUseCase() throws Exception {
         Map<String, String> expectedProperties = new HashMap<>(ImmutableMap.of("a", "b"));
 
-        doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
+        doReturn(expectedProperties).when(spyConfigManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
 
-        Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+        Map<String, String> actualProperties = spyConfigManager.prepareInstallProperties(null,
                                                                                       null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       ArtifactFactory.createArtifact(CDECArtifact.NAME),
@@ -455,14 +471,14 @@ public class TestConfigManager extends BaseTest {
         Artifact artifact = mock(Artifact.class);
         doReturn(Optional.of(Version.valueOf("1.0.0"))).when(artifact).getInstalledVersion();
         doReturn(CDECArtifact.NAME).when(artifact).getName();
-        doReturn(properties).when(configManager).loadConfigProperties("file");
-        doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        doReturn(properties).when(spyConfigManager).loadConfigProperties("file");
+        doReturn(ImmutableMap.of("b", "2")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
         doReturn(new HashMap<String, String>() {{
             put("a", "1");
             put("b", "2");
-        }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
+        }}).when(spyConfigManager).merge(any(Version.class), anyMap(), anyMap());
 
-        Map<String, String> actualProperties = configManager.prepareInstallProperties("file",
+        Map<String, String> actualProperties = spyConfigManager.prepareInstallProperties("file",
                                                                                       null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       artifact,
@@ -480,11 +496,11 @@ public class TestConfigManager extends BaseTest {
         doReturn(new HashMap<String, String>() {{
             put("a", "1");
             put("b", "2");
-        }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
-        doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
-        doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
+        }}).when(spyConfigManager).merge(any(Version.class), anyMap(), anyMap());
+        doReturn(expectedProperties).when(spyConfigManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.SINGLE_SERVER);
+        doReturn(ImmutableMap.of("b", "2")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.SINGLE_SERVER);
 
-        Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+        Map<String, String> actualProperties = spyConfigManager.prepareInstallProperties(null,
                                                                                       null,
                                                                                       InstallType.SINGLE_SERVER,
                                                                                       spyCdec,
@@ -502,14 +518,14 @@ public class TestConfigManager extends BaseTest {
         doReturn(new HashMap<String, String>() {{
             put("a", "1");
             put("b", "2");
-        }}).when(configManager).merge(any(Version.class), anyMap(), anyMap());
+        }}).when(spyConfigManager).merge(any(Version.class), anyMap(), anyMap());
 
-        doReturn(expectedProperties).when(configManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
-        doReturn(ImmutableMap.of("b", "2")).when(configManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
-        doReturn("master").when(configManager).fetchMasterHostName();
+        doReturn(expectedProperties).when(spyConfigManager).loadCodenvyDefaultProperties(Version.valueOf("3.1.0"), InstallType.MULTI_SERVER);
+        doReturn(ImmutableMap.of("b", "2")).when(spyConfigManager).loadInstalledCodenvyProperties(InstallType.MULTI_SERVER);
+        doReturn("master").when(spyConfigManager).fetchMasterHostName();
 
 
-        Map<String, String> actualProperties = configManager.prepareInstallProperties(null,
+        Map<String, String> actualProperties = spyConfigManager.prepareInstallProperties(null,
                                                                                       null,
                                                                                       InstallType.MULTI_SERVER,
                                                                                       spyCdec,
@@ -523,18 +539,18 @@ public class TestConfigManager extends BaseTest {
 
     @Test
     public void testGetApiEndpointSingleServer() throws Exception {
-        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+        doReturn(InstallType.SINGLE_SERVER).when(spyConfigManager).detectInstallationType();
 
-        assertEquals(configManager.getApiEndpoint(), "http://localhost/api");
+        assertEquals(spyConfigManager.getApiEndpoint(), "http://localhost/api");
     }
 
     @Test
     public void testGetApiEndpointMultiServer() throws Exception {
-        doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
+        doReturn(InstallType.MULTI_SERVER).when(spyConfigManager).detectInstallationType();
         doReturn(new Config(ImmutableMap.of("host_protocol", "http", "host_url", "codenvy.onprem")))
-                .when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+                .when(spyConfigManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
 
-        assertEquals(configManager.getApiEndpoint(), "http://codenvy.onprem/api");
+        assertEquals(spyConfigManager.getApiEndpoint(), "http://codenvy.onprem/api");
     }
 }
 

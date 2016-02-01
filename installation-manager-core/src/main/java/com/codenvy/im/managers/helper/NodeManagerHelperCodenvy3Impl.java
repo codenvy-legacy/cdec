@@ -29,6 +29,7 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
+import com.codenvy.im.managers.UnknownInstallationTypeException;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -194,7 +195,7 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
     }
 
     @Override
-    public void checkInstallType() throws IllegalStateException {
+    public void checkInstallType() throws IllegalStateException, UnknownInstallationTypeException, IOException {
         if (configManager.detectInstallationType() != InstallType.MULTI_SERVER) {
             throw new IllegalStateException("You can add/remove node in Multi-Server Codenvy only");
         }
