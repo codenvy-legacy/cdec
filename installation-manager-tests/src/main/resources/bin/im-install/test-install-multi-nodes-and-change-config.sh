@@ -45,11 +45,13 @@ executeIMCommand "im-config" "--hostname" "${NEW_HOST_URL}"
 
 # verify changes on api node
 executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
+sleep 10m
+executeSshCommand "sudo cat /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy/codenvy-data/conf/general.properties" "api.codenvy"
 
 # verify changes on installation-manager service
 executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
-sleep 10
+sleep 10m
 executeSshCommand "sudo cat /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
 
 executeSshCommand "sudo grep \"api.endpoint=http://${NEW_HOST_URL}/api\" /home/codenvy-im/codenvy-im-data/conf/installation-manager.properties"
