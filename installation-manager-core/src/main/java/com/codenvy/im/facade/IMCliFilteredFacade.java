@@ -20,6 +20,7 @@ package com.codenvy.im.facade;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
@@ -38,6 +39,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
@@ -71,7 +73,8 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
                                BackupManager backupManager,
                                StorageManager storageManager,
                                InstallManager installManager,
-                               DownloadManager downloadManager) {
+                               DownloadManager downloadManager,
+                               CodenvyLicenseManager licenseManager) {
         super(downloadDir,
               updateServerEndpoint,
               saasServerEndpoint,
@@ -84,7 +87,8 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
               backupManager,
               storageManager,
               installManager,
-              downloadManager);
+              downloadManager,
+              licenseManager);
     }
 
     /** {@inheritDoc} */

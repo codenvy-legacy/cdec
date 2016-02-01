@@ -73,6 +73,10 @@
             <artifactId>jsch</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.license4j</groupId>
+            <artifactId>license4j-runtime-library</artifactId>
+        </dependency>
+        <dependency>
             <groupId>commons-configuration</groupId>
             <artifactId>commons-configuration</artifactId>
         </dependency>

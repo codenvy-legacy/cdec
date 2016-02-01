@@ -27,6 +27,7 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.LdapManager;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
@@ -85,6 +86,8 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
     private DownloadManager            downloadManager;
     @Mock
     private ConfigManager              configManager;
+    @Mock
+    private CodenvyLicenseManager      codenvyLicenseManager;
 
     private IMArtifactLabeledFacade         facade;
     private ImmutableMap<Artifact, Version> versions;
@@ -112,7 +115,8 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
                                                  backupManager,
                                                  storageManager,
                                                  installManager,
-                                                 downloadManager));
+                                                 downloadManager,
+                                                 codenvyLicenseManager));
     }
 
     @Test
@@ -191,11 +195,5 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
         assertEquals(result.getLabel(), VersionLabel.STABLE);
         assertEquals(result.getFile(), "path");
-    }
-
-    @Test
-    public void testGetArtifacts() throws Exception {
-
-
     }
 }
