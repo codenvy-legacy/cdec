@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,6 +46,7 @@ import java.util.Objects;
 
 import static com.google.api.client.repackaged.com.google.common.base.Strings.isNullOrEmpty;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toMap;
 
 /**
  * @author Anatoliy Bazko
@@ -297,12 +299,17 @@ public class CodenvyLicenseManager {
      * @throws LicenseException
      *         if other errors occurred
      */
-    public Map<String, String> getCustomFeatures() throws LicenseNotFoundException,
-                                                          IllegalFormatLicenseException,
-                                                          InvalidLicenseException,
-                                                          LicenseException {
+    public Map<LicenseFeature, String> getCustomFeatures() throws LicenseNotFoundException,
+                                                                  IllegalFormatLicenseException,
+                                                                  InvalidLicenseException,
+                                                                  LicenseException {
         License license = doLoadAndValidate();
-        return license.getLicenseText().getCustomSignedFeatures();
+        Map<String, String> features = license.getLicenseText().getCustomSignedFeatures();
+
+        return features.entrySet()
+                       .stream()
+                       .map(entry -> new AbstractMap.SimpleEntry<>(LicenseFeature.fromString(entry.getKey()), entry.getValue()))
+                       .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private String doGetFeature(Map<String, String> customFeatures, LicenseFeature licenseFeature) throws IllegalFormatLicenseException {
@@ -334,6 +341,10 @@ public class CodenvyLicenseManager {
         @Override
         public String toString() {
             return super.toString().toLowerCase().replace("_", "-");
+        }
+
+        public static LicenseFeature fromString(String value) {
+            return LicenseFeature.valueOf(value.toUpperCase().replace("-", "_"));
         }
     }
 }

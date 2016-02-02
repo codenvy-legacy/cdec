@@ -22,14 +22,16 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
+import com.codenvy.im.exceptions.InvalidLicenseException;
+import com.codenvy.im.exceptions.LicenseNotFoundException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.LdapManager;
-import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
@@ -45,6 +47,7 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
+
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
@@ -68,9 +71,11 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import static com.codenvy.im.utils.Commons.toJson;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -207,6 +212,7 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Test
     public void testAddNode() throws IOException {
         doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com")).when(nodeManager).add("builder.node.com");
+        doReturn(ImmutableMap.of(cdecArtifact, Version.valueOf("3.0.0"))).when(installManager).getInstalledArtifacts();
         assertEquals(toJson(installationManagerFacade.addNode("builder.node.com")), "{\n" +
                                                                                     "  \"type\" : \"BUILDER\",\n" +
                                                                                     "  \"host\" : \"builder.node.com\"\n" +
@@ -216,9 +222,55 @@ public class TestInstallationManagerFacade extends BaseTest {
 
     @Test(expectedExceptions = IOException.class)
     public void testAddNodeException() throws IOException {
+        doReturn(ImmutableMap.of(cdecArtifact, Version.valueOf("3.0.0"))).when(installManager).getInstalledArtifacts();
         doThrow(new IOException("error")).when(nodeManager).add("builder.node.com");
 
         installationManagerFacade.addNode("builder.node.com");
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Codenvy License is invalid or has unappropriated format.")
+    public void testAddNodeShouldFailedWhenLicenseInvalid() throws IOException {
+        doReturn(ImmutableMap.of(cdecArtifact, Version.valueOf("4.0.0"))).when(installManager).getInstalledArtifacts();
+        doThrow(new InvalidLicenseException("error")).when(codenvyLicenseManager).validate();
+
+        installationManagerFacade.addNode("builder.node.com");
+
+        verify(nodeManager, never()).add(anyString());
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class,
+          expectedExceptionsMessageRegExp = "Your Codenvy subscription only allows a single server.")
+    public void testAddNodeShouldFailedWhenLicenseNotFound() throws IOException {
+        doReturn(ImmutableMap.of(cdecArtifact, Version.valueOf("4.0.0"))).when(installManager).getInstalledArtifacts();
+        doThrow(new LicenseNotFoundException("error")).when(codenvyLicenseManager).validate();
+
+        installationManagerFacade.addNode("builder.node.com");
+
+        verify(nodeManager, never()).add(anyString());
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void testAddNodeShouldFailedWhenEvaluationKeyExpired() throws IOException {
+        doReturn(ImmutableMap.of(cdecArtifact, Version.valueOf("4.0.0"))).when(installManager).getInstalledArtifacts();
+        doReturn(CodenvyLicenseManager.LicenseType.EVALUATION_PRODUCT_KEY).when(codenvyLicenseManager).getLicenseType();
+        doReturn(Boolean.TRUE).when(codenvyLicenseManager).isLicenseExpired();
+
+        installationManagerFacade.addNode("builder.node.com");
+
+        verify(nodeManager, never()).add(anyString());
+    }
+
+    @Test
+    public void testAddNodeShouldPassWhenProductKeyExpired() throws IOException {
+        doReturn(new NodeConfig(NodeConfig.NodeType.BUILDER, "builder.node.com")).when(nodeManager).add("builder.node.com");
+        doReturn(ImmutableMap.of(cdecArtifact, Version.valueOf("4.0.0"))).when(installManager).getInstalledArtifacts();
+        doReturn(CodenvyLicenseManager.LicenseType.PRODUCT_KEY).when(codenvyLicenseManager).getLicenseType();
+        doReturn(Boolean.TRUE).when(codenvyLicenseManager).isLicenseExpired();
+
+        installationManagerFacade.addNode("builder.node.com");
+
+        verify(nodeManager).add(anyString());
     }
 
     @Test
