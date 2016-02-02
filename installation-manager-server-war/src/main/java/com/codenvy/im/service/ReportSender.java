@@ -17,6 +17,11 @@
  */
 package com.codenvy.im.service;
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.UnknownArtifactVersionException;
+import com.codenvy.im.exceptions.LicenseException;
+import com.codenvy.im.facade.InstallationManagerFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.LdapManager;
@@ -24,6 +29,7 @@ import com.codenvy.im.report.ReportParameters;
 import com.codenvy.im.report.ReportType;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
+import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.codenvy.mail.MailSenderClient;
@@ -34,8 +40,12 @@ import javax.inject.Named;
 import javax.mail.MessagingException;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.codenvy.im.utils.Commons.combinePaths;
+import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
+import static com.codenvy.im.artifacts.UnknownArtifactVersionException.of;
 
 /**
  * Sends reports:
@@ -46,37 +56,57 @@ import static com.codenvy.im.utils.Commons.combinePaths;
  */
 @Singleton
 public class ReportSender {
-    private final LdapManager      ldapManager;
-    private final MailSenderClient mailClient;
-    private final HttpTransport    httpTransport;
-    private final String           updateServerEndpoint;
-    private final ConfigManager    configManager;
+    private static final Logger LOG = Logger.getLogger(ReportSender.class.getSimpleName());
+
+    private final LdapManager               ldapManager;
+    private final MailSenderClient          mailClient;
+    private final HttpTransport             httpTransport;
+    private final String                    updateServerEndpoint;
+    private final ConfigManager             configManager;
+    private final InstallationManagerFacade facade;
 
     @Inject
     public ReportSender(@Named("installation-manager.update_server_endpoint") String updateServerEndpoint,
                         LdapManager ldapManager,
                         MailSenderClient mailClient,
                         HttpTransport httpTransport,
-                        ConfigManager configManager) {
+                        ConfigManager configManager,
+                        InstallationManagerFacade facade) {
         this.ldapManager = ldapManager;
         this.mailClient = mailClient;
         this.httpTransport = httpTransport;
         this.updateServerEndpoint = updateServerEndpoint;
         this.configManager = configManager;
+        this.facade = facade;
     }
 
-//    @ScheduleCron(cron = "0 0 1 ? * SUN *")  // TODO [ndp] CDEC-376
-    // @ScheduleCron(cron = "0 0/1 * 1/1 * ? *")  // send every 1 minute
-    public void sendWeeklyReports() throws IOException, MessagingException, JsonParseException {
-        sendNumberOfUsers();
+    @ScheduleCron(cron = "0 0 1 ? * SUN *")  // send each Sunday at 1:00 AM. Use "0 0/1 * 1/1 * ? *" to send every 1 minute.
+    public void sendWeeklyReports() {
+        try {
+            Artifact cdecArtifact = getCdecArtifact();
+            Version version = cdecArtifact.getInstalledVersion().orElseThrow(() -> of(cdecArtifact));
+
+            if (version.is4Major()) {
+                sendNumberOfUsers();
+            }
+        } catch (JsonParseException | IOException | MessagingException | UnknownArtifactVersionException e) {
+            LOG.log(Level.SEVERE, "Error of sending weekly reports.", e);
+        }
     }
 
     private void sendNumberOfUsers() throws IOException, MessagingException, JsonParseException {
-        ReportParameters parameters = obtainReportParameters(ReportType.CODENVY_ONPREM_USER_NUMBER_REPORT);
-
-        if (! parameters.isActive()) {
-            return;
+        try {
+            if (!facade.isLicenseExpired()) {
+                // don't send report if Codenvy License is valid and isn't expired
+                LOG.log(Level.INFO, "Codenvy License is valid and isn't expired.");
+                return;
+            }
+        } catch (LicenseException e) {
+            // just log info without interrupting sending report if there is a problem with Codenvy License
+            LOG.log(Level.INFO, "There is a problem with Codenvy License.", e);
         }
+
+        ReportParameters parameters = obtainReportParameters(ReportType.CODENVY_ONPREM_USER_NUMBER_REPORT);
 
         String externalIP = obtainExternalIP();
 
@@ -90,13 +120,20 @@ public class ReportSender {
 
     private String obtainExternalIP() throws IOException {
         String requestUrl = combinePaths(updateServerEndpoint, "/util/client-ip");
-        return httpTransport.doGet(requestUrl);
+        return httpTransport.doGetTextPlain(requestUrl);
     }
 
     private ReportParameters obtainReportParameters(ReportType reportType) throws IOException, JsonParseException {
-        String requestUrl = combinePaths(updateServerEndpoint, "/parameters/" + reportType.name().toLowerCase());
+        String requestUrl = combinePaths(updateServerEndpoint, "/report/parameters/" + reportType.name().toLowerCase());
 
-        String response = httpTransport.doPost(requestUrl, null);
+        String response = httpTransport.doGet(requestUrl);
         return Commons.fromJson(response, ReportParameters.class);
+    }
+
+    /**
+     * has protected access for the testing propose
+     */
+    protected Artifact getCdecArtifact() {
+        return INJECTOR.getInstance(CDECArtifact.class);
     }
 }

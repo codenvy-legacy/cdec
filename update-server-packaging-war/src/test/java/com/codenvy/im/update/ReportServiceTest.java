@@ -35,7 +35,7 @@ public class ReportServiceTest {
     private ReportService testReportService;
 
     /** @see {update-server-packaging-war/src/test/resourses/report.properties} */
-    ReportParameters testReportParameters = new ReportParameters("test title", "test@sender", "test@receiver", true);
+    ReportParameters testReportParameters = new ReportParameters("test title", "test@sender", "test@receiver");
 
     @BeforeMethod
     public void setup() {
