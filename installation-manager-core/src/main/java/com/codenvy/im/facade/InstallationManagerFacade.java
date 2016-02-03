@@ -720,7 +720,7 @@ public class InstallationManagerFacade {
     /**
      * @see CodenvyLicenseManager#getCustomFeatures()
      */
-    public Map<CodenvyLicenseManager.LicenseFeature, String> getCustomFeatures() {
+    public Map<CodenvyLicenseManager.LicenseFeature, String> getCodenvyLicenseFeatures() {
         return licenseManager.getCustomFeatures();
     }
 }

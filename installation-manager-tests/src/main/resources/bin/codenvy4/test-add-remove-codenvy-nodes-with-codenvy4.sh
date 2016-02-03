@@ -28,13 +28,21 @@ validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 # copy ssh key to codenvy node
 scp -o StrictHostKeyChecking=no -i ~/.vagrant.d/insecure_private_key -P 2222 ~/.vagrant.d/insecure_private_key vagrant@127.0.0.1:./.ssh/id_rsa >> ${TEST_LOG}
 
-# throw error that dns is incorrect
+# throw error if no --codenvy-ip is used
 executeIMCommand "--valid-exit-code=1" "im-add-node" "node1.${HOST_URL}"
 validateExpectedString ".*Use.the.following.syntax\:.im-add-node.--codenvy-ip.<CODENVY_IP_ADDRESS>.<NODE_DNS>.*"
+
+# throw error if no Codenvy license
+executeIMCommand "--valid-exit-code=1" "im-add-node" "--codenvy-ip 192.168.56.110" "node1.${HOST_URL}"
+validateExpectedString ".*Codenvy.License.can.t.be.validated.*"
+
+addCodenvyLicenseConfiguration
+storeCodenvyLicense
 
 # add node1.${HOST_URL}
 executeIMCommand "im-add-node" "--codenvy-ip 192.168.56.110" "node1.${HOST_URL}"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.${HOST_URL}\".*"
+
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
 validateExpectedString ".*Nodes\",\"2\".*\[\"${HOST_URL}\",\"${HOST_URL}:2375\"\].*\[\"node1.${HOST_URL}\",\"node1.${HOST_URL}:2375\"\].*"

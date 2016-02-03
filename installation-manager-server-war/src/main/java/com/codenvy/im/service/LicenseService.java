@@ -63,7 +63,8 @@ import static javax.ws.rs.core.Response.status;
 @RolesAllowed({"system/admin"})
 @Api(value = "license", description = "License manager")
 public class LicenseService {
-    private static final Logger LOG = LoggerFactory.getLogger(LicenseService.class);
+    private static final Logger LOG                                 = LoggerFactory.getLogger(LicenseService.class);
+    public static final  String CODENVY_LICENSE_PROPERTY_IS_EXPIRED = "isExpired";
 
     private final InstallationManagerFacade delegate;
 
@@ -134,7 +135,7 @@ public class LicenseService {
     @Path("/properties")
     public Response getLicenseProperties() throws ApiException {
         try {
-            Map<CodenvyLicenseManager.LicenseFeature, String> features = delegate.getCustomFeatures();
+            Map<CodenvyLicenseManager.LicenseFeature, String> features = delegate.getCodenvyLicenseFeatures();
 
             Map<String, String> properties = features
                     .entrySet()
@@ -143,7 +144,7 @@ public class LicenseService {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             boolean licenseExpired = delegate.isLicenseExpired();
-            properties.put("isExpired", String.valueOf(licenseExpired));
+            properties.put(CODENVY_LICENSE_PROPERTY_IS_EXPIRED, String.valueOf(licenseExpired));
 
             return status(OK).entity(new JsonStringMapImpl<>(properties)).build();
         } catch (LicenseNotFoundException e) {
