@@ -45,7 +45,7 @@ public class ReportService {
     public ReportService() {
     }
 
-    /** Log event. */
+    /** Get parameters of certain report. */
     @GenerateLink(rel = "return certain report parameters")
     @GET
     @Path("/parameters/{report_type}")

@@ -32,8 +32,7 @@ public enum ReportType {
         ReportParameters parameters = new ReportParameters(
             InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".title"))),
             InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".sender"))),
-            InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".receiver"))),
-            Boolean.valueOf(InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".active"))))
+            InjectorBootstrap.INJECTOR.getInstance(Key.get(String.class, Names.named(parameterPrefix + ".receiver")))
         );
         return parameters;
     }

@@ -25,7 +25,9 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
@@ -42,10 +44,11 @@ public class UtilService {
     public UtilService() {
     }
 
-    /** Log event. */
+    /** Get client's IP. */
     @GenerateLink(rel = "return client's external IP")
     @GET
     @Path("/client-ip")
+    @Produces(MediaType.TEXT_PLAIN)
     public Response getClientIp(@Context HttpServletRequest requestContext) {
         try {
             String clientIp = requestContext.getRemoteAddr();

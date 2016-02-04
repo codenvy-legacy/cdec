@@ -15,25 +15,21 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im;
+package com.codenvy.im.artifacts;
 
-import com.codenvy.im.update.ReportService;
-import com.codenvy.im.update.RepositoryService;
-import com.codenvy.im.update.UtilService;
-import com.google.inject.AbstractModule;
-
-import org.eclipse.che.inject.DynaModule;
+import static java.lang.String.format;
 
 /**
- * @author Anatoliy Bazko
+ * @author Dmytro Nochevnov
  */
-@DynaModule
-public class UpdateServerModule extends AbstractModule {
-
-    @Override
-    protected void configure() {
-        bind(RepositoryService.class);
-        bind(ReportService.class);
-        bind(UtilService.class);
+public class UnknownArtifactVersionException extends RuntimeException {
+    private static final String ERROR_MESSAGE_TEMPLATE = "It is impossible to recognize the version of artifact '%s'.";
+    
+    public UnknownArtifactVersionException(Artifact artifact) {
+        super(format(ERROR_MESSAGE_TEMPLATE, artifact.getName()));
+    }
+    
+    public static UnknownArtifactVersionException of(Artifact artifact) {
+        return new UnknownArtifactVersionException(artifact);
     }
 }

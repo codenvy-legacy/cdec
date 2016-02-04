@@ -24,12 +24,18 @@ public class ReportParameters {
     private String  title;
     private String  sender;
     private String  receiver;
-    private boolean active;
 
     public ReportParameters() {
     }
 
-    @Override public boolean equals(Object o) {
+    public ReportParameters(String title, String sender, String receivers) {
+        this.title = title;
+        this.sender = sender;
+        this.receiver = receivers;
+    }
+
+    @Override 
+    public boolean equals(Object o) {
         if (this == o)
             return true;
         if (o == null || getClass() != o.getClass())
@@ -37,8 +43,6 @@ public class ReportParameters {
 
         ReportParameters that = (ReportParameters)o;
 
-        if (active != that.active)
-            return false;
         if (title != null ? !title.equals(that.title) : that.title != null)
             return false;
         if (sender != null ? !sender.equals(that.sender) : that.sender != null)
@@ -47,29 +51,21 @@ public class ReportParameters {
 
     }
 
-    @Override public int hashCode() {
+    @Override 
+    public int hashCode() {
         int result = title != null ? title.hashCode() : 0;
         result = 31 * result + (sender != null ? sender.hashCode() : 0);
         result = 31 * result + (receiver != null ? receiver.hashCode() : 0);
-        result = 31 * result + (active ? 1 : 0);
         return result;
     }
 
-    @Override public String toString() {
+    @Override 
+    public String toString() {
         return "ReportParameters{" +
                "title='" + title + '\'' +
                ", sender='" + sender + '\'' +
                ", receiver='" + receiver + '\'' +
-               ", active=" + active +
                '}';
-
-    }
-
-    public ReportParameters(String title, String sender, String receivers, boolean active) {
-        this.title = title;
-        this.sender = sender;
-        this.receiver = receivers;
-        this.active = active;
     }
 
     public String getTitle() {
@@ -94,13 +90,5 @@ public class ReportParameters {
 
     public void setReceiver(String receiver) {
         this.receiver = receiver;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
     }
 }

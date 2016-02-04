@@ -65,6 +65,14 @@ public class HttpTransport {
 
     /**
      * Performs GET request.
+     * Expected content type {@link javax.ws.rs.core.MediaType#TEXT_PLAIN}
+     */
+    public String doGetTextPlain(String path) throws IOException {
+        return request(path, "GET", null, MediaType.TEXT_PLAIN, null);
+    }
+
+    /**
+     * Performs GET request.
      * Expected content type {@link javax.ws.rs.core.MediaType#APPLICATION_JSON}
      */
     public String doGet(String path, String accessToken) throws IOException {

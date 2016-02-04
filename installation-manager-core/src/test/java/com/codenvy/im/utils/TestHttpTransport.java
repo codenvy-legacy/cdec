@@ -76,6 +76,15 @@ public class TestHttpTransport {
     }
 
     @Test
+    public void testDoGetTextPlain(ITestContext context) throws Exception {
+        Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
+        String value = httpTransport.doGetTextPlain("http://localhost:" + port + "/rest/test/get-text-plain");
+
+        assertNotNull(value);
+        assertEquals(value, "value");
+    }
+
+    @Test
     public void testDoPost(ITestContext context) throws Exception {
         Object port = context.getAttribute(EverrestJetty.JETTY_PORT);
         Object body = new JsonStringMapImpl<>(ImmutableMap.of("a", "b"));
@@ -194,6 +203,14 @@ public class TestHttpTransport {
         public Response get() {
             Map<String, String> value = ImmutableMap.of("key", "value");
             return Response.status(Response.Status.OK).entity(new JsonStringMapImpl<>(value)).build();
+        }
+
+        @GET
+        @Produces(MediaType.TEXT_PLAIN)
+        @Path("get-text-plain")
+        public Response getTextPlain() {
+            String value = "value";
+            return Response.status(Response.Status.OK).entity(value).build();
         }
 
         @GET
