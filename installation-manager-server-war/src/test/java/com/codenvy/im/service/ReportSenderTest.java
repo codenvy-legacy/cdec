@@ -19,8 +19,9 @@ package com.codenvy.im.service;
 
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.UnknownArtifactVersionException;
-import com.codenvy.im.exceptions.LicenseException;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.license.CodenvyLicense;
+import com.codenvy.im.license.LicenseException;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.LdapManager;
@@ -30,6 +31,7 @@ import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
+
 import org.codenvy.mail.MailSenderClient;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
@@ -64,21 +66,18 @@ public class ReportSenderTest {
 
     @Mock
     private LdapManager mockLdapManager;
-
     @Mock
     private MailSenderClient mockMailClient;
-
     @Mock
     private HttpTransport mockHttpTransport;
-
     @Mock
     private ConfigManager mockConfigManager;
-
     @Mock
     private CDECArtifact mockCdecArtifact;
-
     @Mock
     private InstallationManagerFacade mockFacade;
+    @Mock
+    private CodenvyLicense codenvyLicense;
 
     private String updateServerEndpoint = "update/endpoint";
 
@@ -103,7 +102,8 @@ public class ReportSenderTest {
 
         doReturn(150L).when(mockLdapManager).getNumberOfUsers();
         doReturn(VERSION_4_0_0).when(mockCdecArtifact).getInstalledVersion();
-        doReturn(true).when(mockFacade).isLicenseExpired();
+        doReturn(codenvyLicense).when(mockFacade).loadCodenvyLicense();
+        doReturn(true).when(codenvyLicense).isExpired();
 
         spyReportSender.sendWeeklyReports();
 
@@ -121,7 +121,7 @@ public class ReportSenderTest {
 
         doReturn(150L).when(mockLdapManager).getNumberOfUsers();
         doReturn(VERSION_4_0_0).when(mockCdecArtifact).getInstalledVersion();
-        doThrow(LicenseException.class).when(mockFacade).isLicenseExpired();
+        doThrow(LicenseException.class).when(mockFacade).loadCodenvyLicense();
 
         spyReportSender.sendWeeklyReports();
 
@@ -133,7 +133,8 @@ public class ReportSenderTest {
     @Test
     public void shouldNotSendWeeklyReportBecauseOfNonExpiredLicense() throws IOException, JsonParseException, MessagingException {
         doReturn(VERSION_4_0_0).when(mockCdecArtifact).getInstalledVersion();
-        doReturn(false).when(mockFacade).isLicenseExpired();
+        doReturn(codenvyLicense).when(mockFacade).loadCodenvyLicense();
+        doReturn(false).when(codenvyLicense).isExpired();
 
         spyReportSender.sendWeeklyReports();
 

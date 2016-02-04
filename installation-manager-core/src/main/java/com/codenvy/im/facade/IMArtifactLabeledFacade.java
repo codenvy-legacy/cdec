@@ -20,7 +20,7 @@ package com.codenvy.im.facade;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.managers.BackupManager;
-import com.codenvy.im.managers.CodenvyLicenseManager;
+import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;

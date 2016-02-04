@@ -85,8 +85,8 @@ public class AddNodeCommand extends AbstractIMCommand {
 
             if (property == null || property.contains(DEFAULT_CODENVY_IP_FOR_THE_DOCKER_CONTAINER)) {
                 throw new IllegalStateException(
-                        "This is the first time you add extra node to Codenvy.\n" +
-                        "It is required to set IP of a Codenvy workspace master host.\n" +
+                        "This is the first time you add extra node to Codenvy. " +
+                        "It is required to set IP of a Codenvy workspace master host. " +
                         "Use the following syntax: im-add-node --codenvy-ip <CODENVY_IP_ADDRESS> <NODE_DNS>");
             }
         }
