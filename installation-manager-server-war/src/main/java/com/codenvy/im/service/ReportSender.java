@@ -20,8 +20,9 @@ package com.codenvy.im.service;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.UnknownArtifactVersionException;
-import com.codenvy.im.exceptions.LicenseException;
 import com.codenvy.im.facade.InstallationManagerFacade;
+import com.codenvy.im.license.CodenvyLicense;
+import com.codenvy.im.license.LicenseException;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.LdapManager;
@@ -32,6 +33,7 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.codenvy.mail.MailSenderClient;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.schedule.ScheduleCron;
@@ -43,9 +45,9 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.codenvy.im.artifacts.UnknownArtifactVersionException.of;
 import static com.codenvy.im.utils.Commons.combinePaths;
 import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
-import static com.codenvy.im.artifacts.UnknownArtifactVersionException.of;
 
 /**
  * Sends reports:
@@ -96,7 +98,8 @@ public class ReportSender {
 
     private void sendNumberOfUsers() throws IOException, MessagingException, JsonParseException {
         try {
-            if (!facade.isLicenseExpired()) {
+            CodenvyLicense codenvyLicense = facade.loadCodenvyLicense();
+            if (!codenvyLicense.isExpired()) {
                 // don't send report if Codenvy License is valid and isn't expired
                 LOG.log(Level.INFO, "Codenvy License is valid and isn't expired.");
                 return;

@@ -22,12 +22,14 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-import com.codenvy.im.exceptions.InvalidLicenseException;
-import com.codenvy.im.exceptions.LicenseException;
-import com.codenvy.im.exceptions.LicenseNotFoundException;
+import com.codenvy.im.license.CodenvyLicense;
+import com.codenvy.im.license.CodenvyLicenseFactory;
+import com.codenvy.im.license.InvalidLicenseException;
+import com.codenvy.im.license.LicenseException;
+import com.codenvy.im.license.LicenseFeature;
+import com.codenvy.im.license.LicenseNotFoundException;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.facade.InstallationManagerFacade;
-import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.google.inject.Inject;
 
 import org.eclipse.che.api.core.ApiException;
@@ -67,14 +69,16 @@ public class LicenseService {
     public static final  String CODENVY_LICENSE_PROPERTY_IS_EXPIRED = "isExpired";
 
     private final InstallationManagerFacade delegate;
+    private final CodenvyLicenseFactory licenseFactory;
 
     @Inject
-    public LicenseService(IMCliFilteredFacade delegate) {
+    public LicenseService(IMCliFilteredFacade delegate, CodenvyLicenseFactory licenseFactory) {
         this.delegate = delegate;
+        this.licenseFactory = licenseFactory;
     }
 
     @DELETE
-    @ApiOperation(value = "Deletes license")
+    @ApiOperation(value = "Deletes Codenvy license")
     @ApiResponses(value = {@ApiResponse(code = 202, message = "OK"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response deleteLicense() throws ApiException {
@@ -90,14 +94,17 @@ public class LicenseService {
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Loads license")
+    @ApiOperation(value = "Loads Codenvy license")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
+                           @ApiResponse(code = 409, message = "Invalid license"),
                            @ApiResponse(code = 404, message = "License not found"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response loadLicense() throws ApiException {
         try {
-            String license = delegate.loadCodenvyLicense();
-            return status(OK).entity(license).build();
+            CodenvyLicense codenvyLicense = delegate.loadCodenvyLicense();
+            return status(OK).entity(codenvyLicense.getLicenseText()).build();
+        } catch (InvalidLicenseException e) {
+            throw new ConflictException(e.getMessage());
         } catch (LicenseNotFoundException e) {
             throw new NotFoundException(e.getMessage());
         } catch (LicenseException e) {
@@ -108,13 +115,14 @@ public class LicenseService {
 
     @POST
     @Consumes(MediaType.TEXT_PLAIN)
-    @ApiOperation(value = "Stores valid license in the system")
+    @ApiOperation(value = "Stores valid Codenvy license in the system")
     @ApiResponses(value = {@ApiResponse(code = 201, message = "OK"),
                            @ApiResponse(code = 409, message = "Invalid license"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response storeLicense(String license) throws ApiException {
         try {
-            delegate.storeCodenvyLicense(license);
+            CodenvyLicense codenvyLicense = licenseFactory.create(license);
+            delegate.storeCodenvyLicense(codenvyLicense);
             return status(CREATED).build();
         } catch (InvalidLicenseException e) {
             throw new ConflictException(e.getMessage());
@@ -124,10 +132,9 @@ public class LicenseService {
         }
     }
 
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Loads license")
+    @ApiOperation(value = "Loads Codenvy license properties")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 404, message = "License not found"),
                            @ApiResponse(code = 409, message = "Invalid license"),
@@ -135,7 +142,8 @@ public class LicenseService {
     @Path("/properties")
     public Response getLicenseProperties() throws ApiException {
         try {
-            Map<CodenvyLicenseManager.LicenseFeature, String> features = delegate.getCodenvyLicenseFeatures();
+            CodenvyLicense codenvyLicense = delegate.loadCodenvyLicense();
+            Map<LicenseFeature, String> features = codenvyLicense.getFeatures();
 
             Map<String, String> properties = features
                     .entrySet()
@@ -143,7 +151,7 @@ public class LicenseService {
                     .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey().toString(), entry.getValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            boolean licenseExpired = delegate.isLicenseExpired();
+            boolean licenseExpired = codenvyLicense.isExpired();
             properties.put(CODENVY_LICENSE_PROPERTY_IS_EXPIRED, String.valueOf(licenseExpired));
 
             return status(OK).entity(new JsonStringMapImpl<>(properties)).build();
@@ -156,5 +164,4 @@ public class LicenseService {
             throw new ServerException(e.getMessage(), e);
         }
     }
-
 }

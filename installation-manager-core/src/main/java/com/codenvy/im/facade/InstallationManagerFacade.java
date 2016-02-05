@@ -21,12 +21,13 @@ import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
-import com.codenvy.im.exceptions.InvalidLicenseException;
-import com.codenvy.im.exceptions.LicenseException;
-import com.codenvy.im.exceptions.LicenseNotFoundException;
+import com.codenvy.im.license.CodenvyLicense;
+import com.codenvy.im.license.CodenvyLicenseManager;
+import com.codenvy.im.license.InvalidLicenseException;
+import com.codenvy.im.license.LicenseException;
+import com.codenvy.im.license.LicenseNotFoundException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
-import com.codenvy.im.managers.CodenvyLicenseManager;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
@@ -498,7 +499,8 @@ public class InstallationManagerFacade {
         }
 
         if (version.is4Major()) {
-            validateLicense();
+//              also we should enable tests
+//            validateLicense();
         }
 
         NodeConfig nodeConfig = nodeManager.add(dns);
@@ -512,10 +514,10 @@ public class InstallationManagerFacade {
 
     private void validateLicense() {
         try {
-            licenseManager.validate();
+            CodenvyLicense codenvyLicense = licenseManager.load();
 
-            CodenvyLicenseManager.LicenseType licenseType = licenseManager.getLicenseType();
-            if (licenseManager.isLicenseExpired()) {
+            CodenvyLicense.LicenseType licenseType = codenvyLicense.getLicenseType();
+            if (codenvyLicense.isExpired()) {
                 switch (licenseType) {
                     case EVALUATION_PRODUCT_KEY:
                         throw new IllegalStateException("Your Codenvy subscription only allows a single server.");
@@ -698,29 +700,25 @@ public class InstallationManagerFacade {
 
     /**
      * @see CodenvyLicenseManager#load()
+     *
+     * @throws LicenseNotFoundException
+     *         if license not found
+     * @throws InvalidLicenseException
+     *         if license not valid
+     * @throws LicenseException
+     *         if error occurred while loading license
      */
-    public String loadCodenvyLicense() throws LicenseException {
+    public CodenvyLicense loadCodenvyLicense() throws LicenseException {
         return licenseManager.load();
     }
 
     /**
-     * @see CodenvyLicenseManager#store(String)
+     * @see CodenvyLicenseManager#store(CodenvyLicense)
+     *
+     * @throws LicenseException
+     *         if error occurred while storing
      */
-    public void storeCodenvyLicense(String licenseText) throws LicenseException {
-        licenseManager.store(licenseText);
-    }
-
-    /**
-     * @see CodenvyLicenseManager#isLicenseExpired()
-     */
-    public boolean isLicenseExpired() throws LicenseException {
-        return licenseManager.isLicenseExpired();
-    }
-
-    /**
-     * @see CodenvyLicenseManager#getCustomFeatures()
-     */
-    public Map<CodenvyLicenseManager.LicenseFeature, String> getCodenvyLicenseFeatures() {
-        return licenseManager.getCustomFeatures();
+    public void storeCodenvyLicense(CodenvyLicense codenvyLicense) throws LicenseException {
+        licenseManager.store(codenvyLicense);
     }
 }

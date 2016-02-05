@@ -15,13 +15,17 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-package com.codenvy.im.exceptions;
+package com.codenvy.im.license;
 
 /**
  * @author Anatoliy Bazko
  */
-public class InvalidLicenseException extends LicenseException {
-    public InvalidLicenseException(String message) {
+public class LicenseException extends RuntimeException {
+    public LicenseException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public LicenseException(String message) {
         super(message);
     }
 }
