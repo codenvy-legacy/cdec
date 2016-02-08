@@ -45,7 +45,7 @@ validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.${HOST_UR
 
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"2\".*\[\"${HOST_URL}\",\"${HOST_URL}:2375\"\].*\[\"node1.${HOST_URL}\",\"node1.${HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"2\".*\[\" ${HOST_URL}\",\"${HOST_URL}:2375\"\].*\[\" node1.${HOST_URL}\",\"node1.${HOST_URL}:2375\"\].*"
 
 # throw error that node has been already used
 executeIMCommand "--valid-exit-code=1" "im-add-node" "node1.codenvy"
@@ -83,14 +83,14 @@ validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.${HOST_UR
 doSleep "1m"  "Wait until Docker machine takes into account /usr/local/swarm/node_list config"
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"1\".*\[\"${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"1\".*\[\" ${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
 
 # add node1.${NEW_HOST_URL}
 executeIMCommand "im-add-node" "node1.${NEW_HOST_URL}"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.${NEW_HOST_URL}\".*"
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"2\".*\[\"node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*\[\"${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"2\".*\[\" node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*\[\" ${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
 ############# End of change Codenvy hostname workflow
 
 # add node2
@@ -98,7 +98,7 @@ executeIMCommand "im-add-node" "node2.${NEW_HOST_URL}"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node2.${NEW_HOST_URL}\".*"
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"3\".*\[\"node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*[\"node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*\[\"${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"3\".*\[\" node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*\[\" node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*\[\" ${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
 
 # remove node2
 executeIMCommand "im-remove-node" "node2.${NEW_HOST_URL}"
@@ -106,7 +106,7 @@ validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node2.${NEW_HOS
 doSleep "1m"  "Wait until Docker machine takes into account /usr/local/swarm/node_list config"
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${NEW_HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"2\".*\[\"node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*\[\"${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"2\".*\[\" node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*\[\" ${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
 
 # remove already removed node2
 executeIMCommand "--valid-exit-code=1" "im-remove-node" "node2.${NEW_HOST_URL}"
@@ -117,7 +117,7 @@ executeIMCommand "im-add-node" "node2.${NEW_HOST_URL}"
 validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node2.${NEW_HOST_URL}\".*"
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"3\".*\[\"node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*[\"node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*\[\"${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"3\".*\[\" node1.${NEW_HOST_URL}\",\"node1.${NEW_HOST_URL}:2375\"\].*\[\" node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*\[\" ${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
 
 # remove node1.${NEW_HOST_URL}
 executeIMCommand "im-remove-node" "node1.${NEW_HOST_URL}"
@@ -125,7 +125,7 @@ validateExpectedString ".*\"type\".\:.\"MACHINE\".*\"host\".\:.\"node1.${NEW_HOS
 doSleep "1m"  "Wait until Docker machine takes into account /usr/local/swarm/node_list config"
 executeSshCommand "sudo systemctl stop iptables"  # open port 23750
 doGet "http://${HOST_URL}:23750/info"
-validateExpectedString ".*Nodes\",\"2\".*[\"node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*\[\"${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
+validateExpectedString ".*Nodes\",\"2\".*[\" node2.${NEW_HOST_URL}\",\"node2.${NEW_HOST_URL}:2375\"].*\[\" ${NEW_HOST_URL}\",\"${NEW_HOST_URL}:2375\"\].*"
 
 printAndLog "RESULT: PASSED"
 vagrantDestroy

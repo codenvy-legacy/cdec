@@ -35,15 +35,15 @@ BACKUP_AT_START=${OUTPUT}
 executeIMCommand "im-password" "password" "new-password"
 authWithoutRealmAndServerDns "admin" "new-password"
 
-# create user "user-1"
-doPost "application/json" "{\"name\":\"user-1\",\"password\":\"pwd123ABC\"}" "http://${HOST_URL}/api/user/create?token=${TOKEN}"
+# create user "cdec.im.test@gmail.com"
+doPost "application/json" "{\"name\":\"cdec.im.test@gmail.com\",\"password\":\"pwd123ABC\"}" "http://${HOST_URL}/api/user/create?token=${TOKEN}"
 fetchJsonParameter "id"
 USER_ID=${OUTPUT}
 
-authWithoutRealmAndServerDns "user-1" "pwd123ABC"
+authWithoutRealmAndServerDns "cdec.im.test@gmail.com" "pwd123ABC"
 
 # create workspace "workspace-1"
-doPost "application/json" "{\"environments\":{\"workspace-1\":{\"name\":\"workspace-1\",\"recipe\":null,\"machineConfigs\":[{\"name\":\"ws-machine\",\"limits\":{\"memory\":1000},\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}},\"name\":\"workspace-1\",\"attributes\":{},\"projects\":[],\"defaultEnvName\":\"workspace-1\",\"description\":null,\"commands\":[],\"links\":[]}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
+doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://codenvy/api/recipe/recipekyykg1doyz44lzjc/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
@@ -95,9 +95,9 @@ executeIMCommand "im-restore" ${BACKUP_WITH_MODIFICATIONS}
 authWithoutRealmAndServerDns "admin" "new-password"
 
 doGet "http://${HOST_URL}/api/user/${USER_ID}?token=${TOKEN}"
-validateExpectedString ".*user-1.*"
+validateExpectedString ".*cdec.im.test@gmail.com.*"
 
-authWithoutRealmAndServerDns "user-1" "pwd123ABC"
+authWithoutRealmAndServerDns "cdec.im.test@gmail.com" "pwd123ABC"
 
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}?token=${TOKEN}"
 validateExpectedString ".*project-1.*workspace-1.*"
