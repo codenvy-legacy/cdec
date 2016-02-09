@@ -43,15 +43,15 @@ USER_ID=${OUTPUT}
 authWithoutRealmAndServerDns "cdec.im.test@gmail.com" "pwd123ABC"
 
 # create workspace "workspace-1"
-doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://codenvy/api/recipe/recipekyykg1doyz44lzjc/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
+doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
 fetchJsonParameter "id"
 WORKSPACE_ID=${OUTPUT}
 
 # run workspace "workspace-1"
-doPost "application/json" "" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
+doPost "application/json" "{}" "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 
 # verify is workspace running
-doSleep "5m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
+doSleep "10m"  "Wait until workspace starts to avoid 'java.lang.NullPointerException' error on verifying workspace state"
 doGet "http://${HOST_URL}/api/workspace/${WORKSPACE_ID}/runtime?token=${TOKEN}"
 validateExpectedString ".*\"status\":\"RUNNING\".*"
 
@@ -60,7 +60,7 @@ doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\"
 doPost "application/json" "{\"links\":[], \"name\":\"project-1\", \"attributes\":{\"maven.version\":[\"1.0-SNAPSHOT\"], \"maven.packaging\":[\"jar\"], \"maven.source.folder\":[\"src/main/java\"], \"maven.test.source.folder\":[\"src/test/java\"], \"maven.artifactId\":[\"project-1\"], \"maven.groupId\":[\"project-1\"]}, \"type\":\"maven\", \"source\":{\"location\":null, \"type\":null, \"parameters\":{}}, \"contentRoot\":null, \"modules\":[], \"path\":null, \"description\":null, \"problems\":[], \"mixins\":[]}" "http://${HOST_URL}/api/ext/project/${WORKSPACE_ID}?name=project-1&token=${TOKEN}"
 
 # create factory from template "minimal"
-doPost "application/json" "{\"v\": \"4.0\",\"workspace\": {\"projects\": [{\"links\": [],\"name\": \"Spring\",\"attributes\": {\"languageVersion\": [\"1.6\"],\"language\": [\"java\"]},\"type\": \"maven\", \"source\": {\"location\": \"https://github.com/codenvy-templates/web-spring-java-simple.git\",\"type\": \"git\",\"parameters\": {\"keepVcs\": \"false\", \"branch\": \"3.1.0\"}},\"modules\": [],\"path\": \"/Spring\",\"mixins\": [\"git\"],\"problems\": []}], \"defaultEnvName\": \"wss\",\"name\": \"wss\",\"environments\": {\"wss\": {\"machineConfigs\": [{\"dev\": true,\"limits\": {\"memory\":2048},\"source\": {\"location\": \"http://dev.box.com/api/recipe/recipe_ubuntu/script\",\"type\": \"recipe\"}, \"name\": \"dev-machine\",\"type\": \"docker\"}],\"name\": \"wss\"}},\"links\": []}}" "http://${HOST_URL}/api/factory?token=${TOKEN}"
+doPost "application/json" "{\"v\": \"4.0\",\"workspace\": {\"projects\": [{\"links\": [],\"name\": \"Spring\",\"attributes\": {\"languageVersion\": [\"1.6\"],\"language\": [\"java\"]},\"type\": \"maven\", \"source\": {\"location\": \"https://github.com/codenvy-templates/web-spring-java-simple.git\",\"type\": \"git\",\"parameters\": {\"keepVcs\": \"false\", \"branch\": \"3.1.0\"}},\"modules\": [],\"path\": \"/Spring\",\"mixins\": [\"git\"],\"problems\": []}], \"defaultEnv\": \"wss\",\"name\": \"wss\",\"environments\": [{\"machineConfigs\": [{\"dev\": true,\"limits\": {\"ram\":2048},\"source\": {\"location\": \"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\": \"recipe\"}, \"name\": \"dev-machine\",\"type\": \"docker\"}],\"name\": \"wss\"}],\"links\": []}}" "http://${HOST_URL}/api/factory?token=${TOKEN}"
 fetchJsonParameter "id"
 FACTORY_ID=${OUTPUT}
 
