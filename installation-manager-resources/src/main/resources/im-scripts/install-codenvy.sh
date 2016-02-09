@@ -35,7 +35,8 @@ EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
                        "http://yum.puppetlabs.com/||1"
                        "http://repo.zabbix.com/zabbix/||0"
                        "${JDK_URL}|Cookie:oraclelicense=accept-securebackup-cookie|0"
-                       "http://mirror.centos.org/centos||0");
+                       "http://mirror.centos.org/centos||0"
+                       "http://mirrorlist.centos.org||0");
 
 CURRENT_STEP=0
 INSTALLATION_STEPS=("Configuring system..."
