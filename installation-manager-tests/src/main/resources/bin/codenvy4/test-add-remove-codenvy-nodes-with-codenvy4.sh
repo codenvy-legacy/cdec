@@ -33,8 +33,8 @@ executeIMCommand "--valid-exit-code=1" "im-add-node" "node1.${HOST_URL}"
 validateExpectedString ".*Use.the.following.syntax\:.im-add-node.--codenvy-ip.<CODENVY_IP_ADDRESS>.<NODE_DNS>.*"
 
 # throw error if no Codenvy license
-executeIMCommand "--valid-exit-code=1" "im-add-node" "--codenvy-ip 192.168.56.110" "node1.${HOST_URL}"
-validateExpectedString ".*Codenvy.License.can.t.be.validated.*"
+#executeIMCommand "--valid-exit-code=1" "im-add-node" "--codenvy-ip 192.168.56.110" "node1.${HOST_URL}"
+#validateExpectedString ".*Codenvy.License.can.t.be.validated.*"
 
 addCodenvyLicenseConfiguration
 storeCodenvyLicense
