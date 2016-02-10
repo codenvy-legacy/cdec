@@ -86,9 +86,4 @@ public class TestInstallationManagerCliWithCodenvy3 extends BaseTest{
         doTest("test-backup-restore-multi-nodes.sh");
     }
 
-    @Test
-    public void testVersionCommand() throws Exception {
-        doTest("im-version/test-im-version.sh");
-    }
-
 }

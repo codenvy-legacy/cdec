@@ -22,7 +22,7 @@ printAndLog "TEST CASE: Migration Data"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 # install Codenvy
-installCodenvy
+installCodenvy ${LATEST_CODENVY3_VERSION}
 validateInstalledCodenvyVersion
 auth "admin" "password"
 
@@ -64,7 +64,7 @@ vagrantDestroy
 
 # restore
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
-installCodenvy
+installCodenvy ${LATEST_CODENVY3_VERSION}
 validateInstalledCodenvyVersion
 executeSshCommand "mkdir /home/vagrant/codenvy-im-data/backups"
 executeSshCommand "cp /vagrant/backup.tar.gz ${BACKUP}"

@@ -21,7 +21,7 @@
 printAndLog "TEST CASE: Add and remove Codenvy nodes"
 vagrantUp ${MULTI_NODE_WITH_ADDITIONAL_NODES_VAGRANT_FILE}
 
-installCodenvy
+installCodenvy ${LATEST_CODENVY3_VERSION}
 validateInstalledCodenvyVersion
 
 # add runner

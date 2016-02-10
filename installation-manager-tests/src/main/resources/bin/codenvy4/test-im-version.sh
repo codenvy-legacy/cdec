@@ -19,13 +19,21 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Test check version with Codenvy 4.x"
+printAndLog "TEST CASE: Test im-version command with Codenvy 4.x"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+
+installImCliClient
+validateInstalledImCliClientVersion
+
+# test getting latest stable version of codenvy by default
+executeIMCommand "im-version"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"availableVersion\".*.*\"stable\".*"
 
 installCodenvy ${LATEST_CODENVY4_VERSION}
 validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 
 executeIMCommand "im-version"
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY4_VERSION}\".*\"label\".\:.\"UNSTABLE\".*\"status\".\:.\"You are running the latest stable version of Codenvy!\".*"
+# check issue [CDEC-561]
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY4_VERSION}\".*\"label\".\:.\"UNSTABLE\".*\"status\".\:.\"You are running the latest unstable version of Codenvy!\".*"
 
 vagrantDestroy

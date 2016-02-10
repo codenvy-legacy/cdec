@@ -22,7 +22,7 @@
 printAndLog "TEST CASE: Check subscription from within IM server"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
-installCodenvy
+installCodenvy ${LATEST_CODENVY3_VERSION}
 validateInstalledCodenvyVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)

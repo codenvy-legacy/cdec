@@ -22,7 +22,7 @@
 printAndLog "TEST CASE: Install the latest multi-node Codenvy On Premise"
 vagrantUp ${MULTI_NODE_VAGRANT_FILE}
 
-installCodenvy
+installCodenvy ${LATEST_CODENVY3_VERSION}
 validateInstalledCodenvyVersion
 
 auth "admin" "password"
