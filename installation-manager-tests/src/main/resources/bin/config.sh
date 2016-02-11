@@ -24,9 +24,10 @@ HOST_URL="codenvy"
 NEW_HOST_URL="test.codenvy"
 
 AVAILABLE_CODENVY_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/codenvy)
-PREV_CODENVY3_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)","3[^"]*".*\]/\1/'`
-LATEST_CODENVY3_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)".*/\1/'`
-LATEST_CODENVY4_VERSION=`echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(4[^"]*\)".*/\1/'`
+PREV_CODENVY3_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)","3[^"]*".*\]/\1/')
+LATEST_CODENVY3_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]*\)".*/\1/')
+LATEST_CODENVY4_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(4[^"]*\)".*/\1/')
+LATEST_STABLE_CODENVY4_VERSION="4.0.0-RC3"
 
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`

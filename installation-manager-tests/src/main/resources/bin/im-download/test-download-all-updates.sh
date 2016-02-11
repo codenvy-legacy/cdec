@@ -26,10 +26,10 @@ installImCliClient
 validateInstalledImCliClientVersion
 
 executeIMCommand "im-download"
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY3_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY3_VERSION}.zip\".*\"status\".\:.\"DOWNLOADED\".*"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_STABLE_CODENVY4_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_STABLE_CODENVY4_VERSION}.zip\".*\"status\".\:.\"DOWNLOADED\".*"
 
 executeIMCommand "im-download" "--list-local"
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY3_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_CODENVY3_VERSION}.zip\".*\"status\".\:.\"READY_TO_INSTALL\".*"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_STABLE_CODENVY4_VERSION}\".*\"file\".\:.\".*codenvy-${LATEST_STABLE_CODENVY4_VERSION}.zip\".*\"status\".\:.\"READY_TO_INSTALL\".*"
 
 executeIMCommand "--valid-exit-code=1" "im-download" "unknown"
 executeIMCommand "--valid-exit-code=1" "im-download" "codenvy" "1.0.0"
