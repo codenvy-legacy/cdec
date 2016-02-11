@@ -175,7 +175,7 @@
             <artifactId>che-core-commons-schedule</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.che.swagger</groupId>
+            <groupId>org.eclipse.che.lib</groupId>
             <artifactId>che-swagger-module</artifactId>
         </dependency>
         <dependency>
