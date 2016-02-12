@@ -103,7 +103,7 @@
                                 <configuration>
                                     <target>
                                         <!-- unpacking resources -->
-                                        <unzip dest="${project.build.directory}/update-server-tomcat" src="${project.build.directory}/packager-conf/zip/codenvy-tomcat8-slf4j-logback.zip" />
+                                        <unzip dest="${project.build.directory}/update-server-tomcat" src="${project.build.directory}/packager-conf/zip/che-tomcat8-slf4j-logback.zip" />
                                         <!-- Coping resources -->
                                         <copy overwrite="true" todir="${project.build.directory}/update-server-tomcat/">
                                             <fileset dir="${basedir}/src/main/resources/server" />
