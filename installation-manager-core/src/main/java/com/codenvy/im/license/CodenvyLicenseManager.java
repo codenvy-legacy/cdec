@@ -1,7 +1,4 @@
 /*
- * CODENVY CONFIDENTIAL
- * __________________
- *
  *  [2012] - [2016] Codenvy, S.A.
  *  All Rights Reserved.
  *
@@ -15,7 +12,6 @@
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-
 package com.codenvy.im.license;
 
 import com.codenvy.im.managers.PropertyNotFoundException;
