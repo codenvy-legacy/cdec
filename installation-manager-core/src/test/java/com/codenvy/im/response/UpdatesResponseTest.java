@@ -1,7 +1,4 @@
 /*
- * CODENVY CONFIDENTIAL
- * __________________
- *
  *  [2012] - [2016] Codenvy, S.A.
  *  All Rights Reserved.
  *
