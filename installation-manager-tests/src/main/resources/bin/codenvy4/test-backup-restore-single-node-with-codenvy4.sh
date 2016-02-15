@@ -36,11 +36,11 @@ executeIMCommand "im-password" "password" "new-password"
 authWithoutRealmAndServerDns "admin" "new-password"
 
 # create user "cdec.im.test@gmail.com"
-doPost "application/json" "{\"name\":\"cdec.im.test@gmail.com\",\"password\":\"pwd123ABC\"}" "http://${HOST_URL}/api/user/create?token=${TOKEN}"
+doPost "application/json" "{\"name\":\"cdec\",\"email\":\"cdec.im.test@gmail.com\",\"password\":\"pwd123ABC\"}" "http://${HOST_URL}/api/user/create?token=${TOKEN}"
 fetchJsonParameter "id"
 USER_ID=${OUTPUT}
 
-authWithoutRealmAndServerDns "cdec.im.test@gmail.com" "pwd123ABC"
+authWithoutRealmAndServerDns "cdec" "pwd123ABC"
 
 # create workspace "workspace-1"
 doPost "application/json" "{\"environments\":[{\"name\":\"workspace-1\",\"machineConfigs\":[{\"links\":[],\"limits\":{\"ram\":1000},\"name\":\"ws-machine\",\"type\":\"docker\",\"source\":{\"location\":\"http://${HOST_URL}/api/recipe/recipe_ubuntu/script\",\"type\":\"recipe\"},\"dev\":true}]}],\"defaultEnv\":\"workspace-1\",\"projects\":[],\"name\":\"workspace-1\",\"attributes\":{},\"temporary\":false}" "http://${HOST_URL}/api/workspace/config?token=${TOKEN}"
