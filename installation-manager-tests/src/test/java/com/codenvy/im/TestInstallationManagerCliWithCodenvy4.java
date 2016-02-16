@@ -48,4 +48,9 @@ public class TestInstallationManagerCliWithCodenvy4 extends BaseTest {
     public void testVersionCommand() throws Exception {
         doTest("codenvy4/test-im-version.sh");
     }
+
+    @Test
+    public void testUpdateSingleNodeWithCodenvy4() throws Exception {
+        doTest("codenvy4/test-update-single-node-with-codenvy4.sh");
+    }
 }
