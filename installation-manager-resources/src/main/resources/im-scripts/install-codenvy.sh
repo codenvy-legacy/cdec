@@ -376,9 +376,9 @@ preConfigureSystem() {
     # valid sudo rights
     sudo -n true 2> /dev/null
     if [[ ! $? == 0 ]]; then
-        println $(printError "ERROR: User '${USER}' doesn't have sudo rights")
+        println $(printError "ERROR: User '${USER}' doesn't have sudo rights without password")
         println
-        println $(printWarning "NOTE: Grant sudo privileges to '${USER}' user and restart installation")
+        println $(printWarning "NOTE: Grant privileges to run sudo without password to '${USER}' user and restart installation")
         exit 1
     fi
 
