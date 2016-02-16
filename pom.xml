@@ -20,7 +20,7 @@
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>com.codenvy.che.depmgt</groupId>
-        <version>4.0.0-RC4</version>
+        <version>4.0.0-RC4-SNAPSHOT</version>
         <relativePath />
     </parent>
     <groupId>com.codenvy.im</groupId>
@@ -51,6 +51,11 @@
     </properties>
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.codenvy.hosted-infrastructure</groupId>
+                <artifactId>codenvy-hosted-api-creditcard</artifactId>
+                <version>4.0.0-RC3</version>
+            </dependency>
             <dependency>
                 <groupId>com.codenvy.hosted-infrastructure</groupId>
                 <artifactId>codenvy-hosted-api-subscription</artifactId>
