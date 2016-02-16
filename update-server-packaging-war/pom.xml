@@ -20,7 +20,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>4.0.0-RC4</version>
+        <version>4.0.0-RC5-SNAPSHOT</version>
     </parent>
     <artifactId>update-server-packaging-war</artifactId>
     <packaging>war</packaging>
