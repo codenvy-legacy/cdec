@@ -35,6 +35,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.user.User;
@@ -542,7 +543,7 @@ public class RepositoryService {
 
             mailUtil.sendNotificationLetter(accountId, userEmail);
             LOG.info(format("Subscription for %s was provisioned and notification mail was sent", userEmail));
-        } catch (IOException | MessagingException e) {
+        } catch (IOException | MessagingException | ApiException e) {
             LOG.error("Error of sending email with subscription info to sales.", e);
         }
     }

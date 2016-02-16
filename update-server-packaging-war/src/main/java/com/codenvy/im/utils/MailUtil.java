@@ -16,7 +16,8 @@ package com.codenvy.im.utils;
 
 import com.google.inject.Singleton;
 
-import org.codenvy.mail.MailSenderClient;
+import com.codenvy.mail.MailSenderClient;
+import org.eclipse.che.api.core.ApiException;
 
 import javax.inject.Inject;
 import javax.mail.MessagingException;
@@ -36,7 +37,7 @@ public class MailUtil {
         this.config = config;
     }
 
-    public void sendNotificationLetter(String accountId, String userEmail) throws IOException, MessagingException {
+    public void sendNotificationLetter(String accountId, String userEmail) throws IOException, MessagingException, ApiException {
         final String mailSubject = "New On-Prem Trial (IM)";
         final String currentDateTime = new Date().toString();
 

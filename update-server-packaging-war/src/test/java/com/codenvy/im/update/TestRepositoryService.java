@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.response.Response;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.commons.user.UserImpl;
 import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
@@ -557,7 +558,7 @@ public class TestRepositoryService extends BaseTest {
     }
 
     @Test
-    public void testAddSubscriptionWhenSendSubscriptionInfoThrowsMessagingException() throws IOException, MessagingException {
+    public void testAddSubscriptionWhenSendSubscriptionInfoThrowsMessagingException() throws IOException, MessagingException, ApiException {
         doReturn("[{"
                  + "roles:[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
                  + "accountReference:{id:\"accountId\",name:\"name1\"}"

@@ -14,7 +14,8 @@
  */
 package com.codenvy.im.utils;
 
-import org.codenvy.mail.MailSenderClient;
+import com.codenvy.mail.MailSenderClient;
+import org.eclipse.che.api.core.ApiException;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -50,7 +51,7 @@ public class TestMailUtil {
     }
 
     @Test
-    public void testSendOnPremSubscriptionInfo() throws IOException, MessagingException {
+    public void testSendOnPremSubscriptionInfo() throws IOException, MessagingException, ApiException {
         String currentDateStringWithHoursOnly = new Date().toString().substring(0, 14);  // "Thu Jan 29 12:"
         String expectedSubscriptionInfo = "Email address of user: userEmail\n"
                                           + "AccountID of user: accountId\n"

@@ -29,7 +29,8 @@ import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 
-import org.codenvy.mail.MailSenderClient;
+import com.codenvy.mail.MailSenderClient;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -91,7 +92,7 @@ public class ReportSenderTest {
     }
 
     @Test
-    public void shouldSendWeeklyReportBecauseOfExpiredLicense() throws IOException, JsonParseException, MessagingException {
+    public void shouldSendWeeklyReportBecauseOfExpiredLicense() throws IOException, JsonParseException, MessagingException, ApiException {
         ReportParameters reportParameters = new ReportParameters(TEST_TITLE, TEST_SENDER, TEST_RECEIVER);
         doReturn(Commons.toJson(reportParameters)).when(mockHttpTransport)
                                                   .doGet(combinePaths(updateServerEndpoint, "/report/parameters/" + ReportType.CODENVY_ONPREM_USER_NUMBER_REPORT.name().toLowerCase()));
@@ -110,7 +111,7 @@ public class ReportSenderTest {
     }
 
     @Test
-    public void shouldSendWeeklyReportBecauseOfLicenseException() throws IOException, JsonParseException, MessagingException {
+    public void shouldSendWeeklyReportBecauseOfLicenseException() throws IOException, JsonParseException, MessagingException, ApiException {
         ReportParameters reportParameters = new ReportParameters(TEST_TITLE, TEST_SENDER, TEST_RECEIVER);
         doReturn(Commons.toJson(reportParameters)).when(mockHttpTransport)
                                                   .doGet(combinePaths(updateServerEndpoint, "/report/parameters/" + ReportType.CODENVY_ONPREM_USER_NUMBER_REPORT.name().toLowerCase()));
@@ -128,7 +129,7 @@ public class ReportSenderTest {
     }
 
     @Test
-    public void shouldNotSendWeeklyReportBecauseOfNonExpiredLicense() throws IOException, JsonParseException, MessagingException {
+    public void shouldNotSendWeeklyReportBecauseOfNonExpiredLicense() throws IOException, JsonParseException, MessagingException, ApiException {
         doReturn(VERSION_4_0_0).when(mockCdecArtifact).getInstalledVersion();
         doReturn(codenvyLicense).when(mockFacade).loadCodenvyLicense();
         doReturn(false).when(codenvyLicense).isExpired();
@@ -143,7 +144,7 @@ public class ReportSenderTest {
     }
 
     @Test
-    public void shouldNotSendWeeklyReportInCodenvy3() throws IOException, JsonParseException, MessagingException {
+    public void shouldNotSendWeeklyReportInCodenvy3() throws IOException, JsonParseException, MessagingException, ApiException {
         doReturn(VERSION_3_0_0).when(mockCdecArtifact).getInstalledVersion();
 
         spyReportSender.sendWeeklyReports();
@@ -152,7 +153,7 @@ public class ReportSenderTest {
     }
 
     @Test
-    public void shouldNotSendWeeklyReportBecauseOfUnknownVersion() throws IOException, JsonParseException, MessagingException {
+    public void shouldNotSendWeeklyReportBecauseOfUnknownVersion() throws IOException, JsonParseException, MessagingException, ApiException {
         doThrow(UnknownArtifactVersionException.class).when(mockCdecArtifact).getInstalledVersion();
 
         spyReportSender.sendWeeklyReports();

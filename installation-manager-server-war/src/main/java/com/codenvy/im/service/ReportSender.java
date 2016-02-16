@@ -31,7 +31,8 @@ import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.codenvy.mail.MailSenderClient;
+import com.codenvy.mail.MailSenderClient;
+import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.commons.json.JsonParseException;
 import org.eclipse.che.commons.schedule.ScheduleCron;
 
@@ -88,12 +89,12 @@ public class ReportSender {
             if (version.is4Major()) {
                 sendNumberOfUsers();
             }
-        } catch (JsonParseException | IOException | MessagingException | UnknownArtifactVersionException e) {
+        } catch (JsonParseException | IOException | MessagingException | UnknownArtifactVersionException | ApiException e) {
             LOG.log(Level.SEVERE, "Error of sending weekly reports.", e);
         }
     }
 
-    private void sendNumberOfUsers() throws IOException, MessagingException, JsonParseException {
+    private void sendNumberOfUsers() throws IOException, MessagingException, JsonParseException, ApiException {
         try {
             CodenvyLicense codenvyLicense = facade.loadCodenvyLicense();
             if (!codenvyLicense.isExpired()) {
