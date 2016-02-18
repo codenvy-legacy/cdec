@@ -60,15 +60,18 @@ public class CodenvyLicenseFactory {
 
         HashMap<String, String> customSignedFeatures = license.getLicenseText().getCustomSignedFeatures();
 
-        Map<LicenseFeature, String> features = customSignedFeatures
-                .entrySet()
-                .stream()
-                .map(entry -> new AbstractMap.SimpleEntry<>(LicenseFeature.valueOf(entry.getKey().toUpperCase()), entry.getValue()))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+        try {
+            Map<LicenseFeature, String> features = customSignedFeatures
+                    .entrySet()
+                    .stream()
+                    .map(entry -> new AbstractMap.SimpleEntry<>(LicenseFeature.valueOf(entry.getKey().toUpperCase()), entry.getValue()))
+                    .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+            validateFeaturesFormat(features);
 
-        validateFeaturesFormat(features);
-
-        return new CodenvyLicense(licenseText, features);
+            return new CodenvyLicense(licenseText, features);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidLicenseException(e.getMessage(), e);
+        }
     }
 
     private void validateFeaturesFormat(Map<LicenseFeature, String> features) throws IllegalLicenseFormatException {
