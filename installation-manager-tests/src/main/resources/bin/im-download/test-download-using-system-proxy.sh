@@ -27,9 +27,13 @@ executeSshCommand "sudo yum install squid -y -q"
 executeSshCommand "sudo squid start"
 executeSshCommand "sudo chkconfig --levels 235 squid on"
 
-# Setup system proxy parameters
+# Setup system proxy parameters for vagrant user to propagate proxy setting to IM Cli
 executeSshCommand "sed -i '2iexport http_proxy=http://127.0.0.1:3128/' ~/.bashrc"
 executeSshCommand "sed -i '2iexport https_proxy=http://127.0.0.1:3128/' ~/.bashrc"
+
+# Setup system proxy parameters for root user to propagate proxy setting to Puppet
+executeSshCommand "sudo sed -i '2iexport http_proxy=http://127.0.0.1:3128/' /root/.bashrc"
+executeSshCommand "sudo sed -i '2iexport https_proxy=http://127.0.0.1:3128/' /root/.bashrc"
 
 installImCliClient
 validateInstalledImCliClientVersion

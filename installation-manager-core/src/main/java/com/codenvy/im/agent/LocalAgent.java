@@ -35,7 +35,7 @@ public class LocalAgent extends AbstractAgent {
     protected final static String READ_PASSWORD_PROMPT              = String.format("[sudo] password for %s: ", System.getProperty("user.name"));
     protected static final String CHECK_PASSWORD_NECESSITY_COMMAND  = "ERROR=$(sudo -n true 2>&1); if [[ $? != 0 ]] ; then echo $ERROR; fi";
     protected static final String CHECK_IS_PASSWORD_CORRECT_COMMAND = "sudo -S true";
-    protected static final String PASSWORD_INCORRECT_STATUS         = "Sorry, try again";
+    protected static final String PASSWORD_INCORRECT_STATUS         = "Sorry, try again.";
     protected static final String NEED_PASSWORD_MESSAGE             = "sudo: a password is required";
 
     private static char[] pwdCache = null;
@@ -125,7 +125,7 @@ public class LocalAgent extends AbstractAgent {
                 LOG.log(Level.WARNING, String.format("Command '%s' requires sudo password", command));
                 return true;
             }
-            
+
             return false;
 
         } catch (Exception e) {
@@ -145,7 +145,7 @@ public class LocalAgent extends AbstractAgent {
                 console.print(READ_PASSWORD_PROMPT);
                 Object answer = console.readPassword();
                 if (answer == null) {
-                    console.println("Sorry, try again.");
+                    console.println(PASSWORD_INCORRECT_STATUS);
                     continue;
                 }
 
@@ -155,7 +155,7 @@ public class LocalAgent extends AbstractAgent {
                     return answerChar;
                 }
 
-                console.println("Sorry, try again.");
+                console.println(PASSWORD_INCORRECT_STATUS);
             }
 
             console.println("sudo: 3 incorrect password attempts");

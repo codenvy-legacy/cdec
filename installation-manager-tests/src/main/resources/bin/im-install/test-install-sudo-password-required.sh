@@ -22,8 +22,14 @@
 printAndLog "TEST CASE: Install when sudo password is required"
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
+# 1) description without password: "vagrant ALL=(ALL) NOPASSWD:ALL"
+# set password: "passwd vagrant"
+# change sudo password timeout:
+# 2) execute "mcedit /etc/sudoers"
+# 3) add "Defaults timestamp_timeout=0" to ask password every time
+# or add "Defaults timestamp_timeout=-1" to turn off asking password
+# 4) save
 executeSshCommand "sudo sed -i -e 's/vagrant.*/vagrant ALL=\(ALL\) ALL/g' /etc/sudoers"
-executeSshCommand "sudo -k"
 executeSshCommand "--valid-exit-code=1" "sudo -n -k true"
 
 executeSshCommand "--valid-exit-code=1" "bash <(curl -L -s ${UPDATE_SERVICE}/repository/public/download/install-codenvy) --silent --fair-source-license=accept"

@@ -9,6 +9,7 @@
 # --hostname=<CODENVY HOSTNAME>
 # --systemAdminName=<SYSTEM ADMIN NAME>
 # --systemAdminPassword=<SYSTEM ADMIN PASSWORD>
+# --fair-source-license=accept
 
 trap cleanUp EXIT
 
@@ -374,7 +375,7 @@ installPackageIfNeed() {
 
 preConfigureSystem() {
     # valid sudo rights
-    sudo -n true 2> /dev/null
+    sudo -k -n true 2> /dev/null
     if [[ ! $? == 0 ]]; then
         println $(printError "ERROR: User '${USER}' doesn't have sudo rights without password")
         println
@@ -435,7 +436,7 @@ installIm() {
     tar -xf ${IM_FILE} -C ${DIR}/codenvy-cli
 
     sed -i "2iJAVA_HOME=${HOME}/codenvy-im/jre" ${DIR}/codenvy-cli/bin/codenvy
-    echo "export PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin" >> ${HOME}/.bashrc
+    printf "\nexport PATH=\$PATH:\$HOME/codenvy-im/codenvy-cli/bin\n" >> ${HOME}/.bashrc
 }
 
 clearLine() {
@@ -1244,6 +1245,7 @@ setStepIndicator() {
     updateProgress ${CURRENT_STEP}
 }
 
+################ Timer
 initTimer() {
     START_TIME=`date +%s`
 }
@@ -1284,22 +1286,17 @@ updateTimer() {
     done
 }
 
-updateProgress() {
-    local current_step=$1
-    local last_step=${LAST_INSTALLATION_STEP}
-
-    local progress_number=$(( ${current_step}*100/${last_step} ))
-
-    local progress_field=
-    for ((i=1; i<=${current_step}*${PROGRESS_FACTOR}; i++));  do
-       progress_field="${progress_field}="
+################ Puppet Info Printer
+updatePuppetInfo() {
+    for ((;;)); do
+        local line=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log 2>/dev/null)
+        if [[ -n "$line" ]]; then
+            updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:$(( ${DEPENDENCIES_STATUS_OFFSET}-8 ))}...]"     # print first N symbols of line
+        else
+            updateLine ${PUPPET_LINE} ""
+        fi
+        sleep 1 &>/dev/null
     done
-
-    progress_field=$(printf "[%-$(( ${last_step}*${PROGRESS_FACTOR} ))s]" ${progress_field})
-
-    local message="Full install ${progress_field} ${progress_number}%"
-
-    updateLine ${PROGRESS_LINE} "${message}"
 }
 
 runPuppetInfoPrinter() {
@@ -1323,6 +1320,24 @@ pausePuppetInfoPrinter() {
     if [ -n "${PRINTER_PID}" ]; then
         kill -SIGSTOP ${PRINTER_PID}
     fi
+}
+
+updateProgress() {
+    local current_step=$1
+    local last_step=${LAST_INSTALLATION_STEP}
+
+    local progress_number=$(( ${current_step}*100/${last_step} ))
+
+    local progress_field=
+    for ((i=1; i<=${current_step}*${PROGRESS_FACTOR}; i++));  do
+       progress_field="${progress_field}="
+    done
+
+    progress_field=$(printf "[%-$(( ${last_step}*${PROGRESS_FACTOR} ))s]" ${progress_field})
+
+    local message="Full install ${progress_field} ${progress_number}%"
+
+    updateLine ${PROGRESS_LINE} "${message}"
 }
 
 runFooterUpdater() {
@@ -1368,18 +1383,6 @@ initFooterPosition() {
     echo "" > /tmp/im_prev_line_2 2>/dev/null
     echo "" > /tmp/im_prev_line_3 2>/dev/null
     echo "" > /tmp/im_prev_line_4 2>/dev/null
-}
-
-updatePuppetInfo() {
-    for ((;;)); do
-        local line=$(sudo tail -n 1 /var/log/puppet/puppet-agent.log 2>/dev/null)
-        if [[ -n "$line" ]]; then
-            updateLine ${PUPPET_LINE} "[PUPPET: ${line:0:$(( ${DEPENDENCIES_STATUS_OFFSET}-8 ))}...]"     # print first N symbols of line
-        else
-            updateLine ${PUPPET_LINE} ""
-        fi
-        sleep 1 &>/dev/null
-    done
 }
 
 runInternetAccessChecker() {
