@@ -21,25 +21,24 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifact", "version", "label", "status"})
-public class InstallArtifactInfo extends AbstractArtifactInfo {
+public class UpdateArtifactInfo extends AbstractArtifactInfo {
     public enum Status {
-        SUCCESS,
-        FAILURE,
-        IN_PROGRESS
+        DOWNLOADED,
+        AVAILABLE_TO_DOWNLOAD
     }
 
     private Status status;
+
+    public Status getStatus() {
+        return status;
+    }
 
     public void setStatus(Status status) {
         this.status = status;
     }
 
-    public Status getStatus() {
-        return this.status;
-    }
-
-    public static InstallArtifactInfo createInstance(String artifact, String version, VersionLabel label, Status status) {
-        InstallArtifactInfo info = new InstallArtifactInfo();
+    public static UpdateArtifactInfo createInstance(String artifact, String version, VersionLabel label, Status status) {
+        UpdateArtifactInfo info = new UpdateArtifactInfo();
 
         info.setArtifact(artifact);
         info.setVersion(version);
@@ -49,8 +48,11 @@ public class InstallArtifactInfo extends AbstractArtifactInfo {
         return info;
     }
 
-    public static InstallArtifactInfo createInstance(String artifactName, String versionNumber, Status status) {
+    public static UpdateArtifactInfo createInstance(String artifactName, String versionNumber, Status status) {
         return createInstance(artifactName, versionNumber, null, status);
     }
-}
 
+    public static UpdateArtifactInfo createInstance(String artifactName, String versionNumber) {
+        return createInstance(artifactName, versionNumber, null, null);
+    }
+}

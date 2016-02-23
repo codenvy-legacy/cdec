@@ -34,7 +34,7 @@ public class InstallArtifactStepInfoTest {
         info.setVersion("1.0.1");
         info.setLabel(VersionLabel.STABLE);
         info.setStep(1);
-        info.setStatus(InstallArtifactStatus.IN_PROGRESS);
+        info.setStatus(InstallArtifactInfo.Status.IN_PROGRESS);
         info.setMessage("ok");
 
         String json = toJson(info);

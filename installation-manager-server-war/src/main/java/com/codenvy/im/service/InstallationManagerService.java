@@ -43,7 +43,7 @@ import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.UpdatesArtifactInfo;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
@@ -240,12 +240,12 @@ public class InstallationManagerService {
     @GET
     @Path("updates")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = UpdatesArtifactInfo.class, responseContainer = "List")
+    @ApiOperation(value = "Gets the list of actual updates from Update Server", response = UpdateArtifactInfo.class, responseContainer = "List")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
                            @ApiResponse(code = 500, message = "Server error")})
     public Response getUpdates() {
         try {
-            Collection<UpdatesArtifactInfo> updates = delegate.getAllUpdates(createArtifact(CDECArtifact.NAME));
+            Collection<UpdateArtifactInfo> updates = delegate.getAllUpdates(createArtifact(CDECArtifact.NAME));
             return Response.ok(updates).build();
         } catch (Exception e) {
             return handleException(e);

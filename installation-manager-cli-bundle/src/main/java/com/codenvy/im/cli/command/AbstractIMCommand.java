@@ -28,12 +28,11 @@ import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
-import com.codenvy.im.response.DownloadArtifactStatus;
+import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
-import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactStatus;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Version;
 
@@ -101,28 +100,28 @@ public abstract class AbstractIMCommand extends AbsCommand {
         try {
             // get latest update of IM CLI client
             Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
-            List<UpdatesArtifactInfo> updates = facade.getAllUpdates(imArtifact);
+            List<UpdateArtifactInfo> updates = facade.getAllUpdates(imArtifact);
             if (updates.isEmpty()) {
                 return;
             }
-            UpdatesArtifactInfo update = updates.get(updates.size() - 1);
+            UpdateArtifactInfo update = updates.get(updates.size() - 1);
             Version versionToUpdate = Version.valueOf(update.getVersion());
 
             // download update of IM CLI client
-            if (update.getStatus().equals(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD)) {
+            if (update.getStatus().equals(UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD)) {
                 facade.startDownload(imArtifact, versionToUpdate);
 
                 while (true) {
                     DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
 
-                    if (downloadProgressResponse.getStatus().equals(DownloadArtifactStatus.FAILED)) {
+                    if (downloadProgressResponse.getStatus().equals(DownloadArtifactInfo.Status.FAILED)) {
                         // log error and continue working
                         LOG.log(Level.SEVERE, format("Fail of automatic download of update of IM CLI client. Error: %s", downloadProgressResponse.getMessage()));
                         console.printError(updateFailMessage, isInteractive());
                         return;
                     }
 
-                    if (downloadProgressResponse.getStatus().equals(DownloadArtifactStatus.DOWNLOADED)) {
+                    if (downloadProgressResponse.getStatus().equals(DownloadArtifactInfo.Status.DOWNLOADED)) {
                         break;
                     }
                 }
@@ -138,7 +137,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
             String stepId = facade.update(imArtifact, versionToUpdate, installOptions);
             facade.waitForInstallStepCompleted(stepId);
             InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
-            if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
+            if (updateStepInfo.getStatus() == InstallArtifactInfo.Status.FAILURE) {
                 // log error and continue working
                 LOG.log(Level.SEVERE, format("Fail of automatic install of update of IM CLI client. Error: %s", updateStepInfo.getMessage()));
                 console.printError(updateFailMessage, isInteractive());

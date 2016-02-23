@@ -28,11 +28,8 @@ import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.InstallArtifactStatus;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactStatus;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
@@ -128,7 +125,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         InstallArtifactInfo installArtifactInfo = installedVersions.iterator().next();
         assertEquals(installArtifactInfo.getArtifact(), "codenvy");
         assertEquals(installArtifactInfo.getVersion(), "1.0.1");
-        assertEquals(installArtifactInfo.getStatus(), InstallArtifactStatus.SUCCESS);
+        assertEquals(installArtifactInfo.getStatus(), InstallArtifactInfo.Status.SUCCESS);
         assertEquals(installArtifactInfo.getLabel(), VersionLabel.STABLE);
     }
 
@@ -140,14 +137,14 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         }}).when(downloadManager).getDownloadedVersions(artifact);
         doReturn(VersionLabel.STABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
-        Collection<UpdatesArtifactInfo> updates = facade.getUpdates();
+        Collection<UpdateArtifactInfo> updates = facade.getUpdates();
 
         assertEquals(updates.size(), 1);
 
-        UpdatesArtifactInfo result = updates.iterator().next();
+        UpdateArtifactInfo result = updates.iterator().next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
-        assertEquals(result.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(result.getStatus(), UpdateArtifactInfo.Status.DOWNLOADED);
         assertEquals(result.getLabel(), VersionLabel.STABLE);
     }
 
@@ -162,14 +159,14 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         }}).when(downloadManager).getDownloadedVersions(artifact);
         doReturn(VersionLabel.UNSTABLE).when(facade).fetchVersionLabel("codenvy", "1.0.1");
 
-        Collection<UpdatesArtifactInfo> updates = facade.getAllUpdates(artifact);
+        Collection<UpdateArtifactInfo> updates = facade.getAllUpdates(artifact);
 
         assertEquals(updates.size(), 1);
 
-        UpdatesArtifactInfo result = updates.iterator().next();
+        UpdateArtifactInfo result = updates.iterator().next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
-        assertEquals(result.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(result.getStatus(), UpdateArtifactInfo.Status.DOWNLOADED);
         assertEquals(result.getLabel(), VersionLabel.UNSTABLE);
     }
 
@@ -189,7 +186,7 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
         DownloadArtifactInfo result = downloads.iterator().next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(result.getLabel(), VersionLabel.STABLE);
         assertEquals(result.getFile(), "path");
     }

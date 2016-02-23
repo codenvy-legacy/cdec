@@ -14,46 +14,15 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.im.artifacts.VersionLabel;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
  * @author Alexander Reshetnyak
  */
-@JsonPropertyOrder({"artifact", "version", "label", "availableVersion", "status"})
-public class VersionArtifactInfo extends BasicArtifactInfo {
-    private String               artifact;
-    private String               version;
-    private VersionLabel         label;
+@JsonPropertyOrder({"artifact", "version", "label", "availableVersion", "message"})
+public class VersionArtifactInfo extends AbstractArtifactInfo {
     private AvailableVersionInfo availableVersion;
-    private String               status;
-
-    public VersionArtifactInfo() {
-    }
-
-    public String getArtifact() {
-        return artifact;
-    }
-
-    public void setArtifact(String artifact) {
-        this.artifact = artifact;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public VersionLabel getLabel() {
-        return label;
-    }
-
-    public void setLabel(VersionLabel label) {
-        this.label = label;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
+    private String               message;
 
     public AvailableVersionInfo getAvailableVersion() {
         return availableVersion;
@@ -63,52 +32,12 @@ public class VersionArtifactInfo extends BasicArtifactInfo {
         this.availableVersion = availableVersion;
     }
 
-    public String getStatus() {
-        return status;
+    public String getMessage() {
+        return message;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setMessage(String message) {
+        this.message = message;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof VersionArtifactInfo)) {
-            return false;
-        }
-
-        VersionArtifactInfo that = (VersionArtifactInfo)o;
-
-        if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) {
-            return false;
-        }
-        if (version != null ? !version.equals(that.version) : that.version != null) {
-            return false;
-        }
-        if (label != that.label) {
-            return false;
-        }
-        if (availableVersion != null ? !availableVersion.equals(that.availableVersion) : that.availableVersion != null) {
-            return false;
-        }
-        if (status != null ? !status.equals(that.status) : that.status != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode() {
-        int result = artifact != null ? artifact.hashCode() : 0;
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (availableVersion != null ? availableVersion.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
-        return result;
-    }
 }

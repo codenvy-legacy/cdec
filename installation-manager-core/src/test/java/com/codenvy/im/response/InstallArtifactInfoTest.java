@@ -22,7 +22,6 @@ import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.toJson;
 import static org.testng.Assert.assertEquals;
 
-
 /**
  * @author Anatoliy Bazko
  */
@@ -30,11 +29,10 @@ public class InstallArtifactInfoTest {
 
     @Test
     public void test() throws Exception {
-        InstallArtifactInfo info = new InstallArtifactInfo();
-        info.setArtifact("codenvy");
-        info.setVersion("1.0.1");
-        info.setLabel(VersionLabel.UNSTABLE);
-        info.setStatus(InstallArtifactStatus.SUCCESS);
+        InstallArtifactInfo info = InstallArtifactInfo.createInstance("codenvy",
+                                                                      "1.0.1",
+                                                                      VersionLabel.UNSTABLE,
+                                                                      InstallArtifactInfo.Status.SUCCESS);
 
         String json = toJson(info);
         assertEquals(json, "{\n" +

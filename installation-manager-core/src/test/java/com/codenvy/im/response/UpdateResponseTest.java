@@ -14,9 +14,9 @@
  */
 package com.codenvy.im.response;
 
-import com.codenvy.im.artifacts.VersionLabel;
-
 import org.testng.annotations.Test;
+
+import java.util.Collections;
 
 import static com.codenvy.im.utils.Commons.fromJson;
 import static com.codenvy.im.utils.Commons.toJson;
@@ -26,26 +26,21 @@ import static org.testng.Assert.assertEquals;
 /**
  * @author Anatoliy Bazko
  */
-public class UpdatesArtifactInfoTest {
-
+public class UpdateResponseTest {
 
     @Test
     public void test() throws Exception {
-        UpdatesArtifactInfo info = new UpdatesArtifactInfo();
-        info.setLabel(VersionLabel.STABLE);
-        info.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        info.setArtifact("codenvy");
-        info.setVersion("1.0.1");
+        UpdateResponse result = new UpdateResponse();
+        result.setStatus(ResponseCode.ERROR);
+        result.setMessage("error");
+        result.setArtifacts(Collections.<UpdateArtifactInfo>emptyList());
 
-        String json = toJson(info);
-
+        String json = toJson(result);
         assertEquals(json, "{\n" +
-                           "  \"artifact\" : \"codenvy\",\n" +
-                           "  \"version\" : \"1.0.1\",\n" +
-                           "  \"label\" : \"STABLE\",\n" +
-                           "  \"status\" : \"AVAILABLE_TO_DOWNLOAD\"\n" +
+                           "  \"artifacts\" : [ ],\n" +
+                           "  \"message\" : \"error\",\n" +
+                           "  \"status\" : \"ERROR\"\n" +
                            "}");
-
-        assertEquals(info, fromJson(json, UpdatesArtifactInfo.class));
+        assertEquals(fromJson(json, UpdateResponse.class), result);
     }
 }

@@ -17,7 +17,7 @@ package com.codenvy.im.managers;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
@@ -143,7 +143,7 @@ public class InstallManager {
         info.setArtifact(artifact.getName());
         info.setVersion(version.toString());
         info.setStep(options.getStep());
-        info.setStatus(InstallArtifactStatus.IN_PROGRESS);
+        info.setStatus(InstallArtifactInfo.Status.IN_PROGRESS);
 
         installations.put(stepId, info);
 
@@ -156,11 +156,11 @@ public class InstallManager {
                                                    : artifact.getInstallCommand(version, pathToBinaries, options);
                         executeCommand(command);
 
-                        info.setStatus(InstallArtifactStatus.SUCCESS);
+                        info.setStatus(InstallArtifactInfo.Status.SUCCESS);
                     } catch (Exception e) {
                         LOG.log(Level.SEVERE, e.getMessage(), e);
                         info.setMessage(e.getMessage());
-                        info.setStatus(InstallArtifactStatus.FAILURE);
+                        info.setStatus(InstallArtifactInfo.Status.FAILURE);
                     } finally {
                         info.notifyAll();
                     }
@@ -180,7 +180,7 @@ public class InstallManager {
         InstallArtifactStepInfo info = installations.get(stepId);
         if (info != null) {
             synchronized (info) {
-                while (info.getStatus() == InstallArtifactStatus.IN_PROGRESS) {
+                while (info.getStatus() == InstallArtifactInfo.Status.IN_PROGRESS) {
                     info.wait();
                 }
             }

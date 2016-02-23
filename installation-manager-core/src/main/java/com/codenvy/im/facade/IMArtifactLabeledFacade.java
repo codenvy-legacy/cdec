@@ -25,12 +25,11 @@ import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.BasicArtifactInfo;
+import com.codenvy.im.response.AbstractArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactInfo;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
@@ -101,8 +100,8 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
 
     /** {@inheritDoc} */
     @Override
-    public Collection<UpdatesArtifactInfo> getUpdates() throws IOException {
-        Collection<UpdatesArtifactInfo> updates = super.getUpdates();
+    public Collection<UpdateArtifactInfo> getUpdates() throws IOException {
+        Collection<UpdateArtifactInfo> updates = super.getUpdates();
         setVersionLabel(updates);
         return updates;
     }
@@ -125,8 +124,8 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
 
     /** {@inheritDoc} */
     @Override
-    public List<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
-        List<UpdatesArtifactInfo> updates = super.getAllUpdates(artifact);
+    public List<UpdateArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
+        List<UpdateArtifactInfo> updates = super.getAllUpdates(artifact);
         setVersionLabel(updates);
         return updates;
     }
@@ -137,17 +136,17 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
         DownloadProgressResponse response = super.getDownloadProgress();
 
         // avoid requests if artifact hasn't been downloaded
-        if (response.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
+        if (response.getStatus() != DownloadArtifactInfo.Status.DOWNLOADING) {
             setVersionLabel(response.getArtifacts());
         }
         return response;
     }
 
-    protected void setVersionLabel(Collection<? extends BasicArtifactInfo> infos) throws IOException {
-        Iterator<? extends BasicArtifactInfo> iter = infos.iterator();
+    protected void setVersionLabel(Collection<? extends AbstractArtifactInfo> infos) throws IOException {
+        Iterator<? extends AbstractArtifactInfo> iter = infos.iterator();
 
         while (iter.hasNext()) {
-            BasicArtifactInfo info = iter.next();
+            AbstractArtifactInfo info = iter.next();
             VersionLabel versionLabel = fetchVersionLabel(info.getArtifact(), info.getVersion());
             info.setLabel(versionLabel);
         }

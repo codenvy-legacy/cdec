@@ -35,7 +35,7 @@ public class DownloadArtifactInfoTest {
         info.setArtifact("codenvy");
         info.setFile("file");
         info.setLabel(VersionLabel.STABLE);
-        info.setStatus(DownloadArtifactStatus.DOWNLOADED);
+        info.setStatus(DownloadArtifactInfo.Status.DOWNLOADED);
 
         String json = Commons.toJson(info);
         assertEquals(json, "{\n" +

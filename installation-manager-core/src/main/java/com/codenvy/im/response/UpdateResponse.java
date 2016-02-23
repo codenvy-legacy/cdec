@@ -22,13 +22,13 @@ import java.util.Collection;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifacts", "message", "status"})
-public class UpdatesResponse implements Response {
+public class UpdateResponse implements Response {
 
-    private ResponseCode              status;
-    private String                    message;
-    private Collection<UpdatesArtifactInfo> artifacts;
+    private ResponseCode                   status;
+    private String                         message;
+    private Collection<UpdateArtifactInfo> artifacts;
 
-    public UpdatesResponse() {
+    public UpdateResponse() {
     }
 
     public ResponseCode getStatus() {
@@ -47,11 +47,11 @@ public class UpdatesResponse implements Response {
         this.message = message;
     }
 
-    public Collection<UpdatesArtifactInfo> getArtifacts() {
+    public Collection<UpdateArtifactInfo> getArtifacts() {
         return artifacts;
     }
 
-    public void setArtifacts(Collection<UpdatesArtifactInfo> artifacts) {
+    public void setArtifacts(Collection<UpdateArtifactInfo> artifacts) {
         this.artifacts = artifacts;
     }
 
@@ -61,11 +61,11 @@ public class UpdatesResponse implements Response {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UpdatesResponse)) {
+        if (!(o instanceof UpdateResponse)) {
             return false;
         }
 
-        UpdatesResponse that = (UpdatesResponse)o;
+        UpdateResponse that = (UpdateResponse)o;
 
         if (artifacts != null ? !artifacts.equals(that.artifacts) : that.artifacts != null) {
             return false;

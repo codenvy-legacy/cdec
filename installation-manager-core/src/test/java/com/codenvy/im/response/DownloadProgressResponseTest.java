@@ -35,16 +35,16 @@ public class DownloadProgressResponseTest extends BaseTest {
     @Test
     public void test() throws Exception {
         DownloadArtifactInfo artifactInfo = new DownloadArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                 Version.valueOf("1.0.1"),
-                                                                                 Paths.get(DOWNLOAD_DIR).resolve("file"),
-                                                                                 DownloadArtifactStatus.DOWNLOADED);
+                                                                     Version.valueOf("1.0.1"),
+                                                                     Paths.get(DOWNLOAD_DIR).resolve("file"),
+                                                                     DownloadArtifactInfo.Status.DOWNLOADED);
 
-        DownloadProgressResponse downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED,
-                                                                                               "message",
-                                                                                               100,
-                                                                                               ImmutableList.of(artifactInfo));
+        DownloadProgressResponse downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED,
+                                                                                         "message",
+                                                                                         100,
+                                                                                         ImmutableList.of(artifactInfo));
 
-        assertEquals(downloadProgressResponse.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(downloadProgressResponse.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(downloadProgressResponse.getPercents(), 100);
         assertEquals(downloadProgressResponse.getMessage(), "message");
         assertEquals(downloadProgressResponse.getArtifacts().size(), 1);

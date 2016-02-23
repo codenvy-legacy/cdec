@@ -21,7 +21,6 @@ import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -349,21 +348,21 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(info.getPercents(), 100);
 
         List<DownloadArtifactInfo> artifacts = info.getArtifacts();
         assertEquals(artifacts.size(), 2);
 
         assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
-        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(artifacts.get(0).getFile(), pathCDEC.toString());
         assertEquals(artifacts.get(0).getVersion(), cdecVersion.toString());
 
         assertEquals(artifacts.get(1).getArtifact(), installManagerArtifact.getName());
-        assertEquals(artifacts.get(1).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(1).getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(artifacts.get(1).getFile(), pathIM.toString());
         assertEquals(artifacts.get(1).getVersion(), imVersion.toString());
     }
@@ -399,15 +398,15 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(info.getPercents(), 100);
 
         List<DownloadArtifactInfo> artifacts = info.getArtifacts();
         assertEquals(artifacts.size(), 1);
         assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
-        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(artifacts.get(0).getFile(), pathCDEC.toString());
         assertEquals(artifacts.get(0).getVersion(), cdecVersion.toString());
     }
@@ -443,15 +442,15 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(info.getPercents(), 100);
 
         List<DownloadArtifactInfo> artifacts = info.getArtifacts();
         assertEquals(artifacts.size(), 1);
         assertEquals(artifacts.get(0).getArtifact(), cdecArtifact.getName());
-        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(artifacts.get(0).getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(artifacts.get(0).getFile(), pathCDEC.toString());
         assertEquals(artifacts.get(0).getVersion(), cdecVersion.toString());
     }
@@ -466,9 +465,9 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
         assertEquals(info.getPercents(), 0);
         assertEquals(info.getArtifacts().size(), 0);
     }
@@ -491,9 +490,9 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.FAILED);
     }
 
     @Test(expectedExceptions = DownloadAlreadyStartedException.class)
@@ -535,9 +534,9 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.FAILED);
     }
 
     @Test
@@ -560,9 +559,9 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.FAILED);
     }
 
     @Test
@@ -676,9 +675,9 @@ public class DownloadManagerTest extends BaseTest {
         do {
             sleep(100); // due to async request, wait a bit to get proper download status
             info = downloadManager.getDownloadProgress();
-        } while (info.getStatus() == DownloadArtifactStatus.DOWNLOADING);
+        } while (info.getStatus() == DownloadArtifactInfo.Status.DOWNLOADING);
 
-        assertEquals(info.getStatus(), DownloadArtifactStatus.FAILED);
+        assertEquals(info.getStatus(), DownloadArtifactInfo.Status.FAILED);
         assertEquals(info.getPercents(), 100);
         assertTrue(info.getMessage().contains("File corrupted"));
     }

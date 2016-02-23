@@ -38,7 +38,7 @@ public class ArtifactInfoTest {
         info.setArtifact("codenvy");
         info.setVersion("1.0.1");
         info.setLabel(VersionLabel.STABLE);
-        info.setStatus(ArtifactStatus.INSTALLED);
+        info.setStatus(ArtifactInfo.Status.INSTALLED);
 
         String json = toJson(info);
         assertEquals(json, "{\n" +

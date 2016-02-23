@@ -26,9 +26,6 @@ public class BackupResponse implements Response {
     private String       message;
     private BackupInfo   backup;
 
-    public BackupResponse() {
-    }
-
     public ResponseCode getStatus() {
         return status;
     }

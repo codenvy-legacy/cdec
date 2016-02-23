@@ -34,9 +34,7 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactStatus;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactStatus;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
@@ -476,11 +474,11 @@ public class TestInstallationManagerFacade extends BaseTest {
             put(version100, null);
         }});
 
-        Collection<UpdatesArtifactInfo> updates = installationManagerFacade.getUpdates();
+        Collection<UpdateArtifactInfo> updates = installationManagerFacade.getUpdates();
         assertEquals(updates.size(), 1);
 
-        UpdatesArtifactInfo info = updates.iterator().next();
-        assertEquals(info.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        UpdateArtifactInfo info = updates.iterator().next();
+        assertEquals(info.getStatus(), UpdateArtifactInfo.Status.DOWNLOADED);
         assertEquals(info.getArtifact(), cdecArtifact.getName());
         assertEquals(info.getVersion(), version100.toString());
     }
@@ -496,20 +494,20 @@ public class TestInstallationManagerFacade extends BaseTest {
             put(Version.valueOf("1.0.1"), Paths.get("file1"));
         }}).when(downloadManager).getDownloadedVersions(cdecArtifact);
 
-        Collection<UpdatesArtifactInfo> updates = installationManagerFacade.getAllUpdates(cdecArtifact);
+        Collection<UpdateArtifactInfo> updates = installationManagerFacade.getAllUpdates(cdecArtifact);
         assertEquals(updates.size(), 2);
 
-        Iterator<UpdatesArtifactInfo> iter = updates.iterator();
+        Iterator<UpdateArtifactInfo> iter = updates.iterator();
 
-        UpdatesArtifactInfo info = iter.next();
+        UpdateArtifactInfo info = iter.next();
         assertEquals(info.getVersion(), "1.0.1");
         assertEquals(info.getArtifact(), cdecArtifact.getName());
-        assertEquals(info.getStatus(), UpdatesArtifactStatus.DOWNLOADED);
+        assertEquals(info.getStatus(), UpdateArtifactInfo.Status.DOWNLOADED);
 
         info = iter.next();
         assertEquals(info.getVersion(), "1.0.2");
         assertEquals(info.getArtifact(), cdecArtifact.getName());
-        assertEquals(info.getStatus(), UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+        assertEquals(info.getStatus(), UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
     }
 
 
@@ -559,17 +557,17 @@ public class TestInstallationManagerFacade extends BaseTest {
         ArtifactInfo info = iterator.next();
         assertEquals(info.getArtifact(), "codenvy");
         assertEquals(info.getVersion(), "1.0.2");
-        assertEquals(info.getStatus(), ArtifactStatus.READY_TO_INSTALL);
+        assertEquals(info.getStatus(), ArtifactInfo.Status.READY_TO_INSTALL);
 
         info = iterator.next();
         assertEquals(info.getArtifact(), "codenvy");
         assertEquals(info.getVersion(), "1.0.1");
-        assertEquals(info.getStatus(), ArtifactStatus.INSTALLED);
+        assertEquals(info.getStatus(), ArtifactInfo.Status.INSTALLED);
 
         info = iterator.next();
         assertEquals(info.getArtifact(), "codenvy");
         assertEquals(info.getVersion(), "1.0.0");
-        assertEquals(info.getStatus(), ArtifactStatus.DOWNLOADED);
+        assertEquals(info.getStatus(), ArtifactInfo.Status.DOWNLOADED);
     }
 
     @Test

@@ -23,10 +23,6 @@ public class BackupInfo {
     private String artifact;
     private String version;
 
-
-    public BackupInfo() {
-    }
-
     public String getFile() {
         return file;
     }
