@@ -392,19 +392,19 @@ public class TestCommandLibrary extends BaseTest {
     @Test
     public void testCreateReadFileCommand() throws AgentException {
         Path fileToRead = Paths.get("messages");
-        Command command = CommandLibrary.createTailCommand(fileToRead, 5, false);
-        assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='LocalAgent'}");
+        Command command = CommandLibrary.createTailCommand(fileToRead, 8192, false);
+        assertEquals(command.toString(), "{'command'='tail -c 8192 messages', 'agent'='LocalAgent'}");
 
-        command = CommandLibrary.createTailCommand(fileToRead, 6, true);
-        assertEquals(command.toString(), "{'command'='sudo tail -n 6 messages', 'agent'='LocalAgent'}");
+        command = CommandLibrary.createTailCommand(fileToRead, 600, true);
+        assertEquals(command.toString(), "{'command'='sudo tail -c 600 messages', 'agent'='LocalAgent'}");
 
         NodeConfig testNode = new NodeConfig(NodeConfig.NodeType.API, "host", "user");
-        command = CommandLibrary.createTailCommand(fileToRead, 5, testNode, false);
-        assertEquals(command.toString(), "{'command'='tail -n 5 messages', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+        command = CommandLibrary.createTailCommand(fileToRead, 500, testNode, false);
+        assertEquals(command.toString(), "{'command'='tail -c 500 messages', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
 
-        command = CommandLibrary.createTailCommand(fileToRead, 6, testNode, true);
+        command = CommandLibrary.createTailCommand(fileToRead, 600, testNode, true);
         assertEquals(command.toString(),
-                     "{'command'='sudo tail -n 6 messages', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
+                     "{'command'='sudo tail -c 600 messages', 'agent'='{'host'='host', 'port'='22', 'user'='user', 'identity'='[~/.ssh/id_rsa]'}'}");
     }
 
     @Test

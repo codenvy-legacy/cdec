@@ -375,16 +375,16 @@ public class CommandLibrary {
         PuppetErrorInterrupter.PATH_TO_PUPPET_LOG);
     }
 
-    public static Command createTailCommand(Path file, int lineNumber, boolean needSudo) {
-        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, lineNumber, needSudo));
+    public static Command createTailCommand(Path file, int bytes, boolean needSudo) {
+        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, bytes, needSudo));
     }
 
-    public static Command createTailCommand(Path file, int lineNumber, NodeConfig node, boolean needSudo) throws AgentException {
-        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, lineNumber, needSudo), node);
+    public static Command createTailCommand(Path file, int bytes, NodeConfig node, boolean needSudo) throws AgentException {
+        return SimpleCommand.createCommandWithoutLogging(getTailCommand(file, bytes, needSudo), node);
     }
 
-    private static String getTailCommand(Path file, int lineNumber, boolean needSudo) {
-        String command = format("tail -n %s %s", lineNumber, file);
+    private static String getTailCommand(Path file, int bytes, boolean needSudo) {
+        String command = format("tail -c %s %s", bytes, file);
         if (needSudo) {
             command = "sudo " + command;
         }

@@ -51,7 +51,7 @@ import static java.lang.String.format;
 /** @author Dmytro Nochevnov */
 public class PuppetErrorInterrupter implements Command {
     public static final int READ_LOG_TIMEOUT_MILLIS = 200;
-    public static final int SELECTION_LINE_NUMBER   = 20;
+    public static final int SELECTION_BYTES_NUMBER  = 8192;
 
     /** minimum number of similar errors at the same node to interrupt installation manager */
     public final static int  MIN_ERROR_EVENTS_TO_INTERRUPT_IM = Integer.parseInt(
@@ -209,9 +209,9 @@ public class PuppetErrorInterrupter implements Command {
      */
     protected Command createReadFileCommand(@Nullable NodeConfig node) throws AgentException {
         if (node == null) {
-            return CommandLibrary.createTailCommand(getPuppetLogFile(), SELECTION_LINE_NUMBER, useSudo());
+            return CommandLibrary.createTailCommand(getPuppetLogFile(), SELECTION_BYTES_NUMBER, useSudo());
         } else {
-            return CommandLibrary.createTailCommand(getPuppetLogFile(), SELECTION_LINE_NUMBER, node, useSudo());
+            return CommandLibrary.createTailCommand(getPuppetLogFile(), SELECTION_BYTES_NUMBER, node, useSudo());
         }
     }
 
