@@ -19,10 +19,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /**
  * @author Alexander Reshetnyak
  */
-@JsonPropertyOrder({"artifact", "version", "label", "availableVersion", "message"})
+@JsonPropertyOrder({"artifact", "version", "label", "availableVersion", "status"})
 public class VersionArtifactInfo extends AbstractArtifactInfo {
     private AvailableVersionInfo availableVersion;
-    private String               message;
+    private String               status;
 
     public AvailableVersionInfo getAvailableVersion() {
         return availableVersion;
@@ -32,12 +32,12 @@ public class VersionArtifactInfo extends AbstractArtifactInfo {
         this.availableVersion = availableVersion;
     }
 
-    public String getMessage() {
-        return message;
+    public String getStatus() {
+        return status;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }

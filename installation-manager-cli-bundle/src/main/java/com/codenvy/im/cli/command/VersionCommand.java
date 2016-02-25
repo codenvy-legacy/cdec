@@ -65,7 +65,7 @@ public class VersionCommand extends AbstractIMCommand {
         }
 
         if (info.getVersion() != null) {
-            info.setMessage(getMessage(info, latestStableVersionInfo));
+            info.setStatus(getStatus(info, latestStableVersionInfo));
         }
 
         console.println(toJson(info));
@@ -108,7 +108,7 @@ public class VersionCommand extends AbstractIMCommand {
     }
 
     @Nullable
-    public String getMessage(VersionArtifactInfo info, UpdateArtifactInfo latestStableVersionInfo) {
+    public String getStatus(VersionArtifactInfo info, UpdateArtifactInfo latestStableVersionInfo) {
         if (info.getAvailableVersion() != null && info.getAvailableVersion().getStable() != null) {
             String suffix;
             if (latestStableVersionInfo.getStatus() == UpdateArtifactInfo.Status.DOWNLOADED) {

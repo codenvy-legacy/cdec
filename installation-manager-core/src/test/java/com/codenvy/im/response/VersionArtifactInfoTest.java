@@ -33,7 +33,7 @@ public class VersionArtifactInfoTest {
         info.setArtifact("codenvy");
         info.setVersion("1.0.1");
         info.setLabel(VersionLabel.STABLE);
-        info.setMessage("little bit text");
+        info.setStatus("little bit text");
 
         AvailableVersionInfo availableVersionInfo = new AvailableVersionInfo();
         availableVersionInfo.setStable("1.0.2");
@@ -49,7 +49,7 @@ public class VersionArtifactInfoTest {
                            "    \"stable\" : \"1.0.2\",\n" +
                            "    \"unstable\" : \"1.0.3\"\n" +
                            "  },\n" +
-                           "  \"message\" : \"little bit text\"\n" +
+                           "  \"status\" : \"little bit text\"\n" +
                            "}");
         assertEquals(fromJson(json, VersionArtifactInfo.class), info);
     }
