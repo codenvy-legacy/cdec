@@ -20,7 +20,7 @@
     <parent>
         <artifactId>codenvy-im</artifactId>
         <groupId>com.codenvy.im</groupId>
-        <version>4.0.0-RC7</version>
+        <version>4.0.0-RC8-SNAPSHOT</version>
     </parent>
     <artifactId>update-server-packaging-tomcat</artifactId>
     <packaging>pom</packaging>
