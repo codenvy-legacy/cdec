@@ -14,21 +14,20 @@
  */
 package com.codenvy.im.response;
 
+import com.codenvy.im.artifacts.Artifact;
+import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.VersionLabel;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.codenvy.im.utils.Version;
+
+import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
 
 /**
  * @author Anatoliy Bazko
  */
-@JsonPropertyOrder({"artifact", "version", "label", "status"})
-public class UpdatesArtifactInfo extends BasicArtifactInfo {
-    private String                artifact;
-    private String                version;
+public abstract class AbstractArtifactInfo implements Info, Comparable<AbstractArtifactInfo> {
+    private String       artifact;
+    private String       version;
     private VersionLabel label;
-    private UpdatesArtifactStatus status;
-
-    public UpdatesArtifactInfo() {
-    }
 
     public String getArtifact() {
         return artifact;
@@ -46,14 +45,6 @@ public class UpdatesArtifactInfo extends BasicArtifactInfo {
         this.version = version;
     }
 
-    public UpdatesArtifactStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(UpdatesArtifactStatus status) {
-        this.status = status;
-    }
-
     public VersionLabel getLabel() {
         return label;
     }
@@ -68,19 +59,16 @@ public class UpdatesArtifactInfo extends BasicArtifactInfo {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UpdatesArtifactInfo)) {
+        if (!(o instanceof AbstractArtifactInfo)) {
             return false;
         }
 
-        UpdatesArtifactInfo that = (UpdatesArtifactInfo)o;
+        AbstractArtifactInfo that = (AbstractArtifactInfo)o;
 
         if (artifact != null ? !artifact.equals(that.artifact) : that.artifact != null) {
             return false;
         }
         if (label != that.label) {
-            return false;
-        }
-        if (status != that.status) {
             return false;
         }
         if (version != null ? !version.equals(that.version) : that.version != null) {
@@ -96,7 +84,27 @@ public class UpdatesArtifactInfo extends BasicArtifactInfo {
         int result = artifact != null ? artifact.hashCode() : 0;
         result = 31 * result + (version != null ? version.hashCode() : 0);
         result = 31 * result + (label != null ? label.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
         return result;
     }
+
+
+    /** {@inheritDoc} */
+    @Override
+    public int compareTo(AbstractArtifactInfo o) {
+        if (!getArtifact().equals(o.getArtifact())) {
+            try {
+                Artifact thisArtifact = createArtifact(getArtifact());
+                Artifact thatArtifact = createArtifact(o.getArtifact());
+                return thatArtifact.compareTo(thisArtifact);
+            } catch (ArtifactNotFoundException e) {
+                throw new IllegalStateException(e);
+            }
+        } else {
+            Version thisVersion = Version.valueOf(getVersion());
+            Version thatVersion = Version.valueOf(o.getVersion());
+
+            return thatVersion.compareTo(thisVersion);
+        }
+    }
+
 }

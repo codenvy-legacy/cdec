@@ -15,7 +15,6 @@
 package com.codenvy.im.response;
 
 import com.codenvy.im.artifacts.Artifact;
-import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.utils.Version;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -25,36 +24,33 @@ import java.nio.file.Path;
  * @author Anatoliy Bazko
  */
 @JsonPropertyOrder({"artifact", "version", "label", "file", "status"})
-public class DownloadArtifactInfo extends BasicArtifactInfo {
-    private String                 artifact;
-    private String                 version;
-    private String                 file;
-    private VersionLabel           label;
-    private DownloadArtifactStatus status;
+public class DownloadArtifactInfo extends AbstractArtifactInfo {
+    public enum Status {
+        DOWNLOADED,
+        DOWNLOADING,
+        READY_TO_INSTALL,
+        FAILED
+    }
+
+    private String file;
+    private Status status;
 
     public DownloadArtifactInfo() {
     }
 
-    public DownloadArtifactInfo(Artifact artifact, Version version, Path file, DownloadArtifactStatus status) {
-        this.artifact = artifact.getName();
-        this.version = version.toString();
+    public DownloadArtifactInfo(Artifact artifact, Version version, Path file, Status status) {
+        setArtifact(artifact.getName());
+        setVersion(version.toString());
+
         this.file = (file != null) ? file.toString() : null;
         this.status = status;
     }
 
-    public DownloadArtifactInfo(Artifact artifact, Version version, DownloadArtifactStatus status) {
+    public DownloadArtifactInfo(Artifact artifact, Version version, Status status) {
         this(artifact, version, null, status);
     }
 
-    public String getArtifact() {
-        return artifact;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public DownloadArtifactStatus getStatus() {
+    public Status getStatus() {
         return status;
     }
 
@@ -62,69 +58,12 @@ public class DownloadArtifactInfo extends BasicArtifactInfo {
         return file;
     }
 
-    public void setArtifact(String artifact) {
-        this.artifact = artifact;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
     public void setFile(String file) {
         this.file = file;
     }
 
-    public void setStatus(DownloadArtifactStatus status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
-    public VersionLabel getLabel() {
-        return label;
-    }
-
-    public void setLabel(VersionLabel label) {
-        this.label = label;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof DownloadArtifactInfo)) {
-            return false;
-        }
-
-        DownloadArtifactInfo result = (DownloadArtifactInfo)o;
-
-        if (artifact != null ? !artifact.equals(result.artifact) : result.artifact != null) {
-            return false;
-        }
-        if (file != null ? !file.equals(result.file) : result.file != null) {
-            return false;
-        }
-        if (label != result.label) {
-            return false;
-        }
-        if (status != result.status) {
-            return false;
-        }
-        if (version != null ? !version.equals(result.version) : result.version != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public int hashCode() {
-        int result = artifact != null ? artifact.hashCode() : 0;
-        result = 31 * result + (version != null ? version.hashCode() : 0);
-        result = 31 * result + (file != null ? file.hashCode() : 0);
-        result = 31 * result + (label != null ? label.hashCode() : 0);
-        result = 31 * result + (status != null ? status.hashCode() : 0);
-        return result;
-    }
 }

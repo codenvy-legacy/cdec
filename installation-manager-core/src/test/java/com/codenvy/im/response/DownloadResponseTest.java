@@ -36,7 +36,7 @@ public class DownloadResponseTest extends BaseTest {
     public void testToJson() throws Exception {
         DownloadArtifactInfo downloadArtifactInfo = new DownloadArtifactInfo();
         downloadArtifactInfo.setFile("file");
-        downloadArtifactInfo.setStatus(DownloadArtifactStatus.DOWNLOADED);
+        downloadArtifactInfo.setStatus(DownloadArtifactInfo.Status.DOWNLOADED);
         downloadArtifactInfo.setArtifact("codenvy");
         downloadArtifactInfo.setVersion("1.0.1");
 
@@ -63,17 +63,17 @@ public class DownloadResponseTest extends BaseTest {
     @Test
     public void testResponseCode() throws Exception {
         DownloadArtifactInfo artifactInfo = new DownloadArtifactInfo(ArtifactFactory.createArtifact(CDECArtifact.NAME),
-                                                                                 Version.valueOf("1.0.1"),
-                                                                                 Paths.get(DOWNLOAD_DIR).resolve("file"),
-                                                                                 DownloadArtifactStatus.DOWNLOADING);
+                                                                     Version.valueOf("1.0.1"),
+                                                                     Paths.get(DOWNLOAD_DIR).resolve("file"),
+                                                                     DownloadArtifactInfo.Status.DOWNLOADING);
 
         DownloadProgressResponse
-                downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED, 100, ImmutableList.of(artifactInfo));
+                downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED, 100, ImmutableList.of(artifactInfo));
         DownloadResponse downloadResponse = new DownloadResponse(downloadProgressResponse);
 
         assertEquals(downloadResponse.getStatus(), ResponseCode.OK);
 
-        downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactStatus.FAILED, 100, ImmutableList.of(artifactInfo));
+        downloadProgressResponse = new DownloadProgressResponse(DownloadArtifactInfo.Status.FAILED, 100, ImmutableList.of(artifactInfo));
         downloadResponse = new DownloadResponse(downloadProgressResponse);
 
         assertEquals(downloadResponse.getStatus(), ResponseCode.ERROR);

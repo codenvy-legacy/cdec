@@ -25,7 +25,6 @@ import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
@@ -145,19 +144,19 @@ public class TestDownloadInstallationManagerFacade {
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.0");
         assertEquals(result.getFile(), "target/file1");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
 
         result = iter.next();
         assertEquals(result.getArtifact(), "codenvy");
         assertEquals(result.getVersion(), "1.0.1");
         assertEquals(result.getFile(), "target/file2");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.READY_TO_INSTALL);
 
         result = iter.next();
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file3");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.READY_TO_INSTALL);
     }
 
     @Test
@@ -184,13 +183,13 @@ public class TestDownloadInstallationManagerFacade {
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file1");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.DOWNLOADED);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.DOWNLOADED);
 
         result = iter.next();
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.1");
         assertEquals(result.getFile(), "target/file2");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.READY_TO_INSTALL);
     }
 
     @Test
@@ -212,7 +211,7 @@ public class TestDownloadInstallationManagerFacade {
         assertEquals(result.getArtifact(), InstallManagerArtifact.NAME);
         assertEquals(result.getVersion(), "2.0.0");
         assertEquals(result.getFile(), "target/file1");
-        assertEquals(result.getStatus(), DownloadArtifactStatus.READY_TO_INSTALL);
+        assertEquals(result.getStatus(), DownloadArtifactInfo.Status.READY_TO_INSTALL);
     }
 
     @Test

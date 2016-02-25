@@ -19,7 +19,6 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.managers.DownloadAlreadyStartedException;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.DownloadResponse;
 import com.codenvy.im.response.ResponseCode;
@@ -77,7 +76,7 @@ public class DownloadCommand extends AbstractIMCommand {
             DownloadProgressResponse downloadProgressResponse = facade.getDownloadProgress();
             DownloadResponse downloadResponse = new DownloadResponse(downloadProgressResponse);
 
-            if (downloadProgressResponse.getStatus() == DownloadArtifactStatus.FAILED) {
+            if (downloadProgressResponse.getStatus() == DownloadArtifactInfo.Status.FAILED) {
                 console.cleanCurrentLine();
                 console.printResponseExitInError(downloadResponse);
                 break;
@@ -95,7 +94,7 @@ public class DownloadCommand extends AbstractIMCommand {
                 isCanceled = true;
             }
 
-            if (downloadProgressResponse.getStatus() != DownloadArtifactStatus.DOWNLOADING) {
+            if (downloadProgressResponse.getStatus() != DownloadArtifactInfo.Status.DOWNLOADING) {
                 console.cleanCurrentLine();
                 console.printResponseExitInError(downloadResponse);
                 break;

@@ -23,9 +23,6 @@ public class NodeInfo {
     private NodeConfig.NodeType type;
     private String host;
 
-    public NodeInfo() {
-    }
-
     public NodeConfig.NodeType getType() {
         return type;
     }

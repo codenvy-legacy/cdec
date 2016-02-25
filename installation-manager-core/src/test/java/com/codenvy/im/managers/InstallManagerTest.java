@@ -21,7 +21,7 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.commands.Command;
 import com.codenvy.im.commands.CommandException;
-import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.OSUtils;
@@ -293,13 +293,13 @@ public class InstallManagerTest extends BaseTest {
         String stepId = installManager.performInstallStep(artifact, version, pathToBinaries, options, false);
 
         InstallArtifactStepInfo info = installManager.getUpdateStepInfo(stepId);
-        assertEquals(info.getStatus(), InstallArtifactStatus.IN_PROGRESS);
+        assertEquals(info.getStatus(), InstallArtifactInfo.Status.IN_PROGRESS);
 
         latch.countDown();
 
         installManager.waitForStepCompleted(stepId);
 
-        assertEquals(info.getStatus(), InstallArtifactStatus.SUCCESS);
+        assertEquals(info.getStatus(), InstallArtifactInfo.Status.SUCCESS);
         assertEquals(info.getStep(), 0);
     }
 

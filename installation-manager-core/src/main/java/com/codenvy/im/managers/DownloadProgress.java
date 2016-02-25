@@ -17,7 +17,6 @@ package com.codenvy.im.managers;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.utils.Version;
 
 import org.eclipse.che.commons.annotation.Nullable;
@@ -43,18 +42,18 @@ import static java.nio.file.Files.size;
  */
 public class DownloadProgress {
 
-    private final List<DownloadArtifactInfo> downloadedArtifacts;
-    private final Map<Artifact, Version> artifacts2Download;
-    private final Map<Path, Long> binaries;
-    private final AtomicReference<Exception>              exception;
-    private final AtomicReference<DownloadArtifactStatus> status;
-    private final String                 uuid;
-    private final Thread                                  downloadThread;
+    private final List<DownloadArtifactInfo>                   downloadedArtifacts;
+    private final Map<Artifact, Version>                       artifacts2Download;
+    private final Map<Path, Long>                              binaries;
+    private final AtomicReference<Exception>                   exception;
+    private final AtomicReference<DownloadArtifactInfo.Status> status;
+    private final String                                       uuid;
+    private final Thread                                       downloadThread;
 
     public DownloadProgress(Map<Path, Long> binaries, Map<Artifact, Version> artifacts) {
         this.downloadThread = Thread.currentThread();
         this.binaries = new ConcurrentHashMap<>(binaries);
-        this.status = new AtomicReference<>(DownloadArtifactStatus.DOWNLOADING);
+        this.status = new AtomicReference<>(DownloadArtifactInfo.Status.DOWNLOADING);
         this.exception = new AtomicReference<>();
         this.downloadedArtifacts = new CopyOnWriteArrayList<>();
         this.artifacts2Download = new ConcurrentHashMap<>(artifacts);
@@ -108,7 +107,7 @@ public class DownloadProgress {
     }
 
     /** @return the downloading status. */
-    public DownloadArtifactStatus getDownloadStatus() {
+    public DownloadArtifactInfo.Status getDownloadStatus() {
         return status.get();
     }
 
@@ -117,18 +116,18 @@ public class DownloadProgress {
         return exception.get() == null ? null : exception.get().getMessage();
     }
 
-    public void setDownloadStatus(DownloadArtifactStatus status) {
+    public void setDownloadStatus(DownloadArtifactInfo.Status status) {
         this.status.set(status);
     }
 
-    public void setDownloadStatus(DownloadArtifactStatus status, Exception exception) {
+    public void setDownloadStatus(DownloadArtifactInfo.Status status, Exception exception) {
         this.status.set(status);
         this.exception.set(exception);
     }
 
     /** Indicates if downloading finished or didn't. */
     public boolean isDownloadingFinished() {
-        return status.get() != DownloadArtifactStatus.DOWNLOADING;
+        return status.get() != DownloadArtifactInfo.Status.DOWNLOADING;
     }
 
     /** Get thread which downloading artifacts. */

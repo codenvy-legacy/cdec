@@ -96,7 +96,6 @@ public class CodenvyLicenseManager {
      * @throws LicenseException
      *         if error occurred while deleting license
      */
-    @Nullable
     public void delete() throws LicenseException {
         try {
             storageManager.deleteProperty(CODENVY_LICENSE_KEY);

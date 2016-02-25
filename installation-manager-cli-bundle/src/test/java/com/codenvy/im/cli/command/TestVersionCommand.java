@@ -16,29 +16,26 @@ package com.codenvy.im.cli.command;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
+import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.artifacts.VersionLabel;
 import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
+import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.InstallArtifactStatus;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactStatus;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
 import org.apache.felix.service.command.CommandSession;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -51,18 +48,48 @@ import static org.testng.Assert.assertEquals;
 
 /**
  * @author Alexander Reshetnyak
+ * @author Dmytro Nochevnov
  */
 public class TestVersionCommand extends AbstractTestCommand {
+    public static final InstallArtifactInfo INSTALLED_CDEC_1_0_1_UNSTABLE = InstallArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                                                               "1.0.1",
+                                                                                                               VersionLabel.UNSTABLE,
+                                                                                                               InstallArtifactInfo.Status.SUCCESS);
+
+    public static final InstallArtifactInfo INSTALLED_CDEC_1_0_1_STABLE = InstallArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                                                             "1.0.1",
+                                                                                                             VersionLabel.STABLE,
+                                                                                                             InstallArtifactInfo.Status.SUCCESS);
+
+    public static final UpdateArtifactInfo UPDATE_CDEC_1_0_2_STABLE_AVAILABLE_TO_DOWNLOAD = UpdateArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                                                                              "1.0.2",
+                                                                                                                              VersionLabel.STABLE,
+                                                                                                                              UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
+
+    public static final UpdateArtifactInfo UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_AVAILABLE_TO_DOWNLOAD = UpdateArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                                                                                         "1.0.3-SNAPSHOT",
+                                                                                                                                         VersionLabel.UNSTABLE,
+                                                                                                                                         UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
+
+    public static final UpdateArtifactInfo UPDATE_CDEC_1_0_2_STABLE_DOWNLOADED = UpdateArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                                                                              "1.0.2",
+                                                                                                                              VersionLabel.STABLE,
+                                                                                                                              UpdateArtifactInfo.Status.DOWNLOADED);
+
+    public static final UpdateArtifactInfo UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_DOWNLOADED = UpdateArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                                                                              "1.0.3-SNAPSHOT",
+                                                                                                                              VersionLabel.UNSTABLE,
+                                                                                                                              UpdateArtifactInfo.Status.DOWNLOADED);
+
+    public static final InstallArtifactInfo INSTALLED_IM_1_0_1_STABLE = InstallArtifactInfo.createInstance(InstallManagerArtifact.NAME,
+                                                                                                           "1.0.1",
+                                                                                                           VersionLabel.STABLE,
+                                                                                                           InstallArtifactInfo.Status.SUCCESS);
+
     private VersionCommand spyCommand;
 
     private IMArtifactLabeledFacade facade;
     private CommandSession          commandSession;
-
-    private ByteArrayOutputStream outputStream;
-    private ByteArrayOutputStream errorStream;
-
-    PrintStream originOut = System.out;
-    PrintStream originErr = System.err;
 
     @Mock
     private PreferencesStorage mockPreferencesStorage;
@@ -90,319 +117,92 @@ public class TestVersionCommand extends AbstractTestCommand {
         doNothing().when(spyCommand).updateImCliClientIfNeeded();
     }
 
-    @BeforeMethod
-    public void initStreams() {
-        this.outputStream = new ByteArrayOutputStream();
-        this.errorStream = new ByteArrayOutputStream();
 
-        System.setOut(new PrintStream(this.outputStream));
-        System.setErr(new PrintStream(this.errorStream));
-    }
-
-    @AfterMethod
-    public void restoreSystemStreams() {
-        System.setOut(originOut);
-        System.setErr(originErr);
-    }
-
-    @Test
-    public void shouldBePrintAvailableStableVersion() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-        doReturn(installedList).when(facade).getInstalledVersions();
-
-        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
-        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.1");
-        updatesArtifactInfo.setLabel(VersionLabel.STABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        updateList.add(updatesArtifactInfo);
-
-        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
+    @Test(dataProvider="getTestVersionData")
+    public void testCodenvyVersion(List<InstallArtifactInfo> installed, List<UpdateArtifactInfo> updates, String expectedOutput) throws Exception {
+        doReturn(installed).when(facade).getInstalledVersions();
+        doReturn(updates).when(facade).getAllUpdates(any(Artifact.class));
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
         CommandInvoker.Result result = commandInvoker.invoke();
         String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"availableVersion\" : {\n" +
-                             "    \"stable\" : \"1.0.1\"\n" +
-                             "  }\n" +
-                             "}\n");
+        assertEquals(output, expectedOutput);
     }
 
-    @Test
-    public void shouldBePrintStatusLatestStableVersionInstalled() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
+    @DataProvider
+    private Object[][] getTestVersionData() {
+        return new Object[][] {
+            {ImmutableList.of(),
+             ImmutableList.of(),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\"\n"
+             + "}\n"},
 
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
+            {ImmutableList.of(),
+             ImmutableList.of(UPDATE_CDEC_1_0_2_STABLE_AVAILABLE_TO_DOWNLOAD,
+                              UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_AVAILABLE_TO_DOWNLOAD),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"availableVersion\" : {\n"
+             + "    \"stable\" : \"1.0.2\",\n"
+             + "    \"unstable\" : \"1.0.3-SNAPSHOT\"\n"
+             + "  }\n"
+             + "}\n"},
 
-        installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
+            {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
+                              INSTALLED_CDEC_1_0_1_STABLE),
+             ImmutableList.of(),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"version\" : \"1.0.1\",\n"
+             + "  \"label\" : \"STABLE\",\n"
+             + "  \"message\" : \"You are running the latest stable version of Codenvy!\"\n"
+             + "}\n"},
 
-        doReturn(installedList).when(facade).getInstalledVersions();
+            {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
+                              INSTALLED_CDEC_1_0_1_UNSTABLE),
+             ImmutableList.of(),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"version\" : \"1.0.1\",\n"
+             + "  \"label\" : \"UNSTABLE\",\n"
+             + "  \"message\" : \"You are running the latest unstable version of Codenvy!\"\n"
+             + "}\n"},
 
-        doReturn(new ArrayList<UpdatesArtifactInfo>()).when(facade).getAllUpdates(any(Artifact.class));
 
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
+            {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
+                              INSTALLED_CDEC_1_0_1_STABLE),
 
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"version\" : \"1.0.1\",\n" +
-                             "  \"label\" : \"STABLE\",\n" +
-                             "  \"status\" : \"You are running the latest stable version of Codenvy!\"\n" +
-                             "}\n");
-    }
+             ImmutableList.of(UPDATE_CDEC_1_0_2_STABLE_AVAILABLE_TO_DOWNLOAD,
+                              UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_AVAILABLE_TO_DOWNLOAD),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"version\" : \"1.0.1\",\n"
+             + "  \"label\" : \"STABLE\",\n"
+             + "  \"availableVersion\" : {\n"
+             + "    \"stable\" : \"1.0.2\",\n"
+             + "    \"unstable\" : \"1.0.3-SNAPSHOT\"\n"
+             + "  },\n"
+             + "  \"message\" : \"There is a new stable version of Codenvy available. Run im-download 1.0.2.\"\n"
+             + "}\n"},
 
-    @Test
-    public void shouldBePrintAvailableStableVersionAndStatusNewStableVersionAvailable() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
+            {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
+                              INSTALLED_CDEC_1_0_1_STABLE),
 
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        doReturn(installedList).when(facade).getInstalledVersions();
-
-        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
-        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.2");
-        updatesArtifactInfo.setLabel(VersionLabel.STABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        updateList.add(updatesArtifactInfo);
-
-        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"version\" : \"1.0.1\",\n" +
-                             "  \"label\" : \"STABLE\",\n" +
-                             "  \"availableVersion\" : {\n" +
-                             "    \"stable\" : \"1.0.2\"\n" +
-                             "  },\n" +
-                             "  \"status\" : \"There is a new stable version of Codenvy available. Run im-download 1.0.2.\"\n" +
-                             "}\n");
-    }
-
-    @Test
-    public void shouldBePrintAvailableStableVersionAndStatusNewStableVersionAvailableAndInstallIt() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
-
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        doReturn(installedList).when(facade).getInstalledVersions();
-
-        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
-        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.2");
-        updatesArtifactInfo.setLabel(VersionLabel.STABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.DOWNLOADED);
-        updateList.add(updatesArtifactInfo);
-
-        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"version\" : \"1.0.1\",\n" +
-                             "  \"label\" : \"STABLE\",\n" +
-                             "  \"availableVersion\" : {\n" +
-                             "    \"stable\" : \"1.0.2\"\n" +
-                             "  },\n" +
-                             "  \"status\" : \"There is a new stable version of Codenvy available. Run im-install to install it.\"\n" +
-                             "}\n");
-    }
-
-    @Test
-    public void shouldBePrintAvailableStableAndUnstableVersionsAndStatusNewStableVersionAvailable() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
-
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        doReturn(installedList).when(facade).getInstalledVersions();
-
-        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
-        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.2");
-        updatesArtifactInfo.setLabel(VersionLabel.STABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        updateList.add(updatesArtifactInfo);
-
-        updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.3");
-        updatesArtifactInfo.setLabel(VersionLabel.UNSTABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        updateList.add(updatesArtifactInfo);
-
-        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"version\" : \"1.0.1\",\n" +
-                             "  \"label\" : \"STABLE\",\n" +
-                             "  \"availableVersion\" : {\n" +
-                             "    \"stable\" : \"1.0.2\",\n" +
-                             "    \"unstable\" : \"1.0.3\"\n" +
-                             "  },\n" +
-                             "  \"status\" : \"There is a new stable version of Codenvy available. Run im-download 1.0.2.\"\n" +
-                             "}\n");
-    }
-
-    @Test
-    public void shouldBePrintAvailableUnstableVersionAndStatusLatestStableVersionInstalled() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
-
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        doReturn(installedList).when(facade).getInstalledVersions();
-
-        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
-        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.3");
-        updatesArtifactInfo.setLabel(VersionLabel.UNSTABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        updateList.add(updatesArtifactInfo);
-
-        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"version\" : \"1.0.1\",\n" +
-                             "  \"label\" : \"STABLE\",\n" +
-                             "  \"availableVersion\" : {\n" +
-                             "    \"unstable\" : \"1.0.3\"\n" +
-                             "  },\n" +
-                             "  \"status\" : \"You are running the latest stable version of Codenvy!\"\n" +
-                             "}\n");
-    }
-
-    @Test
-    public void shouldBePrintInstalledUnstableVersionAndAvailableStableVersionAndStatusNewStableVersionAvailable() throws Exception {
-        List<InstallArtifactInfo> installedList = new ArrayList<>();
-
-        InstallArtifactInfo installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact("install-im-cli");
-        installedArtifactInfo.setVersion("1.0.1");
-        installedArtifactInfo.setLabel(VersionLabel.STABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        installedArtifactInfo = new InstallArtifactInfo();
-        installedArtifactInfo.setArtifact(CDECArtifact.NAME);
-        installedArtifactInfo.setVersion("1.0.3");
-        installedArtifactInfo.setLabel(VersionLabel.UNSTABLE);
-        installedArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
-        installedList.add(installedArtifactInfo);
-
-        doReturn(installedList).when(facade).getInstalledVersions();
-
-        List<UpdatesArtifactInfo> updateList = new ArrayList<>();
-        UpdatesArtifactInfo updatesArtifactInfo = new UpdatesArtifactInfo();
-        updatesArtifactInfo.setArtifact(CDECArtifact.NAME);
-        updatesArtifactInfo.setVersion("1.0.4");
-        updatesArtifactInfo.setLabel(VersionLabel.STABLE);
-        updatesArtifactInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
-        updateList.add(updatesArtifactInfo);
-
-        doReturn(updateList).when(facade).getAllUpdates(any(Artifact.class));
-
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
-
-        CommandInvoker.Result result = commandInvoker.invoke();
-        String output = result.disableAnsi().getOutputStream();
-        assertEquals(output, "{\n" +
-                             "  \"artifact\" : \"codenvy\",\n" +
-                             "  \"version\" : \"1.0.3\",\n" +
-                             "  \"label\" : \"UNSTABLE\",\n" +
-                             "  \"availableVersion\" : {\n" +
-                             "    \"stable\" : \"1.0.4\"\n" +
-                             "  },\n" +
-                             "  \"status\" : \"There is a new stable version of Codenvy available. Run im-download 1.0.4.\"\n" +
-                             "}\n");
+             ImmutableList.of(UPDATE_CDEC_1_0_2_STABLE_DOWNLOADED,
+                              UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_DOWNLOADED),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"version\" : \"1.0.1\",\n"
+             + "  \"label\" : \"STABLE\",\n"
+             + "  \"availableVersion\" : {\n"
+             + "    \"stable\" : \"1.0.2\",\n"
+             + "    \"unstable\" : \"1.0.3-SNAPSHOT\"\n"
+             + "  },\n"
+             + "  \"message\" : \"There is a new stable version of Codenvy available. Run im-install to install it.\"\n"
+             + "}\n"},
+        };
     }
 
 }

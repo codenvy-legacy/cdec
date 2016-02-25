@@ -25,10 +25,10 @@ import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.BasicArtifactInfo;
+import com.codenvy.im.response.AbstractArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactInfo;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
@@ -98,8 +98,8 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public Collection<UpdatesArtifactInfo> getUpdates() throws IOException {
-        Collection<UpdatesArtifactInfo> updates = new ArrayList<>(super.getUpdates());
+    public Collection<UpdateArtifactInfo> getUpdates() throws IOException {
+        Collection<UpdateArtifactInfo> updates = new ArrayList<>(super.getUpdates());
         removeImCliArtifact(updates);
         return updates;
     }
@@ -122,8 +122,8 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
 
     /** {@inheritDoc} */
     @Override
-    public List<UpdatesArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
-        List<UpdatesArtifactInfo> updates = new ArrayList<>(super.getAllUpdates(artifact));
+    public List<UpdateArtifactInfo> getAllUpdates(@Nullable Artifact artifact) throws IOException, JsonParseException {
+        List<UpdateArtifactInfo> updates = new ArrayList<>(super.getAllUpdates(artifact));
         removeImCliArtifact(updates);
         return updates;
     }
@@ -182,11 +182,11 @@ public class IMCliFilteredFacade extends IMArtifactLabeledFacade {
         return super.getLatestInstallableVersion(artifact);
     }
 
-    protected void removeImCliArtifact(Collection<? extends BasicArtifactInfo> infos) throws IOException {
-        Iterator<? extends BasicArtifactInfo> iter = infos.iterator();
+    protected void removeImCliArtifact(Collection<? extends AbstractArtifactInfo> infos) throws IOException {
+        Iterator<? extends AbstractArtifactInfo> iter = infos.iterator();
 
         while (iter.hasNext()) {
-            BasicArtifactInfo info = iter.next();
+            AbstractArtifactInfo info = iter.next();
             if (info.getArtifact().equals(InstallManagerArtifact.NAME)) {
                 iter.remove();
             }

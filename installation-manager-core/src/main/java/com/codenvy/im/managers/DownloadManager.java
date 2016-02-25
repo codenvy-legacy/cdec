@@ -17,7 +17,6 @@ package com.codenvy.im.managers;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
@@ -157,11 +156,11 @@ public class DownloadManager {
             DownloadArtifactInfo info = new DownloadArtifactInfo();
             info.setArtifact(a.getKey().getName());
             info.setVersion(a.getValue().toString());
-            info.setStatus(DownloadArtifactStatus.DOWNLOADING);
+            info.setStatus(DownloadArtifactInfo.Status.DOWNLOADING);
             infos.add(info);
         }
 
-        if (downloadProgress.getDownloadStatus() == DownloadArtifactStatus.FAILED) {
+        if (downloadProgress.getDownloadStatus() == DownloadArtifactInfo.Status.FAILED) {
             return new DownloadProgressResponse(downloadProgress.getDownloadStatus(),
                                                 downloadProgress.getErrorMessage(),
                                                 downloadProgress.getProgress(),
@@ -197,28 +196,28 @@ public class DownloadManager {
                     DownloadArtifactInfo downloadArtifactDesc = new DownloadArtifactInfo(artToDownload,
                                                                                          verToDownload,
                                                                                          pathToBinaries,
-                                                                                         DownloadArtifactStatus.DOWNLOADED);
+                                                                                         DownloadArtifactInfo.Status.DOWNLOADED);
                     downloadProgress.addDownloadedArtifact(downloadArtifactDesc);
                     saveArtifactProperties(artToDownload, verToDownload, pathToBinaries);
                 } catch (Exception exp) {
                     LOG.log(Level.SEVERE, exp.getMessage(), exp);
                     DownloadArtifactInfo info = new DownloadArtifactInfo(artToDownload,
                                                                          verToDownload,
-                                                                         DownloadArtifactStatus.FAILED);
+                                                                         DownloadArtifactInfo.Status.FAILED);
                     downloadProgress.addDownloadedArtifact(info);
-                    downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, exp);
+                    downloadProgress.setDownloadStatus(DownloadArtifactInfo.Status.FAILED, exp);
                     return;
                 }
             }
 
-            downloadProgress.setDownloadStatus(DownloadArtifactStatus.DOWNLOADED);
+            downloadProgress.setDownloadStatus(DownloadArtifactInfo.Status.DOWNLOADED);
         } catch (Exception e) {
             LOG.log(Level.SEVERE, e.getMessage(), e);
 
             if (downloadProgress == null) {
                 downloadProgress = new DownloadProgress(Collections.<Path, Long>emptyMap(), Collections.<Artifact, Version>emptyMap());
             }
-            downloadProgress.setDownloadStatus(DownloadArtifactStatus.FAILED, e);
+            downloadProgress.setDownloadStatus(DownloadArtifactInfo.Status.FAILED, e);
 
             if (latcher.getCount() == 1) {
                 latcher.countDown();

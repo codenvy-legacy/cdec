@@ -20,12 +20,10 @@ import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
-import com.codenvy.im.response.InstallArtifactStatus;
+import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactStatus;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.utils.Version;
 
 import org.apache.felix.service.command.CommandSession;
@@ -69,9 +67,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Test
     public void testDownload() throws Exception {
         doNothing().when(service).startDownload(null, null);
-        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED,
-                                                100,
-                                                Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
+        doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED,
+                                              100,
+                                              Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -88,9 +86,9 @@ public class TestDownloadCommand extends AbstractTestCommand {
     @Test
     public void testDownloadWhenErrorInResponse() throws Exception {
         doNothing().when(service).startDownload(null, null);
-        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.FAILED,
-                                                0,
-                                                Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
+        doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.FAILED,
+                                              0,
+                                              Collections.<DownloadArtifactInfo>emptyList())).when(service).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
 
@@ -138,13 +136,12 @@ public class TestDownloadCommand extends AbstractTestCommand {
         final Version versionToUpdate = Version.valueOf("1.0.0");
         final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
 
-        UpdatesArtifactInfo updateInfo = new UpdatesArtifactInfo();
-        updateInfo.setArtifact(imArtifact.getName());
-        updateInfo.setVersion(versionToUpdate.toString());
-        updateInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+        UpdateArtifactInfo updateInfo = UpdateArtifactInfo.createInstance(imArtifact.getName(),
+                                                                          versionToUpdate.toString(),
+                                                                          UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
         doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdates(imArtifact);
 
-        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
+        doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
             .when(spyCommand.facade).getDownloadProgress();
 
         InstallOptions installOptions = new InstallOptions();
@@ -156,7 +153,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         String stepId = "1";
         doReturn(stepId).when(spyCommand.facade).update(imArtifact, versionToUpdate, installOptions);
         InstallArtifactStepInfo installStepInfo = new InstallArtifactStepInfo();
-        installStepInfo.setStatus(InstallArtifactStatus.SUCCESS);
+        installStepInfo.setStatus(InstallArtifactInfo.Status.SUCCESS);
         doReturn(installStepInfo).when(spyCommand.facade).getUpdateStepInfo(stepId);
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -195,13 +192,12 @@ public class TestDownloadCommand extends AbstractTestCommand {
         final Version versionToUpdate = Version.valueOf("1.0.0");
         final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
 
-        UpdatesArtifactInfo updateInfo = new UpdatesArtifactInfo();
-        updateInfo.setArtifact(imArtifact.getName());
-        updateInfo.setVersion(versionToUpdate.toString());
-        updateInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+        UpdateArtifactInfo updateInfo = UpdateArtifactInfo.createInstance(imArtifact.getName(),
+                                                                          versionToUpdate.toString(),
+                                                                          UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
         doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdates(imArtifact);
 
-        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.FAILED, "Download error.", 100, Collections.EMPTY_LIST))
+        doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.FAILED, "Download error.", 100, Collections.EMPTY_LIST))
             .when(spyCommand.facade).getDownloadProgress();
 
         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
@@ -224,13 +220,12 @@ public class TestDownloadCommand extends AbstractTestCommand {
         final Version versionToUpdate = Version.valueOf("1.0.0");
         final Artifact imArtifact = createArtifact(InstallManagerArtifact.NAME);
 
-        UpdatesArtifactInfo updateInfo = new UpdatesArtifactInfo();
-        updateInfo.setArtifact(imArtifact.getName());
-        updateInfo.setVersion(versionToUpdate.toString());
-        updateInfo.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+        UpdateArtifactInfo updateInfo = UpdateArtifactInfo.createInstance(imArtifact.getName(),
+                                                                          versionToUpdate.toString(),
+                                                                          UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
         doReturn(Collections.singletonList(updateInfo)).when(spyCommand.facade).getAllUpdates(imArtifact);
 
-        doReturn(new DownloadProgressResponse(DownloadArtifactStatus.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
+        doReturn(new DownloadProgressResponse(DownloadArtifactInfo.Status.DOWNLOADED, null, 100, Collections.EMPTY_LIST))
             .when(spyCommand.facade).getDownloadProgress();
 
         InstallOptions installOptions = new InstallOptions();
@@ -242,7 +237,7 @@ public class TestDownloadCommand extends AbstractTestCommand {
         String stepId = "1";
         doReturn(stepId).when(spyCommand.facade).update(imArtifact, versionToUpdate, installOptions);
         InstallArtifactStepInfo installStepInfo = new InstallArtifactStepInfo();
-        installStepInfo.setStatus(InstallArtifactStatus.FAILURE);
+        installStepInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
         installStepInfo.setMessage("Install error.");
         doReturn(installStepInfo).when(spyCommand.facade).getUpdateStepInfo(stepId);
 

@@ -21,7 +21,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.InstallResponse;
 import com.codenvy.im.response.ResponseCode;
@@ -124,12 +123,12 @@ public class InstallCommand extends AbstractIMCommand {
 
         try {
             facade.reinstall(createArtifact(artifactName));
-            installArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
+            installArtifactInfo.setStatus(InstallArtifactInfo.Status.SUCCESS);
             installResponse.setStatus(ResponseCode.OK);
             console.println(toJson(installResponse));
 
         } catch (Exception e) {
-            installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
+            installArtifactInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
             installResponse.setStatus(ResponseCode.ERROR);
             installResponse.setMessage(e.getMessage());
             console.printResponseExitInError(installResponse);
@@ -201,10 +200,7 @@ public class InstallCommand extends AbstractIMCommand {
             maxInfoLen = max(maxInfoLen, i.length());
         }
 
-        InstallArtifactInfo installArtifactInfo = new InstallArtifactInfo();
-        installArtifactInfo.setArtifact(artifactName);
-        installArtifactInfo.setVersion(versionNumber);
-        installArtifactInfo.setStatus(InstallArtifactStatus.SUCCESS);
+        InstallArtifactInfo installArtifactInfo = InstallArtifactInfo.createInstance(artifactName, versionNumber, InstallArtifactInfo.Status.SUCCESS);
 
         InstallResponse installResponse = new InstallResponse();
         installResponse.setStatus(ResponseCode.OK);
@@ -231,13 +227,13 @@ public class InstallCommand extends AbstractIMCommand {
                     }
                     facade.waitForInstallStepCompleted(stepId);
                     InstallArtifactStepInfo updateStepInfo = facade.getUpdateStepInfo(stepId);
-                    if (updateStepInfo.getStatus() == InstallArtifactStatus.FAILURE) {
+                    if (updateStepInfo.getStatus() == InstallArtifactInfo.Status.FAILURE) {
                         installResponse.setStatus(ResponseCode.ERROR);
                         installResponse.setMessage(updateStepInfo.getMessage());
-                        installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
+                        installArtifactInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
                     }
                 } catch (Exception e) {
-                    installArtifactInfo.setStatus(InstallArtifactStatus.FAILURE);
+                    installArtifactInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
                     installResponse.setStatus(ResponseCode.ERROR);
                     installResponse.setMessage(e.getMessage());
                 }

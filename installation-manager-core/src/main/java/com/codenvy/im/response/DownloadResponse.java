@@ -37,7 +37,7 @@ public class DownloadResponse implements Response {
 
     public DownloadResponse(DownloadProgressResponse downloadProgressResponse) {
         this.artifacts = new ArrayList<>(downloadProgressResponse.getArtifacts());
-        this.status = downloadProgressResponse.getStatus() == DownloadArtifactStatus.FAILED ? ResponseCode.ERROR : ResponseCode.OK;
+        this.status = downloadProgressResponse.getStatus() == DownloadArtifactInfo.Status.FAILED ? ResponseCode.ERROR : ResponseCode.OK;
         this.message = downloadProgressResponse.getMessage();
     }
 

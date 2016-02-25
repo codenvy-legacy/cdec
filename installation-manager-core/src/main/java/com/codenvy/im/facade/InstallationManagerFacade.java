@@ -37,17 +37,13 @@ import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
-import com.codenvy.im.response.ArtifactStatus;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.response.DownloadArtifactStatus;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.response.UpdatesArtifactInfo;
-import com.codenvy.im.response.UpdatesArtifactStatus;
+import com.codenvy.im.response.UpdateArtifactInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
@@ -216,12 +212,12 @@ public class InstallationManagerFacade {
 
                             try {
                                 if (installManager.isInstallable(entry.getKey(), versionEntry.getKey())) {
-                                    info.setStatus(DownloadArtifactStatus.READY_TO_INSTALL);
+                                    info.setStatus(DownloadArtifactInfo.Status.READY_TO_INSTALL);
                                 } else {
-                                    info.setStatus(DownloadArtifactStatus.DOWNLOADED);
+                                    info.setStatus(DownloadArtifactInfo.Status.DOWNLOADED);
                                 }
                             } catch (IOException e) {
-                                info.setStatus(DownloadArtifactStatus.DOWNLOADED);
+                                info.setStatus(DownloadArtifactInfo.Status.DOWNLOADED);
                             }
 
                             l.add(info);
@@ -245,23 +241,21 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#getUpdates()
      */
-    public Collection<UpdatesArtifactInfo> getUpdates() throws IOException {
+    public Collection<UpdateArtifactInfo> getUpdates() throws IOException {
         Map<Artifact, Version> updates = downloadManager.getUpdates();
 
-        return FluentIterable.from(updates.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactInfo>() {
+        return FluentIterable.from(updates.entrySet()).transform(new Function<Map.Entry<Artifact, Version>, UpdateArtifactInfo>() {
             @Override
-            public UpdatesArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
+            public UpdateArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
                 Artifact artifact = entry.getKey();
                 Version version = entry.getValue();
 
-                UpdatesArtifactInfo info = new UpdatesArtifactInfo();
-                info.setArtifact(artifact.getName());
-                info.setVersion(version.toString());
+                UpdateArtifactInfo info = UpdateArtifactInfo.createInstance(artifact.getName(), version.toString());
                 try {
                     if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
-                        info.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+                        info.setStatus(UpdateArtifactInfo.Status.DOWNLOADED);
                     } else {
-                        info.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+                        info.setStatus(UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
                     }
                 } catch (IOException e) {
                     // simply ignore
@@ -275,25 +269,23 @@ public class InstallationManagerFacade {
     /**
      * @see com.codenvy.im.managers.DownloadManager#getAllUpdates
      */
-    public List<UpdatesArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
+    public List<UpdateArtifactInfo> getAllUpdates(Artifact artifact) throws IOException, JsonParseException {
         Collection<Map.Entry<Artifact, Version>> allUpdates = downloadManager.getAllUpdates(artifact);
 
-        List<UpdatesArtifactInfo> infos = new ArrayList<>();
+        List<UpdateArtifactInfo> infos = new ArrayList<>();
 
-        infos.addAll(FluentIterable.from(allUpdates).transform(new Function<Map.Entry<Artifact, Version>, UpdatesArtifactInfo>() {
+        infos.addAll(FluentIterable.from(allUpdates).transform(new Function<Map.Entry<Artifact, Version>, UpdateArtifactInfo>() {
             @Override
-            public UpdatesArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
+            public UpdateArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
                 Artifact artifact = entry.getKey();
                 Version version = entry.getValue();
 
-                UpdatesArtifactInfo info = new UpdatesArtifactInfo();
-                info.setArtifact(artifact.getName());
-                info.setVersion(version.toString());
+                UpdateArtifactInfo info = UpdateArtifactInfo.createInstance(artifact.getName(), version.toString());
                 try {
                     if (downloadManager.getDownloadedVersions(artifact).containsKey(version)) {
-                        info.setStatus(UpdatesArtifactStatus.DOWNLOADED);
+                        info.setStatus(UpdateArtifactInfo.Status.DOWNLOADED);
                     } else {
-                        info.setStatus(UpdatesArtifactStatus.AVAILABLE_TO_DOWNLOAD);
+                        info.setStatus(UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
                     }
                 } catch (IOException e) {
                     // simply ignore
@@ -316,11 +308,9 @@ public class InstallationManagerFacade {
                              .transform(new Function<Map.Entry<Artifact, Version>, InstallArtifactInfo>() {
                                  @Override
                                  public InstallArtifactInfo apply(Map.Entry<Artifact, Version> entry) {
-                                     InstallArtifactInfo info = new InstallArtifactInfo();
-                                     info.setArtifact(entry.getKey().getName());
-                                     info.setVersion(entry.getValue().toString());
-                                     info.setStatus(InstallArtifactStatus.SUCCESS);
-                                     return info;
+                                     return InstallArtifactInfo.createInstance(entry.getKey().getName(),
+                                                                               entry.getValue().toString(),
+                                                                               InstallArtifactInfo.Status.SUCCESS);
                                  }
                              }).toList();
     }
@@ -341,7 +331,7 @@ public class InstallationManagerFacade {
                         ArtifactInfo info = new ArtifactInfo();
                         info.setArtifact(entry.getKey().getName());
                         info.setVersion(entry.getValue().toString());
-                        info.setStatus(ArtifactStatus.INSTALLED);
+                        info.setStatus(ArtifactInfo.Status.INSTALLED);
                         return info;
                     }
                 }).toList());
@@ -364,12 +354,12 @@ public class InstallationManagerFacade {
 
                                 try {
                                     if (installManager.isInstallable(entry.getKey(), versionEntry.getKey())) {
-                                        info.setStatus(ArtifactStatus.READY_TO_INSTALL);
+                                        info.setStatus(ArtifactInfo.Status.READY_TO_INSTALL);
                                     } else {
-                                        info.setStatus(ArtifactStatus.DOWNLOADED);
+                                        info.setStatus(ArtifactInfo.Status.DOWNLOADED);
                                     }
                                 } catch (IOException e) {
-                                    info.setStatus(ArtifactStatus.DOWNLOADED);
+                                    info.setStatus(ArtifactInfo.Status.DOWNLOADED);
                                 }
 
                                 l.add(info);

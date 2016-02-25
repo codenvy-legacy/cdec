@@ -26,7 +26,6 @@ import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.InstallOptions;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
@@ -133,7 +132,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
-        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+        doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -173,7 +172,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
-        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+        doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -313,7 +312,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
         
         InstallArtifactStepInfo testInstallArtifactStepInfo = new InstallArtifactStepInfo();
-        testInstallArtifactStepInfo.setStatus(InstallArtifactStatus.FAILURE);
+        testInstallArtifactStepInfo.setStatus(InstallArtifactInfo.Status.FAILURE);
         testInstallArtifactStepInfo.setMessage(ERROR_MESSAGE);
 
         doReturn(testInstallArtifactStepInfo).when(facade).getUpdateStepInfo(anyString());
@@ -382,12 +381,13 @@ public class TestInstallCommand extends AbstractTestCommand {
     }
 
      @Test
-    public void testListInstalledArtifacts() throws Exception {		
-        doReturn(ImmutableList.of(new InstallArtifactInfo().withArtifact("codenvy")		
-                                                           .withVersion("1.0.1")		
-                                                           .withStatus(InstallArtifactStatus.SUCCESS))).when(facade).getInstalledVersions();		
-		
-        CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);		
+    public void testListInstalledArtifacts() throws Exception {
+         doReturn(ImmutableList.of(InstallArtifactInfo.createInstance("codenvy",
+                                                                      "1.0.1",
+                                                                      InstallArtifactInfo.Status.SUCCESS)))
+             .when(facade).getInstalledVersions();
+
+         CommandInvoker commandInvoker = new CommandInvoker(spyCommand, commandSession);
         commandInvoker.option("--list", Boolean.TRUE);		
 		
         CommandInvoker.Result result = commandInvoker.invoke();		
@@ -595,7 +595,7 @@ public class TestInstallCommand extends AbstractTestCommand {
     @Test
     public void shouldNotInterruptInstallIfLoggingToSaasCodenvyFail() throws Exception {
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
-        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+        doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -627,7 +627,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
-        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+        doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -655,7 +655,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
-        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+        doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));
@@ -697,7 +697,7 @@ public class TestInstallCommand extends AbstractTestCommand {
         ArgumentCaptor<Event> eventArgument = ArgumentCaptor.forClass(Event.class);
 
         InstallArtifactStepInfo info = mock(InstallArtifactStepInfo.class);
-        doReturn(InstallArtifactStatus.SUCCESS).when(info).getStatus();
+        doReturn(InstallArtifactInfo.Status.SUCCESS).when(info).getStatus();
 
         doReturn(info).when(facade).getUpdateStepInfo(anyString());
         doReturn("id").when(facade).install(any(Artifact.class), any(Version.class), any(InstallOptions.class));

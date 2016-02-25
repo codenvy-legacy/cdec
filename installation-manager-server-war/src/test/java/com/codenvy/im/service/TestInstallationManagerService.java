@@ -18,6 +18,7 @@ import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
+import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.facade.IMCliFilteredFacade;
 import com.codenvy.im.managers.BackupConfig;
@@ -34,7 +35,6 @@ import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy4Impl;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
-import com.codenvy.im.response.InstallArtifactStatus;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
@@ -235,9 +235,10 @@ public class TestInstallationManagerService  {
 
     @Test
     public void testGetInstalledVersionsShouldReturnOkStatus() throws Exception {
-        doReturn(ImmutableList.of(new InstallArtifactInfo().withVersion("1.0.1")
-                                                             .withArtifact("codenvy")
-                                                             .withStatus(InstallArtifactStatus.SUCCESS))).when(mockFacade).getInstalledVersions();
+        doReturn(ImmutableList.of(InstallArtifactInfo.createInstance(CDECArtifact.NAME,
+                                                                     "1.0.1",
+                                                                     InstallArtifactInfo.Status.SUCCESS)))
+            .when(mockFacade).getInstalledVersions();
 
         Response result = service.getInstalledVersions();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
