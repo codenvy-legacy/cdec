@@ -22,7 +22,6 @@ import com.codenvy.im.cli.preferences.PreferencesStorage;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
 import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
-import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
@@ -166,10 +165,34 @@ public class TestVersionCommand extends AbstractTestCommand {
              "{\n"
              + "  \"artifact\" : \"codenvy\",\n"
              + "  \"version\" : \"1.0.1\",\n"
-             + "  \"label\" : \"UNSTABLE\",\n"
-             + "  \"status\" : \"You are running the latest unstable version of Codenvy!\"\n"
+             + "  \"label\" : \"UNSTABLE\"\n"
              + "}\n"},
 
+            {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
+                              INSTALLED_CDEC_1_0_1_STABLE),
+
+             ImmutableList.of(UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_DOWNLOADED),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"version\" : \"1.0.1\",\n"
+             + "  \"label\" : \"STABLE\",\n"
+             + "  \"availableVersion\" : {\n"
+             + "    \"unstable\" : \"1.0.3-SNAPSHOT\"\n"
+             + "  },\n"
+             + "  \"status\" : \"You are running the latest stable version of Codenvy!\"\n"
+             + "}\n"},
+
+            {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
+                              INSTALLED_CDEC_1_0_1_UNSTABLE),
+             ImmutableList.of(UPDATE_CDEC_1_0_3_SNAPSHOT_UNSTABLE_DOWNLOADED),
+             "{\n"
+             + "  \"artifact\" : \"codenvy\",\n"
+             + "  \"version\" : \"1.0.1\",\n"
+             + "  \"label\" : \"UNSTABLE\",\n"
+             + "  \"availableVersion\" : {\n"
+             + "    \"unstable\" : \"1.0.3-SNAPSHOT\"\n"
+             + "  }\n"
+             + "}\n"},
 
             {ImmutableList.of(INSTALLED_IM_1_0_1_STABLE,
                               INSTALLED_CDEC_1_0_1_STABLE),

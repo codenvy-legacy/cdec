@@ -36,11 +36,10 @@ import static com.codenvy.im.utils.Commons.toJson;
  */
 @Command(scope = "codenvy", name = "im-version", description = "Print the list of available latest versions and installed ones")
 public class VersionCommand extends AbstractIMCommand {
-    private static final String LATEST_STABLE_VERSION_MESSAGE   = "You are running the latest stable version of Codenvy!";
-    private static final String LATEST_UNSTABLE_VERSION_MESSAGE = "You are running the latest unstable version of Codenvy!";
-    private static final String NEW_VERSION_MESSAGE             = "There is a new stable version of Codenvy available. %s";
-    private static final String SUFFIX_WHEN_DOWNLOADED          = "Run im-install to install it.";
-    private static final String SUFFIX_WHEN_NOT_DOWNLOADED      = "Run im-download %s.";
+    private static final String LATEST_STABLE_VERSION_MESSAGE = "You are running the latest stable version of Codenvy!";
+    private static final String NEW_STABLE_VERSION_MESSAGE    = "There is a new stable version of Codenvy available. %s";
+    private static final String SUFFIX_WHEN_DOWNLOADED        = "Run im-install to install it.";
+    private static final String SUFFIX_WHEN_NOT_DOWNLOADED    = "Run im-download %s.";
 
     @Override
     protected void doExecuteCommand() throws Exception {
@@ -117,15 +116,11 @@ public class VersionCommand extends AbstractIMCommand {
                 suffix = String.format(SUFFIX_WHEN_NOT_DOWNLOADED, info.getAvailableVersion().getStable());
             }
 
-            return String.format(NEW_VERSION_MESSAGE, suffix);
+            return String.format(NEW_STABLE_VERSION_MESSAGE, suffix);
         }
 
         if (info.getLabel().equals(VersionLabel.STABLE)) {
             return LATEST_STABLE_VERSION_MESSAGE;
-        }
-
-        if (info.getLabel().equals(VersionLabel.UNSTABLE)) {
-            return LATEST_UNSTABLE_VERSION_MESSAGE;
         }
 
         return null;

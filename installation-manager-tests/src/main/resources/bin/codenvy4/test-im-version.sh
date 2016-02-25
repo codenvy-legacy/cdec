@@ -34,6 +34,6 @@ validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 
 executeIMCommand "im-version"
 # check issue [CDEC-561]
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY4_VERSION}\".*\"label\".\:.\"UNSTABLE\".*\"status\".\:.\"You are running the latest unstable version of Codenvy!\".*"
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY4_VERSION}\".*\"label\".\:.\"UNSTABLE\".*"
 
 vagrantDestroy
