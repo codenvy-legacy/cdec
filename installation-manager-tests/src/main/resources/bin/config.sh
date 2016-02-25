@@ -30,7 +30,8 @@ LATEST_CODENVY3_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(3[^"]
 
 PREV_CODENVY4_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(4[^"]*\)","4[^"]*".*\]/\1/')
 LATEST_CODENVY4_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\(4[^"]*\)".*/\1/')
-LATEST_STABLE_CODENVY4_VERSION="4.0.0-RC3"
+
+LATEST_STABLE_CODENVY_VERSION=$(echo ${AVAILABLE_CODENVY_VERSIONS} | sed 's/.*"\([^"]*[0-9]\)".*\]/\1/')
 
 AVAILABLE_IM_CLI_CLIENT_VERSIONS=$(curl -s -X GET ${UPDATE_SERVICE}/repository/updates/installation-manager-cli)
 PREV_IM_CLI_CLIENT_VERSION=`echo ${AVAILABLE_IM_CLI_CLIENT_VERSIONS} | sed 's/.*"\([^"]*\)","[^"]*"\]/\1/'`

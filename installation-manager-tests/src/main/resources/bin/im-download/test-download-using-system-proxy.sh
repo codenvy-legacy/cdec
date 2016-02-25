@@ -39,8 +39,7 @@ installImCliClient
 validateInstalledImCliClientVersion
 
 executeIMCommand "im-version"
-validateExpectedString ".*\"artifact\".:.\"codenvy\".*\"availableVersion\".:..*\"stable\".:.\"${LATEST_STABLE_CODENVY4_VERSION}\".*\"unstable\".:.\"${LATEST_CODENVY4_VERSION}\".*"
-
+validateExpectedString ".*\"artifact\".:.\"codenvy\".*\"availableVersion\".:..*\"stable\".:.\"${LATEST_STABLE_CODENVY_VERSION}\".*"
 
 # Ensure, there is record with info about request in the log of Squid proxy-server
 executeSshCommand "sudo grep \"GET ${UPDATE_SERVICE}\" /var/log/squid/access.log"
