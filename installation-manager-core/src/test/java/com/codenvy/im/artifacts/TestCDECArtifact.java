@@ -158,7 +158,7 @@ public class TestCDECArtifact extends BaseTest {
         assertTrue(info.size() > 1);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Codenvy On-Prem can be installed on CentOS 7 only")
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Codenvy On-Prem can be installed on CentOS 7 or RHEL 7 only")
     public void testGetInstallOnWrongOsVersion6() throws Exception {
         OSUtils.VERSION = "6";
         spyCdecArtifact.getInstallCommand(null, null, null);

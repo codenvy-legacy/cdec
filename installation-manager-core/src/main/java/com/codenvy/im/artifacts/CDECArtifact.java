@@ -209,7 +209,7 @@ public class CDECArtifact extends AbstractArtifact {
                                      final InstallOptions installOptions) throws IOException {
 
         if (!OSUtils.getVersion().equals("7")) {
-            throw new IllegalStateException("Codenvy On-Prem can be installed on CentOS 7 only");
+            throw new IllegalStateException("Codenvy On-Prem can be installed on CentOS 7 or RHEL 7 only");
         }
 
         return getHelper(installOptions.getInstallType())

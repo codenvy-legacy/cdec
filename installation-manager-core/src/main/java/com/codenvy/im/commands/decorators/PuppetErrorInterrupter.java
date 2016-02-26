@@ -230,21 +230,17 @@ public class PuppetErrorInterrupter implements Command {
 
         Config codenvyConfig = configManager.loadInstalledCodenvyConfig();
         String hostUrl = codenvyConfig.getHostUrl();
-        String systemAdminName = codenvyConfig.getValue(Config.ADMIN_LDAP_USER_NAME);
-        char[] systemAdminPassword = codenvyConfig.getValue(Config.ADMIN_LDAP_PASSWORD).toCharArray();
         InstallType installType = configManager.detectInstallationType();
         String docsUrlToken = installType == InstallType.SINGLE_SERVER ? "single" : "multi";
 
         return puppetErrorMessage + format(". At the time puppet is continue Codenvy installation in background and is trying to fix this issue."
                                            +
-                                           " Check administrator dashboard page http://%s/admin to verify installation success (credentials: %s/%s)."
+                                           " Check administrator dashboard page http://%s/admin to verify installation success."
                                            + " If the installation eventually fails, contact support with error report %s."
                                            +
                                            " Installation & Troubleshooting Docs: http://docs.codenvy" +
                                            ".com/onpremises/installation-%s-node/#install-troubleshooting.",
                                            hostUrl,
-                                           systemAdminName,
-                                           String.valueOf(systemAdminPassword),
                                            errorReport.toString(),
                                            docsUrlToken
                                           );

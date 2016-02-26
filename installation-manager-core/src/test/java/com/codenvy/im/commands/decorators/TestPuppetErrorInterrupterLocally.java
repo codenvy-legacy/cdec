@@ -83,8 +83,7 @@ public class TestPuppetErrorInterrupterLocally extends BaseTestPuppetErrorInterr
                                                           "At the time puppet is continue Codenvy installation in background and is trying to fix " +
                                                           "this issue. "
                                                           +
-                                                          "Check administrator dashboard page http://localhost/admin to verify installation success" +
-                                                          " [(]credentials: admin/password[)]. "
+                                                          "Check administrator dashboard page http://localhost/admin to verify installation success. "
                                                           +
                                                           "If the installation eventually fails, contact support with error report " +
                                                           "target/reports/error_report_.*.tar.gz. "

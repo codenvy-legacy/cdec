@@ -93,7 +93,7 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
             Pattern errorMessagePattern = Pattern.compile(
                 "Puppet error: 'Could not retrieve catalog from remote server: No route to host - connect[(]2[)]'. " +
                 "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. " +
-                "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. " +
+                "Check administrator dashboard page http://localhost/admin to verify installation success. " +
                 "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. " +
                 "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node/#install-troubleshooting.");
 
@@ -150,7 +150,7 @@ public class TestPuppetErrorInterrupterOnNode extends BaseTestPuppetErrorInterru
             Pattern errorMessagePattern = Pattern.compile(
                 "Puppet error at the API node '127.0.0.1': 'Could not retrieve catalog from remote server: No route to host - connect[(]2[)]'. "
                 + "At the time puppet is continue Codenvy installation in background and is trying to fix this issue. "
-                + "Check administrator dashboard page http://localhost/admin to verify installation success [(]credentials: admin/password[)]. "
+                + "Check administrator dashboard page http://localhost/admin to verify installation success. "
                 + "If the installation eventually fails, contact support with error report target/reports/error_report_.*.tar.gz. "
                 + "Installation & Troubleshooting Docs: http://docs.codenvy.com/onpremises/installation-multi-node/#install-troubleshooting.");
 
