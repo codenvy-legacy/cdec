@@ -26,7 +26,7 @@ vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 installImCliClient
 validateInstalledImCliClientVersion
 
-auth "prodadmin" "CodenvyAdmin" "${SAAS_SERVER}"
+doAuth "prodadmin" "CodenvyAdmin" "" "${SAAS_SERVER}"
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 UUID_MEMBER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
