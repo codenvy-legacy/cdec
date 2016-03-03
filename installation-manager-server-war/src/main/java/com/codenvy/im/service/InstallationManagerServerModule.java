@@ -19,10 +19,10 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.commons.schedule.executor.ScheduleModule;
 import org.eclipse.che.inject.DynaModule;
+import org.eclipse.che.swagger.deploy.DocsModule;
 
 /** @author Dmytro Nochevnov */
 @DynaModule
@@ -38,5 +38,6 @@ public class InstallationManagerServerModule extends AbstractModule {
         Multibinder.newSetBinder(this.binder(), Artifact.class).addBinding().to(CDECArtifact.class);
 
         install(new ScheduleModule());
+        install(new DocsModule());
     }
 }

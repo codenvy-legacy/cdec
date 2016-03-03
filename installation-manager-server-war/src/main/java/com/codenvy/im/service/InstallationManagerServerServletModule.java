@@ -23,7 +23,9 @@ import com.google.inject.servlet.ServletModule;
 import org.eclipse.che.inject.DynaModule;
 import org.everrest.guice.servlet.GuiceEverrestServlet;
 
-/** @author Dmytro Nochevnov */
+/**
+ * @author Dmytro Nochevnov
+ */
 @DynaModule
 public class InstallationManagerServerServletModule extends ServletModule {
 
@@ -40,19 +42,14 @@ public class InstallationManagerServerServletModule extends ServletModule {
 
         filterRegex("/(?!_sso/).*$").through(LoginFilter.class);
         install(new SsoClientServletModule());
-        install(new IMSwaggerConfigurationModule());
         serve("/*").with(GuiceEverrestServlet.class);
-    }
 
-    public class IMSwaggerConfigurationModule extends ServletModule {
-        @Override
-        protected void configureServlets() {
-            bind(io.swagger.jaxrs.config.DefaultJaxrsConfig.class).asEagerSingleton();
-            serve("/swaggerinit").with(io.swagger.jaxrs.config.DefaultJaxrsConfig.class, ImmutableMap
-                .of("api.version", "1.0",
-                    "swagger.api.title", "Installation Manager REST API",
-                    "swagger.api.basepath", "/im"
-                ));
-        }
+        // configure swagger to display IM API docs
+        bind(io.swagger.jaxrs.config.DefaultJaxrsConfig.class).asEagerSingleton();
+        serve("/swaggerinit").with(io.swagger.jaxrs.config.DefaultJaxrsConfig.class, ImmutableMap
+            .of("api.version", "1.0",
+                "swagger.api.title", "Installation Manager REST API",
+                "swagger.api.basepath", "/im"
+            ));
     }
 }
