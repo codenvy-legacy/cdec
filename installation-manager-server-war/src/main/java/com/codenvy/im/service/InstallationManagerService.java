@@ -14,7 +14,6 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
@@ -44,7 +43,6 @@ import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.NodeInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.HttpException;
 import com.codenvy.im.utils.IllegalVersionException;
@@ -57,12 +55,10 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
-import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.dto.server.JsonArrayImpl;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
@@ -555,60 +551,6 @@ public class InstallationManagerService {
         }
     }
 
-    /**
-     * Adds trial subscription to account.
-     */
-    @POST
-    @Path("subscription")
-    @ApiOperation(value = "Adds trial subscription to account at the SaaS Codenvy")
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Subscription added"),
-                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
-                           @ApiResponse(code = 500, message = "Server error")})
-    public Response addTrialSubscription() throws IOException, CloneNotSupportedException {
-        if (saasUserCredentials == null) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        }
-
-        try {
-            delegate.addTrialSaasSubscription(saasUserCredentials.clone());
-            return Response.status(Response.Status.CREATED).build();
-        } catch (Exception e) {
-            return handleException(e);
-        }
-    }
-
-    /**
-     * Gets OnPremises subscription for Codenvy SaaS user.
-     * User has to be logged into Codenvy SaaS using {@link #loginToCodenvySaaS} method.
-     */
-    @GET
-    @Path("subscription")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "OK"),
-                           @ApiResponse(code = 403, message = "SaaS User is not authenticated or authentication token is expired"),
-                           @ApiResponse(code = 404, message = "Subscription not found"),
-                           @ApiResponse(code = 500, message = "Server error")})
-    @ApiOperation(value = "Gets OnPremises subscription for Codenvy SaaS user", response = SubscriptionDescriptor.class)
-    public Response getOnPremisesSaasSubscription() {
-        if (saasUserCredentials == null) {
-            return Response.status(Response.Status.FORBIDDEN).build();
-        }
-
-        try {
-            SubscriptionDescriptor descriptor = delegate.getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, saasUserCredentials);
-            if (descriptor == null) {
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-
-            // remove useless info, since links point to Codenvy SaaS API
-            descriptor.setLinks(null);
-
-            return Response.ok(toJson(descriptor)).build();
-        } catch (Exception e) {
-            return handleException(e);
-        }
-    }
-
     @POST
     @Path("login")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -626,13 +568,6 @@ public class InstallationManagerService {
 
             Token token = delegate.loginToCodenvySaaS(credentials);
             SaasUserCredentials saasUserCredentials = new SaasUserCredentials(token.getValue());
-
-            // get SaaS account id where user is owner
-            AccountReference accountRef = delegate.getAccountWhereUserIsOwner(null, saasUserCredentials.getToken());
-            if (accountRef == null) {
-                throw new ApiException(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
-            }
-            saasUserCredentials.setAccountId(accountRef.getId());
 
             // cache SaaS user credentials into the state of service
             this.saasUserCredentials = saasUserCredentials;

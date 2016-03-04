@@ -14,12 +14,9 @@
  */
 package com.codenvy.im.cli.command;
 
-import com.codenvy.im.saas.SaasAccountServiceProxy;
-
 import org.apache.karaf.shell.commands.Argument;
 import org.apache.karaf.shell.commands.Command;
 import org.apache.karaf.shell.commands.Option;
-import org.eclipse.che.api.account.shared.dto.AccountReference;
 
 import static java.lang.String.format;
 
@@ -34,9 +31,6 @@ public class LoginCommand extends AbstractIMCommand {
 
     @Argument(name = "password", description = "The user's password", required = false, multiValued = false, index = 1)
     private String password;
-
-    @Argument(name = "accountName", description = "The user's account name", required = false, multiValued = false, index = 2)
-    private String accountName;
 
     @Option(name = "--remote", description = "Name of the remote codenvy", required = false)
     private String remoteName;
@@ -70,30 +64,8 @@ public class LoginCommand extends AbstractIMCommand {
                 return;
             }
 
-            AccountReference accountReference = getAccountReferenceWhereUserIsOwner(accountName);
-            if (accountReference == null) {
-                preferencesStorage.invalidate();
-                if (accountName == null) {
-                    console.printErrorAndExit(SaasAccountServiceProxy.CANNOT_RECOGNISE_ACCOUNT_NAME_MSG);
-                } else {
-                    console.printErrorAndExit("Account '" + accountName + "' is not yours or may be you aren't owner of this account.");
-                }
-                return;
-            }
-
-            if (accountName == null) {
-                console.printSuccess(format(SaasAccountServiceProxy.USE_ACCOUNT_MESSAGE_TEMPLATE, accountReference.getName()));
-            }
-
-            preferencesStorage.setAccountId(accountReference.getId());
             console.printSuccess("Login success.");
-
-            facade.addTrialSaasSubscription(getCredentials());
         } catch (Exception e) {
-            if (preferencesStorage != null) {
-                preferencesStorage.invalidate();
-            }
-
             throw e;
         }
     }

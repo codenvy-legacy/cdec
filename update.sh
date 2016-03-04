@@ -58,7 +58,7 @@ deleteFileIfExists() {
     ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "tar -xvf ${filename} -C update-server-tomcat"
 
     echo "==== Step [6/7] =======================> [Starting up on ${AS_IP}]"
-    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin; ./catalina.sh start"
+    ssh -i ~/.ssh/${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "cd ${home}/bin; ./catalina.sh jpda start"
 
     AS_STATE='Starting'
     testfile=/tmp/catalina.log

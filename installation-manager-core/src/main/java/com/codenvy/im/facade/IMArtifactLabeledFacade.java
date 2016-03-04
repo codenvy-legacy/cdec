@@ -16,28 +16,26 @@ package com.codenvy.im.facade;
 
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.VersionLabel;
-import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.license.CodenvyLicenseManager;
+import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.DownloadNotStartedException;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.LdapManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
-import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.AbstractArtifactInfo;
+import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.json.JsonParseException;
 
@@ -64,7 +62,6 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
                                    @Named("saas.api.endpoint") String saasServerEndpoint,
                                    HttpTransport transport,
                                    SaasAuthServiceProxy saasAuthServiceProxy,
-                                   SaasAccountServiceProxy saasAccountServiceProxy,
                                    SaasRepositoryServiceProxy saasRepositoryServiceProxy,
                                    LdapManager ldapManager,
                                    NodeManager nodeManager,
@@ -78,7 +75,6 @@ public class IMArtifactLabeledFacade extends InstallationManagerFacade {
               saasServerEndpoint,
               transport,
               saasAuthServiceProxy,
-              saasAccountServiceProxy,
               saasRepositoryServiceProxy,
               ldapManager,
               nodeManager,

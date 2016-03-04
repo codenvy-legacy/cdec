@@ -17,15 +17,14 @@ package com.codenvy.im.facade;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
+import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.LdapManager;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
@@ -60,8 +59,6 @@ public class TestDownloadInstallationManagerFacade {
     @Mock
     private SaasAuthServiceProxy       saasAuthServiceProxy;
     @Mock
-    private SaasAccountServiceProxy    saasAccountServiceProxy;
-    @Mock
     private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
     private HttpTransport              transport;
@@ -93,7 +90,6 @@ public class TestDownloadInstallationManagerFacade {
                                                                    "saas/endpoint",
                                                                    transport,
                                                                    saasAuthServiceProxy,
-                                                                   saasAccountServiceProxy,
                                                                    saasRepositoryServiceProxy,
                                                                    ldapManager,
                                                                    nodeManager,

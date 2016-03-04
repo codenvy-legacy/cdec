@@ -15,13 +15,11 @@
 package com.codenvy.im.update;
 
 
-import com.codenvy.api.subscription.shared.dto.NewSubscription;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
 import com.codenvy.im.event.Event;
 import com.codenvy.im.event.EventFactory;
 import com.codenvy.im.event.EventLogger;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.IllegalVersionException;
@@ -37,15 +35,13 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.rest.annotations.GenerateLink;
-import org.eclipse.che.commons.json.JsonParseException;
+import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.commons.user.User;
-import org.eclipse.che.dto.server.DtoFactory;
 import org.eclipse.che.dto.server.JsonArrayImpl;
 import org.eclipse.che.dto.server.JsonStringMapImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eclipse.che.commons.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -76,9 +72,6 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static com.codenvy.im.artifacts.ArtifactProperties.PUBLIC_PROPERTIES;
-import static com.codenvy.im.saas.SaasAccountServiceProxy.ON_PREMISES;
-import static com.codenvy.im.utils.Commons.asMap;
-import static com.codenvy.im.utils.Commons.combinePaths;
 import static java.lang.String.format;
 
 
@@ -104,7 +97,6 @@ public class RepositoryService {
     private final UserManager             userManager;
     private final MailUtil                mailUtil;
     private final SaasUserServiceProxy    saasUserServiceProxy;
-    private final SaasAccountServiceProxy saasAccountServiceProxy;
     private final EventLogger             eventLogger;
 
     @Inject
@@ -114,7 +106,6 @@ public class RepositoryService {
                              HttpTransport httpTransport,
                              MailUtil mailUtil,
                              SaasUserServiceProxy saasUserServiceProxy,
-                             SaasAccountServiceProxy saasAccountServiceProxy,
                              EventLogger eventLogger) {
         this.artifactStorage = artifactStorage;
         this.httpTransport = httpTransport;
@@ -122,7 +113,6 @@ public class RepositoryService {
         this.userManager = userManager;
         this.mailUtil = mailUtil;
         this.saasUserServiceProxy = saasUserServiceProxy;
-        this.saasAccountServiceProxy = saasAccountServiceProxy;
         this.eventLogger = eventLogger;
     }
 
@@ -241,33 +231,13 @@ public class RepositoryService {
      */
     @GenerateLink(rel = "download artifact")
     @GET
-    @Path("/download/{artifact}/{version}/{accountId}")
+    @Path("/download/{artifact}/{version}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @RolesAllowed({"user", "system/admin"})
     public Response download(@PathParam("artifact") final String artifact,
-                             @PathParam("version") final String version,
-                             @PathParam("accountId") final String accountId) {
+                             @PathParam("version") final String version) {
         try {
-            String requiredSubscription = artifactStorage.getRequiredSubscription(artifact, version);
-            String accessToken = userManager.getCurrentUser().getToken();
             String userId = userManager.getCurrentUser().getId();
-
-            if (!saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(accessToken, accountId)) {
-                return Response.status(Response.Status.FORBIDDEN)
-                               .entity(format("Unexpected error. Can't download artifact. User '%s' is not owner of the account '%s'.",
-                                              userId, accountId)).build();
-            }
-
-
-            if (requiredSubscription != null && !saasAccountServiceProxy.hasValidSubscription(requiredSubscription,
-                                                                                              accessToken,
-                                                                                              accountId)) {
-
-                return Response.status(Response.Status.FORBIDDEN)
-                               .entity("You do not have a valid subscription. You are not permitted to download '" + artifact +
-                                       (version != null ? ":" + version : "") + "'.").build();
-            }
-
             return doDownloadArtifact(artifact, version, userId);
         } catch (ArtifactNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(
@@ -348,8 +318,7 @@ public class RepositoryService {
         }
 
         if (publicURL &&
-            (artifactStorage.isAuthenticationRequired(artifact, version)
-             || artifactStorage.getRequiredSubscription(artifact, version) != null)) {
+            (artifactStorage.isAuthenticationRequired(artifact, version))) {
             return Response.status(Response.Status.UNAUTHORIZED).entity("Artifact '" + artifact + "' is not in public access").build();
         }
 
@@ -452,37 +421,6 @@ public class RepositoryService {
         }
     }
 
-    /** Adds onpremises subscription to user if it hadn't one. */
-    @GenerateLink(rel = "add trial subscription")
-    @POST
-    @Path("/subscription/{accountId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({"user", "system/admin"})
-    public Response addOnpremisesSubscription(@PathParam("accountId") String accountId) {
-        final String userId = userManager.getCurrentUser().getId();
-        final String accessToken = userManager.getCurrentUser().getToken();
-
-        try {
-            if (!saasAccountServiceProxy.checkIfUserIsOwnerOfAccount(accessToken, accountId)) {
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                               .entity(format("Unexpected error. Can't add trial subscription. User '%s' is not owner of the account '%s'.",
-                                              userId, accountId)).build();
-            }
-
-            if (saasAccountServiceProxy.hasValidSubscription(ON_PREMISES, accessToken, accountId)) {
-                return Response.status(Response.Status.NO_CONTENT).build();
-            }
-
-            doAddOnpremisesSubscription(userId, accountId, accessToken);
-            sendNotificationLetter(accountId, userManager.getCurrentUser());
-
-            return Response.status(Response.Status.OK).build();
-        } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. " + e.getMessage()).build();
-        }
-    }
-
     /** Log event. */
     @GenerateLink(rel = "log event")
     @POST
@@ -508,30 +446,6 @@ public class RepositoryService {
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unexpected error. " + e.getMessage()).build();
-        }
-    }
-
-    protected void doAddOnpremisesSubscription(String userId, String accountId, String accessToken) throws IOException, JsonParseException {
-        try {
-            final String planId = "opm-free";
-            NewSubscription newSubscription = DtoFactory.newDto(NewSubscription.class)
-                                                        .withAccountId(accountId)
-                                                        .withPlanId(planId)
-                                                        .withUsePaymentSystem(false);
-
-            Map m = asMap(httpTransport.doPost(combinePaths(saasApiEndpoint, "subscription"), newSubscription, accessToken));
-            if (!m.containsKey("id")) {
-                if (m.containsKey("message")) {
-                    throw new IOException(CAN_NOT_ADD_TRIAL_SUBSCRIPTION);
-                } else {
-                    throw new IOException("Malformed response. 'id' key is missed.");
-                }
-            }
-
-            Event event = EventFactory.createImSubscriptionAddedEventWithTime(planId, userId == null ? "" : userId);
-            eventLogger.log(event);
-        } catch (IOException | JsonParseException e) {
-            throw new IOException("Can't add subscription. " + e.getMessage(), e);
         }
     }
 

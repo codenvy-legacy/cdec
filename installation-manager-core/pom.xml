@@ -35,10 +35,6 @@
         </dependency>
         <dependency>
             <groupId>com.codenvy.hosted-infrastructure</groupId>
-            <artifactId>codenvy-hosted-api-subscription</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.codenvy.hosted-infrastructure</groupId>
             <artifactId>codenvy-hosted-platform-api-impl</artifactId>
         </dependency>
         <dependency>
@@ -378,7 +374,7 @@
                                         </replace>
                                         <replace file="${project.build.directory}/classes/codenvy/installation-manager.properties">
                                             <replacetoken>saas.api.endpoint=https://codenvy.com/api</replacetoken>
-                                            <replacevalue>saas.api.endpoint=http://nightly4.codenvy-stg.com/api</replacevalue>
+                                            <replacevalue>saas.api.endpoint=https://codenvy-stg.com/api</replacevalue>
                                         </replace>
                                         <tstamp>
                                             <format offset="1" pattern="MM/dd/yyyy hh:mm aa" property="touch.time" unit="minute" />

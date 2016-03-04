@@ -22,18 +22,13 @@ import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.InstallManagerArtifact;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
-import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.AuthenticationException;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import org.apache.commons.io.FileUtils;
 import org.mockito.Mock;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -87,7 +82,6 @@ public class DownloadManagerTest extends BaseTest {
     private CDECArtifact           cdecArtifact;
     private InstallManagerArtifact installManagerArtifact;
     private DownloadManager        downloadManager;
-    private SaasUserCredentials    saasUserCredentials;
     private Path                   pathCDEC;
     private Path                   pathIM;
 
@@ -103,7 +97,6 @@ public class DownloadManagerTest extends BaseTest {
                                                   ImmutableSet.<Artifact>of(cdecArtifact, installManagerArtifact)));
         downloadManager.downloadProgress = null;
 
-        saasUserCredentials = new SaasUserCredentials("auth token", "accountId");
         pathCDEC = Paths.get("./target/cdec.zip");
         pathIM = Paths.get("./target/im.zip");
     }
@@ -248,15 +241,6 @@ public class DownloadManagerTest extends BaseTest {
     @Test
     public void testDownloadVersion() throws Exception {
         Version version100 = Version.valueOf("1.0.0");
-        when(transport.doGet("api/endpoint/account", saasUserCredentials.getToken()))
-                .thenReturn("[{"
-                            + "\"roles\":[\"" + SaasAccountServiceProxy.ACCOUNT_OWNER_ROLE + "\"],"
-                            + "\"accountReference\":{\"id\":\"" + saasUserCredentials.getAccountId() + "\"}"
-                            + "}]");
-
-        when(transport.doGet("api/endpoint/account/" + saasUserCredentials.getAccountId() + "/subscriptions", saasUserCredentials.getToken()))
-                .thenReturn("[{serviceId:\"OnPremises\"}]");
-
         when(transport.doGet(endsWith("repository/properties/" + cdecArtifact.getName() + "/" + version100.toString())))
                 .thenReturn(String.format("{\"%s\": \"true\", \"%s\":\"OnPremises\"}", AUTHENTICATION_REQUIRED_PROPERTY, SUBSCRIPTION_PROPERTY));
 
@@ -315,20 +299,14 @@ public class DownloadManagerTest extends BaseTest {
             }
         }).when(downloadManager).getLatestUpdatesToDownload(null, null);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
-                return pathCDEC;
-            }
+        doAnswer(invocationOnMock -> {
+            FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+            return pathCDEC;
         }).when(downloadManager).download(cdecArtifact, cdecVersion);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                FileUtils.writeByteArrayToFile(pathIM.toFile(), new byte[imSize]);
-                return pathIM;
-            }
+        doAnswer(invocationOnMock -> {
+            FileUtils.writeByteArrayToFile(pathIM.toFile(), new byte[imSize]);
+            return pathIM;
         }).when(downloadManager).download(installManagerArtifact, imVersion);
 
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
@@ -378,12 +356,9 @@ public class DownloadManagerTest extends BaseTest {
             }
         }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, null);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
-                return pathCDEC;
-            }
+        doAnswer(invocationOnMock -> {
+            FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+            return pathCDEC;
         }).when(downloadManager).download(cdecArtifact, cdecVersion);
 
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
@@ -422,12 +397,9 @@ public class DownloadManagerTest extends BaseTest {
             }
         }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, cdecVersion);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
-                return pathCDEC;
-            }
+        doAnswer(invocationOnMock -> {
+            FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+            return pathCDEC;
         }).when(downloadManager).download(cdecArtifact, cdecVersion);
 
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
@@ -503,16 +475,13 @@ public class DownloadManagerTest extends BaseTest {
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);
         doReturn((long)cdecSize).when(downloadManager).getBinariesSize(cdecArtifact, cdecVersion);
 
-        doAnswer(new Answer() {
-            @Override
-            public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-                downloadManager.createDownloadDescriptor(ImmutableMap.<Artifact, Version>of(cdecArtifact, cdecVersion));
+        doAnswer(invocationOnMock -> {
+            downloadManager.createDownloadDescriptor(ImmutableMap.<Artifact, Version>of(cdecArtifact, cdecVersion));
 
-                Object[] arguments = invocationOnMock.getArguments();
-                CountDownLatch countDownLatch = (CountDownLatch)arguments[2];
-                countDownLatch.countDown();
-                return null;
-            }
+            Object[] arguments = invocationOnMock.getArguments();
+            CountDownLatch countDownLatch = (CountDownLatch)arguments[2];
+            countDownLatch.countDown();
+            return null;
         }).when(downloadManager).download(any(Artifact.class), any(Version.class), any(CountDownLatch.class));
 
         downloadManager.startDownload(cdecArtifact, null);
@@ -654,12 +623,9 @@ public class DownloadManagerTest extends BaseTest {
             }
         }).when(downloadManager).getLatestUpdatesToDownload(cdecArtifact, null);
 
-        doAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
-                return pathCDEC;
-            }
+        doAnswer(invocationOnMock -> {
+            FileUtils.writeByteArrayToFile(pathCDEC.toFile(), new byte[cdecSize]);
+            return pathCDEC;
         }).when(downloadManager).download(cdecArtifact, cdecVersion);
 
         doReturn(pathCDEC).when(downloadManager).getPathToBinaries(cdecArtifact, cdecVersion);

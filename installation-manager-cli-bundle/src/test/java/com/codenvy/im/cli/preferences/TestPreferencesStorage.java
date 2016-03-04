@@ -32,7 +32,6 @@ import static org.testng.AssertJUnit.assertNull;
 public class TestPreferencesStorage {
     private final static String SAAS_SERVER_REMOTE_NAME = "saas-server";
     private final static String TEST_TOKEN              = "authToken";
-    private final static String TEST_ACCOUNT_ID         = "test-account-id";
 
     private Preferences globalPreferences;
     private final static String DEFAULT_PREFERENCES_FILE          = "default-preferences.json";
@@ -56,25 +55,7 @@ public class TestPreferencesStorage {
     private void testGetPreferencesWhenSaasServerRemoteAbsent() {
         globalPreferences = loadPreferences(DEFAULT_PREFERENCES_FILE);
         PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, SAAS_SERVER_REMOTE_NAME);
-        assertNull(preferencesStorage.getAccountId());
         assertNull(preferencesStorage.getAuthToken());
-    }
-
-    @Test
-    private void testGetAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, SAAS_SERVER_REMOTE_NAME);
-
-        assertEquals(preferencesStorage.getAccountId(), TEST_ACCOUNT_ID);
-    }
-
-    @Test
-    private void testSetAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        PreferencesStorage preferencesStorage = new PreferencesStorage(globalPreferences, SAAS_SERVER_REMOTE_NAME);
-
-        preferencesStorage.setAccountId("testAccountId");
-        assertEquals(preferencesStorage.getAccountId(), "testAccountId");
     }
 
     private Preferences loadPreferences(String preferencesFileRelativePath) {

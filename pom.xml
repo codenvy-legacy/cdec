@@ -49,18 +49,4 @@
         <maven.snapshots.repo.url>https://maven.codenvycorp.com/content/repositories/codenvy-private-snapshots/</maven.snapshots.repo.url>
         <version.license-header>codenvy-codenvy-license-resource-bundle</version.license-header>
     </properties>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.codenvy.hosted-infrastructure</groupId>
-                <artifactId>codenvy-hosted-api-creditcard</artifactId>
-                <version>4.0.0-RC3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.codenvy.hosted-infrastructure</groupId>
-                <artifactId>codenvy-hosted-api-subscription</artifactId>
-                <version>4.0.0-RC3</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 </project>

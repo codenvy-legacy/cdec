@@ -14,7 +14,6 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactNotFoundException;
 import com.codenvy.im.artifacts.ArtifactProperties;
@@ -36,7 +35,6 @@ import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpException;
@@ -46,7 +44,6 @@ import com.google.common.collect.ImmutableMap;
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
-import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -64,9 +61,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.security.Principal;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -321,85 +316,10 @@ public class TestInstallationManagerService  {
     }
 
     @Test
-    public void testAddTrialSubscriptionShouldReturnOkResponse() throws Exception {
-        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-        service.saasUserCredentials = testUserCredentials;
-
-        Response result = service.addTrialSubscription();
-        assertEquals(result.getStatus(), Response.Status.CREATED.getStatusCode());
-        verify(mockFacade).addTrialSaasSubscription(testUserCredentials);
-    }
-
-    @Test
-    public void testAddTrialSubscriptionShouldReturnForbiddenResponse() throws Exception {
-        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
-
-        Response result = service.addTrialSubscription();
-        assertEquals(result.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
-        verify(mockFacade, never()).addTrialSaasSubscription(testUserCredentials);
-    }
-
-    @Test
-    public void testGetSubscription() throws Exception {
-        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCOUNT_ID, TEST_ACCESS_TOKEN);
-
-        SimpleDateFormat subscriptionDateFormat = new SimpleDateFormat(SaasAccountServiceProxy.SUBSCRIPTION_DATE_FORMAT);
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -1);
-        String startDate = subscriptionDateFormat.format(cal.getTime());
-        cal.add(Calendar.DATE, 2);
-        String endDate = subscriptionDateFormat.format(cal.getTime());
-
-        String testSubscriptionDescriptorJson = "{\n"
-                                                + "  \"description\": \"On-Prem Commercial 25 Users\",\n"
-                                                + "  \"startDate\" : \"" + startDate + "\",\n"
-                                                + "  \"endDate\" : \"" + endDate + "\",\n"
-                                                + "  \"links\": [\n"
-                                                + "    {\n"
-                                                + "      \"href\": \"https://codenvy-stg"
-                                                + ".com/api/account/subscriptions/subscriptionoxmrh93dw3ceuegk\",\n"
-                                                + "      \"rel\": \"get subscription by id\",\n"
-                                                + "      \"produces\": \"application/json\",\n"
-                                                + "      \"parameters\": [],\n"
-                                                + "      \"method\": \"GET\"\n"
-                                                + "    }\n"
-                                                + "  ],\n"
-                                                + "  \"properties\": {\n"
-                                                + "    \"Users\": \"25\",\n"
-                                                + "    \"Package\": \"Commercial\"\n"
-                                                + "  },\n"
-                                                + "  \"id\": \"subscriptionoxmrh93dw3ceuegk\",\n"
-                                                + "  \"state\": \"ACTIVE\"\n"
-                                                + "}";
-        SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson(testSubscriptionDescriptorJson, SubscriptionDescriptor.class);
-        doReturn(descriptor).when(mockFacade).getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
-
-        service.saasUserCredentials = testUserCredentials;
-
-        Response result = service.getOnPremisesSaasSubscription();
-        assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
-        SubscriptionDescriptor subscription = Commons.createDtoFromJson((String)result.getEntity(), SubscriptionDescriptor.class);
-        assertEquals(subscription.getDescription(), "On-Prem Commercial 25 Users");
-        assertEquals(subscription.getStartDate(), startDate);
-        assertEquals(subscription.getEndDate(), endDate);
-        assertTrue(subscription.getLinks().isEmpty());
-        assertEquals(subscription.getId(), "subscriptionoxmrh93dw3ceuegk");
-        assertEquals(subscription.getState().name(), "ACTIVE");
-        assertEquals(subscription.getProperties().get("Users"), "25");
-        assertEquals(subscription.getProperties().get("Package"), "Commercial");
-
-        doThrow(new HttpException(500, "error")).when(mockFacade).getSaasSubscription(SaasAccountServiceProxy.ON_PREMISES, testUserCredentials);
-        result = service.getOnPremisesSaasSubscription();
-        assertErrorResponse(result);
-    }
-
-    @Test
     public void testLoginToSaas() throws Exception {
         Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
 
         doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId(TEST_ACCOUNT_ID).withName(TEST_ACCOUNT_NAME))
-                .when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
 
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
@@ -407,7 +327,6 @@ public class TestInstallationManagerService  {
         assertNotNull(service.saasUserCredentials);
 
         SaasUserCredentials testSaasSaasUserCredentials = service.saasUserCredentials;
-        assertEquals(testSaasSaasUserCredentials.getAccountId(), TEST_ACCOUNT_ID);
         assertEquals(testSaasSaasUserCredentials.getToken(), TEST_ACCESS_TOKEN);
     }
 
@@ -419,22 +338,9 @@ public class TestInstallationManagerService  {
         Response result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
 
-        doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doThrow(new HttpException(500, "Login error")).when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
+        doThrow(new HttpException(500, "Login error")).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
         result = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
         assertEquals(result.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
-    }
-
-
-    @Test
-    public void testLoginToSaasWhenNullAccountReference() throws Exception {
-        Credentials testSaasUsernameAndPassword = Commons.createDtoFromJson(TEST_CREDENTIALS_JSON, Credentials.class);
-
-        doReturn(new DtoServerImpls.TokenImpl().withValue(TEST_ACCESS_TOKEN)).when(mockFacade).loginToCodenvySaaS(testSaasUsernameAndPassword);
-        doReturn(null).when(mockFacade).getAccountWhereUserIsOwner(null, TEST_ACCESS_TOKEN);
-
-        Response response = service.loginToCodenvySaaS(testSaasUsernameAndPassword);
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
     }
 
     @Test
@@ -849,7 +755,7 @@ public class TestInstallationManagerService  {
 
     @Test
     public void shouldLogEventToSaasAnalyticsWhenUserLoggedIn() throws Exception {
-        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN);
         service.saasUserCredentials = testUserCredentials;
 
         Event event = new Event(Event.Type.CDEC_FIRST_LOGIN, Collections.emptyMap());
@@ -862,7 +768,7 @@ public class TestInstallationManagerService  {
 
     @Test
     public void shouldThrowBadRequestErrorIfEventHasTooManyParameters() throws Exception {
-        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN, TEST_ACCOUNT_ID);
+        SaasUserCredentials testUserCredentials = new SaasUserCredentials(TEST_ACCESS_TOKEN);
         service.saasUserCredentials = testUserCredentials;
 
         Map<String, String> parameters = new HashMap<>();

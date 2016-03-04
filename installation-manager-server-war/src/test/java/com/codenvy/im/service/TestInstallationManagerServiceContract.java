@@ -14,7 +14,6 @@
  */
 package com.codenvy.im.service;
 
-import com.codenvy.api.subscription.shared.dto.SubscriptionDescriptor;
 import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.event.Event;
@@ -36,10 +35,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.specification.RequestSpecification;
-
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
-import org.eclipse.che.dto.server.DtoFactory;
 import org.everrest.assured.EverrestJetty;
 import org.everrest.assured.JettyHttpServer;
 import org.mockito.Mock;
@@ -63,7 +60,6 @@ import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -387,72 +383,10 @@ public class TestInstallationManagerServiceContract {
                     doReturn(new DtoServerImpls.TokenImpl().withValue("token"))
                             .when(facade)
                             .loginToCodenvySaaS(Commons.createDtoFromJson("{\"username\": \"test\", \"password\": \"pwd\"}", Credentials.class));
-
-                    doReturn(new org.eclipse.che.api.account.server.dto.DtoServerImpls.AccountReferenceImpl().withId("id").withName("name"))
-                            .when(facade).getAccountWhereUserIsOwner(anyString(), anyString());
-
                 } catch (Exception e) {
                     fail(e.getMessage(), e);
                 }
 
-                return null;
-            },
-            null // assertion
-        );
-    }
-
-    @Test
-    public void testGetOnPremisesSaasSubscription() {
-        testContract(
-            "subscription",                                    // path
-            null,                                              // query parameters
-            null,                                              // request body
-            null,                                              // consume content type
-            ContentType.JSON,                                  // produce content type
-            HttpMethod.GET,                                    // HTTP method
-            "{\n"
-            + "    \"links\": [\n"
-            + "        \n"
-            + "    ],\n"
-            + "    \"properties\": {\n"
-            + "        \n"
-            + "    }\n"
-            + "}",                                             // response body
-            Response.Status.OK,                                // response status
-            o -> {                                             // before test
-                try {
-                    service.saasUserCredentials = new SaasUserCredentials("id", "token");
-
-                    SubscriptionDescriptor descriptor = DtoFactory.getInstance().createDtoFromJson("{}", SubscriptionDescriptor.class);
-                    doReturn(descriptor).when(facade).getSaasSubscription(anyString(), any(SaasUserCredentials.class));
-                } catch (Exception e) {
-                    fail(e.getMessage(), e);
-                }
-
-                return null;
-            },
-            null // assertion
-        );
-    }
-
-    @Test
-    public void testAddTrialSubscription() {
-        testContract(
-            "subscription",                                    // path
-            null,                                              // query parameters
-            null,                                              // request body
-            null,                                              // consume content type
-            null,                                  // produce content type
-            HttpMethod.POST,                                   // HTTP method
-            null,                                  // response body
-            Response.Status.CREATED,                                // response status
-            o -> {                                             // before test
-                try {
-                    service.saasUserCredentials = new SaasUserCredentials("id", "token");
-                    doNothing().when(facade).addTrialSaasSubscription(any(SaasUserCredentials.class));
-                } catch (IOException e) {
-                    fail(e.getMessage(), e);
-                }
                 return null;
             },
             null // assertion

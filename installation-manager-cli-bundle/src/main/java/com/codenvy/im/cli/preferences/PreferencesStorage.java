@@ -30,23 +30,6 @@ public class PreferencesStorage {
     }
 
     @Nullable
-    public String getAccountId() {
-        SubscriptionPreferences accountDescription = readPreference(SubscriptionPreferences.class);
-        if (accountDescription == null) {
-            return null;
-        }
-
-        return accountDescription.getAccountId();
-    }
-
-    public void setAccountId(String accountId) {
-        SubscriptionPreferences accountDescription = new SubscriptionPreferences();
-        accountDescription.setAccountId(accountId);
-
-        writePreference(accountDescription);
-    }
-
-    @Nullable
     public String getAuthToken() {
         RemoteCredentials credentials = readPreference(RemoteCredentials.class);
         if (credentials == null) {
@@ -63,9 +46,5 @@ public class PreferencesStorage {
 
     private <T> void writePreference(T preference) {
         globalPreferences.path("remotes").merge(remote, preference);
-    }
-
-    public void invalidate() {
-        setAccountId("");
     }
 }
