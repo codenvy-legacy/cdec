@@ -20,7 +20,7 @@
     <parent>
         <artifactId>maven-depmgt-pom</artifactId>
         <groupId>com.codenvy.che.depmgt</groupId>
-        <version>4.0.0-RC13</version>
+        <version>4.0.0-RC14-SNAPSHOT</version>
         <relativePath />
     </parent>
     <groupId>com.codenvy.im</groupId>
