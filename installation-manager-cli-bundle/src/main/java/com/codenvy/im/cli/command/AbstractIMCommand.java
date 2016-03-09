@@ -33,15 +33,11 @@ import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.InstallArtifactStepInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
-import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Version;
-
-import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.dto.server.DtoFactory;
 
 import javax.validation.constraints.NotNull;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -201,9 +197,7 @@ public abstract class AbstractIMCommand extends AbsCommand {
 
         if (preferencesStorage == null
             || preferencesStorage.getAuthToken() == null
-            || preferencesStorage.getAccountId() == null
-            || preferencesStorage.getAuthToken().isEmpty()
-            || preferencesStorage.getAccountId().isEmpty()) {
+            || preferencesStorage.getAuthToken().isEmpty()) {
             throw new IllegalStateException("Please log in into '" + remoteName + "' remote.");
         }
     }
@@ -244,17 +238,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
         }
     }
 
-    @Nullable
-    protected AccountReference getAccountReferenceWhereUserIsOwner(@Nullable String accountName) throws IOException {
-        SaasUserCredentials credentials = getCredentials();
-        return facade.getAccountWhereUserIsOwner(accountName, credentials.getToken());
-    }
-
-    protected SaasUserCredentials getCredentials() {
-        validateIfUserLoggedIn();
-        return new SaasUserCredentials(preferencesStorage.getAuthToken(), preferencesStorage.getAccountId());
-    }
-
     @NotNull
     private Preferences getGlobalPreferences() {
         return (Preferences)session.get(Preferences.class.getName());
@@ -282,10 +265,6 @@ public abstract class AbstractIMCommand extends AbsCommand {
     protected void createRemote(String name, String url) {
         Remote remote = getMultiRemoteCodenvy().getRemote(name);
         if (remote != null) {
-            if (preferencesStorage != null) {
-                preferencesStorage.invalidate();
-            }
-
             remote.setUrl(url);
             getGlobalPreferences().path("remotes").put(name, remote);
             return;

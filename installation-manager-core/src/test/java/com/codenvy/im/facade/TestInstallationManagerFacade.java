@@ -35,15 +35,12 @@ import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
-import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
@@ -92,8 +89,6 @@ public class TestInstallationManagerFacade extends BaseTest {
     @Mock
     private SaasAuthServiceProxy       saasAuthServiceProxy;
     @Mock
-    private SaasAccountServiceProxy    saasAccountServiceProxy;
-    @Mock
     private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
     private LdapManager                ldapManager;
@@ -123,7 +118,6 @@ public class TestInstallationManagerFacade extends BaseTest {
                                                                       "saas/endpoint",
                                                                       transport,
                                                                       saasAuthServiceProxy,
-                                                                      saasAccountServiceProxy,
                                                                       saasRepositoryServiceProxy,
                                                                       ldapManager,
                                                                       nodeManager,
@@ -508,29 +502,6 @@ public class TestInstallationManagerFacade extends BaseTest {
         assertEquals(info.getVersion(), "1.0.2");
         assertEquals(info.getArtifact(), cdecArtifact.getName());
         assertEquals(info.getStatus(), UpdateArtifactInfo.Status.AVAILABLE_TO_DOWNLOAD);
-    }
-
-
-    @Test
-    public void testHasValidSaaSSubscription() throws Exception {
-        SaasUserCredentials saasUserCredentials = new SaasUserCredentials();
-        saasUserCredentials.setAccountId("id");
-        saasUserCredentials.setToken("token");
-
-        installationManagerFacade.hasValidSaasSubscription("OnPremises", saasUserCredentials);
-
-        verify(saasAccountServiceProxy).hasValidSubscription("OnPremises", "token", "id");
-    }
-
-    @Test
-    public void testGetSubscription() throws Exception {
-        SaasUserCredentials saasUserCredentials = new SaasUserCredentials();
-        saasUserCredentials.setAccountId("id");
-        saasUserCredentials.setToken("token");
-
-        installationManagerFacade.getSaasSubscription("OnPremises", saasUserCredentials);
-
-        verify(saasAccountServiceProxy).getSubscription("OnPremises", "token", "id");
     }
 
     @Test

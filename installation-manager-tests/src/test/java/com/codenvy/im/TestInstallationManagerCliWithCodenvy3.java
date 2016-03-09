@@ -68,11 +68,6 @@ public class TestInstallationManagerCliWithCodenvy3 extends BaseTest{
         doTest("test-backup-restore-single-node.sh");
     }
 
-    @Test
-    public void testCheckOnpremisesSubscription() throws Exception {
-        doTest("im-subscription/test-check-onpremises-subscription.sh");
-    }
-
     @Test(priority = 9)
     public void testMigrationData() throws Exception {
         doTest("test-migration-data.sh");

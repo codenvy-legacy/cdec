@@ -19,15 +19,15 @@
 [ -f "./lib.sh" ] && . ./lib.sh
 [ -f "../lib.sh" ] && . ../lib.sh
 
-printAndLog "TEST CASE: Check subscription from within IM server"
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-
-installCodenvy ${LATEST_CODENVY3_VERSION}
-validateInstalledCodenvyVersion
+printAndLog "TEST CASE: Check login to Codenvy SaaS through installation manager service with Codenvy 4"
+#vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+#
+#installCodenvy ${LATEST_CODENVY4_VERSION}
+#validateInstalledCodenvyVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
-doAuth "prodadmin" "CodenvyAdmin" "" "${SAAS_SERVER}"
+auth "prodadmin" "CodenvyAdmin" "${SAAS_SERVER}"
 
 # create account
 doPost "application/json" "{\"name\":\"account-${UUID_OWNER}\"}" "${SAAS_SERVER}/api/account?token=${TOKEN}"
@@ -47,9 +47,7 @@ fetchJsonParameter "id"
 USER_OWNER_ID=${OUTPUT}
 doPost "application/json" "{\"userId\":\"${USER_OWNER_ID}\",\"roles\":[\"account/owner\"]}" "${SAAS_SERVER}/api/account/${ACCOUNT_ID}/members?token=${TOKEN}"
 
-###### test subscription
-auth "admin" "password"                   # for Codenvy3
-#doAuth "admin@codenvy.onprem" "password" # for Codenvy4
+authWithoutRealmAndServerDns "admin" "password"
 
 # need to ensure logout state
 doHttpRequest --method=POST \
@@ -57,13 +55,7 @@ doHttpRequest --method=POST \
               --output-http-code
 validateExpectedString "200"
 
-# test get subscription before login
-doHttpRequest --method=GET \
-              --url=http://${HOST_URL}/im/subscription?token=${TOKEN} \
-              --output-http-code
-validateExpectedString "403"
-
-# test login using installation manager server
+# test login
 doHttpRequest --method=POST \
               --content-type="application/json" \
               --body="{\"username\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${ACCOUNT_PASSWORD}\"}" \
@@ -71,35 +63,11 @@ doHttpRequest --method=POST \
               --output-http-code
 validateExpectedString "200"
 
-# test get subscription after login
-doHttpRequest --method=GET \
-              --url=http://${HOST_URL}/im/subscription?token=${TOKEN} \
-              --output-http-code
-validateExpectedString "404"
-
-# test add subscription after login
-doHttpRequest --method=POST \
-              --content-type="application/json" \
-              --body="{\"username\":\"${UUID_OWNER}@codenvy.com\",\"password\":\"${ACCOUNT_PASSWORD}\"}" \
-              --url="http://${HOST_URL}/im/subscription?token=${TOKEN}" \
-              --output-http-code
-validateExpectedString "201"
-
-# test get subscription after adding subscription. Example of result:
-doGet "http://${HOST_URL}/im/subscription?token=${TOKEN}"
-validateExpectedString ".*OnPremises.*([\n].*)*.*${ACCOUNT_ID}.*"
-
 # test logout
 doHttpRequest --method=POST \
               --url=http://${HOST_URL}/im/logout?token=${TOKEN} \
               --output-http-code
 validateExpectedString "200"
-
-# test get subscription after logout
-doHttpRequest --method=GET \
-              --url=http://${HOST_URL}/im/subscription?token=${TOKEN} \
-              --output-http-code
-validateExpectedString "403"
 
 printAndLog "RESULT: PASSED"
 

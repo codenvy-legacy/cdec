@@ -21,14 +21,8 @@ package com.codenvy.im.saas;
  */
 public class SaasUserCredentials implements Cloneable {
     private String token;
-    private String accountId;
 
     public SaasUserCredentials() {
-    }
-
-    public SaasUserCredentials(String token, String accountId) {
-        this.token = token;
-        this.accountId = accountId;
     }
 
     public SaasUserCredentials(String token) {
@@ -45,16 +39,6 @@ public class SaasUserCredentials implements Cloneable {
         this.token = token;
     }
 
-    /** Getter for #accountId */
-    public String getAccountId() {
-        return accountId;
-    }
-
-    /** Setter for #accountId */
-    public void setAccountId(String accountId) {
-        this.accountId = accountId;
-    }
-
     /** {@inheritDoc} */
     @Override
     public boolean equals(Object o) {
@@ -67,10 +51,6 @@ public class SaasUserCredentials implements Cloneable {
 
         SaasUserCredentials that = (SaasUserCredentials)o;
 
-        if (accountId != null ? !accountId.equals(that.accountId) : that.accountId != null) {
-            return false;
-        }
-
         if (token != null ? !token.equals(that.token) : that.token != null) {
             return false;
         }
@@ -81,10 +61,7 @@ public class SaasUserCredentials implements Cloneable {
     /** {@inheritDoc} */
     @Override
     public int hashCode() {
-        int result = token != null ? token.hashCode() : 0;
-        result = 31 * result + (accountId != null ? accountId.hashCode() : 0);
-
-        return result;
+        return token != null ? token.hashCode() : 0;
     }
 
     /** {@inheritDoc} */

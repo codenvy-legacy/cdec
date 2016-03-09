@@ -32,7 +32,7 @@ public class TestInstallationManagerCli extends BaseTest{
 
     @Test
     public void testLoginWithUsernameAndPassword() throws Exception {
-        doTest("im-login/test-login.sh");
+        doTest("im-login/test-login-to-saas-through-im-cli.sh");
     }
 
     @Test

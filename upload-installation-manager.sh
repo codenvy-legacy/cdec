@@ -101,7 +101,7 @@ uploadCodenvySingleServerInstallProperties() {
         doUpload
         [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
         [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=https:\/\/codenvy-stg.com\/update/g' ${DESTINATION}/${FILENAME}"
-        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/nightly.codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
         [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=http:\/\/updater-nightly.codenvy-dev.com\/update/g' ${DESTINATION}/${FILENAME}"
     fi
 }
@@ -117,7 +117,7 @@ uploadCodenvyMultiServerInstallProperties() {
         doUpload
         [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
         [ "${SERVER}" == "stg" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=https:\/\/codenvy-stg.com\/update/g' ${DESTINATION}/${FILENAME}"
-        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/nightly.codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
+        [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/saas_api_endpoint=https:\/\/codenvy.com\/api/saas_api_endpoint=https:\/\/codenvy-stg.com\/api/g' ${DESTINATION}/${FILENAME}"
         [ "${SERVER}" == "ngt" ] && ssh -i ${SSH_KEY_NAME} ${SSH_AS_USER_NAME}@${AS_IP} "sed -i 's/installation_manager_update_server_endpoint=https:\/\/codenvy.com\/update/installation_manager_update_server_endpoint=http:\/\/updater-nightly.codenvy-dev.com\/update/g' ${DESTINATION}/${FILENAME}"
     fi
 }

@@ -19,24 +19,22 @@ import com.codenvy.im.artifacts.Artifact;
 import com.codenvy.im.artifacts.ArtifactFactory;
 import com.codenvy.im.artifacts.CDECArtifact;
 import com.codenvy.im.artifacts.VersionLabel;
+import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.BackupManager;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
 import com.codenvy.im.managers.LdapManager;
-import com.codenvy.im.license.CodenvyLicenseManager;
 import com.codenvy.im.managers.NodeManager;
 import com.codenvy.im.managers.StorageManager;
 import com.codenvy.im.response.DownloadArtifactInfo;
 import com.codenvy.im.response.InstallArtifactInfo;
 import com.codenvy.im.response.UpdateArtifactInfo;
-import com.codenvy.im.saas.SaasAccountServiceProxy;
 import com.codenvy.im.saas.SaasAuthServiceProxy;
 import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableMap;
-
 import org.mockito.Mock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -62,8 +60,6 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
     private HttpTransport              transport;
     @Mock
     private SaasAuthServiceProxy       saasAuthServiceProxy;
-    @Mock
-    private SaasAccountServiceProxy    saasAccountServiceProxy;
     @Mock
     private SaasRepositoryServiceProxy saasRepositoryServiceProxy;
     @Mock
@@ -102,7 +98,6 @@ public class IMArtifactLabeledFacadeTest extends BaseTest {
                                                  SAAS_API_ENDPOINT,
                                                  transport,
                                                  saasAuthServiceProxy,
-                                                 saasAccountServiceProxy,
                                                  saasRepositoryServiceProxy,
                                                  ldapManager,
                                                  nodeManager,

@@ -21,12 +21,12 @@
 
 printAndLog "TEST CASE: Login"
 
-vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+#vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+#
+#installImCliClient
+#validateInstalledImCliClientVersion
 
-installImCliClient
-validateInstalledImCliClientVersion
-
-doAuth "prodadmin" "CodenvyAdmin" "" "${SAAS_SERVER}"
+auth "prodadmin" "CodenvyAdmin" "${SAAS_SERVER}"
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 UUID_MEMBER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
@@ -56,27 +56,15 @@ doPost "application/json" "{\"userId\":\"${USER_MEMBER_ID}\",\"roles\":[\"accoun
 
 # login with username and password
 executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}"
-validateExpectedString ".*Your.Codenvy.account..${ACCOUNT_NAME}..will.be.used.to.verify.on-premises.subscription.*Login.success.*"
-
-# login with username and password and account
-executeIMCommand "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "${ACCOUNT_NAME}"
 validateExpectedString ".*Login.success.*"
 
 # login with wrong password
 executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "wrong_password"
 validateExpectedString ".*Unable.to.authenticate.for.the.given.credentials.on.URL.'${SAAS_SERVER}'\..Check.the.username.and.password\..*Login.failed.on.remote.'saas-server'\..*"
 
-# login with wrong account
-executeIMCommand "--valid-exit-code=1" "login" "${UUID_OWNER}@codenvy.com" "${PASSWORD}" "wrong_account"
-validateExpectedString ".*Account.'wrong_account'.is.not.yours.or.may.be.you.aren't.owner.of.this.account\..*"
-
 # login with wrong username
 executeIMCommand "--valid-exit-code=1" "login" "wrong_username" "${PASSWORD}"
 validateExpectedString ".*Unable.to.authenticate.for.the.given.credentials.on.URL.'${SAAS_SERVER}'\..Check.the.username.and.password\..*Login.failed.on.remote.'saas-server'\..*"
-
-# login with user is not owner of his account
-executeIMCommand "--valid-exit-code=1" "login" "${UUID_MEMBER}@codenvy.com" "${PASSWORD}"
-validateExpectedString ".*You.are.logged.as.a.user.which.does.not.have.an.account/owner.role.in.any.account\..This.likely.means.that.you.used.the.wrong.credentials.to.access.Codenvy\..*"
 
 printAndLog "RESULT: PASSED"
 

@@ -22,11 +22,8 @@ import com.codenvy.cli.security.RemoteCredentials;
 import com.codenvy.client.CodenvyClient;
 import com.codenvy.client.dummy.DummyCodenvyClient;
 import com.codenvy.im.facade.IMArtifactLabeledFacade;
-import com.codenvy.im.saas.SaasUserCredentials;
-import com.codenvy.im.utils.Commons;
 import com.google.common.io.Files;
 import org.apache.felix.service.command.CommandSession;
-import org.eclipse.che.api.account.shared.dto.AccountReference;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -62,10 +59,6 @@ public class TestAbstractIMCommand {
 
     private final static String SAAS_SERVER_REMOTE_NAME = "saas-server";
     private final static String SAAS_SERVER_URL         = "https://test.com";
-    private final static String TEST_ACCOUNT_ID         = "test-account-id";
-    private static final String TEST_ACCOUNT_NAME       = "test-account-name";
-    private static final String TEST_ACCOUNT_REFERENCE  =
-        "{\"name\":\"" + TEST_ACCOUNT_NAME + "\",\"id\":\"" + TEST_ACCOUNT_ID + "\",\"links\":[]}";
     private final static String TEST_TOKEN              = "authToken";
 
     private static final String ANOTHER_REMOTE_NAME = "another remote";
@@ -74,7 +67,6 @@ public class TestAbstractIMCommand {
     private String DEFAULT_PREFERENCES_FILE                        = "default-preferences.json";
     private String PREFERENCES_WITH_SAAS_SERVER_FILE               = "preferences-with-saas-server-remote.json";
     private String PREFERENCES_WITH_SAAS_SERVER_WITHOUT_LOGIN_FILE = "preferences-with-saas-server-remote-without-login.json";
-    private String PREFERENCES_SAAS_SERVER_WITHOUT_ACCOUNT_ID_FILE = "preferences-with-saas-server-remote-without-accountid.json";
 
     private Remote saasServerRemote;
 
@@ -96,21 +88,6 @@ public class TestAbstractIMCommand {
     @Test
     public void testGetSaasServerUrl() {
         assertEquals(spyCommand.getSaasServerEndpoint(), SAAS_SERVER_URL);
-    }
-
-    @Test
-    public void testGetAccountId() throws Exception {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-
-        doReturn(Commons.createDtoFromJson(TEST_ACCOUNT_REFERENCE, AccountReference.class))
-            .when(service).getAccountWhereUserIsOwner("accountName", TEST_TOKEN);
-
-        AccountReference accountReference = spyCommand.getAccountReferenceWhereUserIsOwner("accountName");
-        assertNotNull(accountReference);
-        assertEquals(accountReference.getId(), TEST_ACCOUNT_ID);
-        assertEquals(accountReference.getName(), TEST_ACCOUNT_NAME);
     }
 
     @Test
@@ -149,7 +126,6 @@ public class TestAbstractIMCommand {
 
         assertNotNull(spyCommand.preferencesStorage);
         assertEquals(spyCommand.preferencesStorage.getAuthToken(), TEST_TOKEN);
-        assertEquals(spyCommand.preferencesStorage.getAccountId(), TEST_ACCOUNT_ID);
     }
 
     @Test(expectedExceptions = IllegalStateException.class,
@@ -168,29 +144,6 @@ public class TestAbstractIMCommand {
         prepareTestAbstractIMCommand(spyCommand);
         spyCommand.init();
         spyCommand.validateIfUserLoggedIn();
-    }
-
-    @Test(expectedExceptions = IllegalStateException.class,
-            expectedExceptionsMessageRegExp = "Please log in into 'saas-server' remote.")
-    public void testInitWhenUserDidNotObtainAccountId() {
-        globalPreferences = loadPreferences(PREFERENCES_SAAS_SERVER_WITHOUT_ACCOUNT_ID_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-        spyCommand.validateIfUserLoggedIn();
-    }
-
-    @Test
-    public void testGetCredentialsRep() throws IOException {
-        globalPreferences = loadPreferences(PREFERENCES_WITH_SAAS_SERVER_FILE);
-        prepareTestAbstractIMCommand(spyCommand);
-        spyCommand.init();
-
-        spyCommand.preferencesStorage.setAccountId("testAccountId");
-
-        SaasUserCredentials credentials = spyCommand.getCredentials();
-
-        assertEquals(credentials.getToken(), TEST_TOKEN);
-        assertEquals(credentials.getAccountId(), "testAccountId");
     }
 
     @Test
