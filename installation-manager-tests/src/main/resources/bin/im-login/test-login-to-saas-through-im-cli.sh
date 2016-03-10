@@ -21,10 +21,10 @@
 
 printAndLog "TEST CASE: Login"
 
-#vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-#
-#installImCliClient
-#validateInstalledImCliClientVersion
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+
+installImCliClient
+validateInstalledImCliClientVersion
 
 auth "prodadmin" "CodenvyAdmin" "${SAAS_SERVER}"
 

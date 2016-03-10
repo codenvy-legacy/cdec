@@ -20,10 +20,10 @@
 [ -f "../lib.sh" ] && . ../lib.sh
 
 printAndLog "TEST CASE: Check login to Codenvy SaaS through installation manager service with Codenvy 4"
-#vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
-#
-#installCodenvy ${LATEST_CODENVY4_VERSION}
-#validateInstalledCodenvyVersion
+vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
+
+installCodenvy ${LATEST_CODENVY4_VERSION}
+validateInstalledCodenvyVersion
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
