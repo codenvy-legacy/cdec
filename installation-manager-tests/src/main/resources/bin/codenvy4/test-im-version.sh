@@ -33,7 +33,14 @@ installCodenvy ${LATEST_CODENVY4_VERSION}
 validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 
 executeIMCommand "im-version"
-# check issue [CDEC-561]
-validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY4_VERSION}\".*\"label\".\:.\"UNSTABLE\".*"
+
+# take into account that the latest Codenvy 4 version at the Updater Server could have 'STABLE' label
+if [[ ${LATEST_CODENVY4_VERSION} == ${LATEST_STABLE_CODENVY_VERSION} ]]; then
+    EXPECTED_LABEL=STABLE
+else
+    EXPECTED_LABEL=UNSTABLE
+fi
+
+validateExpectedString ".*\"artifact\".\:.\"codenvy\".*\"version\".\:.\"${LATEST_CODENVY4_VERSION}\".*\"label\".\:.\"${EXPECTED_LABEL}\".*"
 
 vagrantDestroy
