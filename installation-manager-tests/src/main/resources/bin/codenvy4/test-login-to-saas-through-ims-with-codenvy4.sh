@@ -23,7 +23,7 @@ printAndLog "TEST CASE: Check login to Codenvy SaaS through installation manager
 vagrantUp ${SINGLE_NODE_VAGRANT_FILE}
 
 installCodenvy ${LATEST_CODENVY4_VERSION}
-validateInstalledCodenvyVersion
+validateInstalledCodenvyVersion ${LATEST_CODENVY4_VERSION}
 
 UUID_OWNER=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 4 | head -n 1)
 
