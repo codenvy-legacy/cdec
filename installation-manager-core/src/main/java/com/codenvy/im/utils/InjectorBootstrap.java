@@ -24,6 +24,8 @@ import com.google.inject.Module;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 
+import org.eclipse.che.commons.annotation.Nullable;
+
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
@@ -67,6 +69,11 @@ public class InjectorBootstrap {
                 Multibinder.newSetBinder(binder, Artifact.class).addBinding().to(CDECArtifact.class);
             }
         });
+    }
+
+    @Nullable
+    public static String getProperty(String name) {
+        return boundProperties.get(name);
     }
 
     private static void bindAllProperties(Binder binder) {

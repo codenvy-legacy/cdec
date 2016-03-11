@@ -51,6 +51,7 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.FluentIterable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
@@ -71,6 +72,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
@@ -82,6 +85,8 @@ import static java.lang.String.format;
  */
 @Singleton
 public class InstallationManagerFacade {
+    private static final Logger LOG = Logger.getLogger(InstallationManagerFacade.class.getSimpleName());
+
     protected final HttpTransport              transport;
     protected final SaasAuthServiceProxy       saasAuthServiceProxy;
     protected final SaasRepositoryServiceProxy saasRepositoryServiceProxy;
@@ -92,8 +97,6 @@ public class InstallationManagerFacade {
     protected final InstallManager             installManager;
     protected final DownloadManager            downloadManager;
     protected final CodenvyLicenseManager      licenseManager;
-
-
 
     private final String updateServerEndpoint;
     private final Path   downloadDir;
@@ -426,8 +429,7 @@ public class InstallationManagerFacade {
         }
 
         if (version.is4Major()) {
-//              also we should enable tests
-//            validateLicense();
+            validateLicense();
         }
 
         NodeConfig nodeConfig = nodeManager.add(dns);
@@ -458,6 +460,7 @@ public class InstallationManagerFacade {
         } catch (InvalidLicenseException e) {
             throw new IllegalStateException("Codenvy License is invalid or has unappropriated format.");
         } catch (LicenseException e) {
+            LOG.log(Level.SEVERE, e, e::getMessage);
             throw new IllegalStateException("Codenvy License can't be validated.", e);
         }
     }

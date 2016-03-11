@@ -14,6 +14,9 @@
  */
 package com.codenvy.im.license;
 
+import com.codenvy.im.managers.StorageManager;
+import com.codenvy.im.utils.InjectorBootstrap;
+
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -65,8 +68,9 @@ public class CodenvyLicenseManagerTest {
 
     @BeforeMethod
     public void setUp() {
-        codenvyLicenseManager = INJECTOR.getInstance(CodenvyLicenseManager.class);
-        codenvyLicenseFactory = INJECTOR.getInstance(CodenvyLicenseFactory.class);
+        codenvyLicenseFactory = new CodenvyLicenseFactory("testId".toCharArray(),
+                                                          InjectorBootstrap.getProperty("license-manager.public_key"));
+        codenvyLicenseManager = new CodenvyLicenseManager(INJECTOR.getInstance(StorageManager.class), codenvyLicenseFactory);
     }
 
     @Test

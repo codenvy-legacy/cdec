@@ -33,12 +33,18 @@ import static java.util.stream.Collectors.toMap;
 @Singleton
 public class CodenvyLicenseFactory {
 
-    private final String productId;
+    private final char[] productId;
     private final String publicKey;
 
     @Inject
-    public CodenvyLicenseFactory(@Named("license-manager.product_id") String productId,
-                                 @Named("license-manager.public_key") String publicKey) {
+    public CodenvyLicenseFactory(@Named("license-manager.public_key") String publicKey) {
+        this.productId = "OPL-STN-SM".toCharArray();
+        this.publicKey = publicKey;
+    }
+
+    /** For testing purpose only */
+    @Deprecated
+    CodenvyLicenseFactory(char[] productId, String publicKey) {
         this.productId = productId;
         this.publicKey = publicKey;
     }
@@ -52,7 +58,7 @@ public class CodenvyLicenseFactory {
      *         if license is invalid
      */
     public CodenvyLicense create(String licenseText) throws InvalidLicenseException {
-        License license = LicenseValidator.validate(licenseText, publicKey, productId, null, null, null, null);
+        License license = LicenseValidator.validate(licenseText, publicKey, String.valueOf(productId), null, null, null, null);
         ValidationStatus licenseValidationStatus = license.getValidationStatus();
         if (licenseValidationStatus != ValidationStatus.LICENSE_VALID) {
             throw new InvalidLicenseException("Codenvy license is not valid");

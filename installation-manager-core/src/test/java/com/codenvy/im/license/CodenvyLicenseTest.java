@@ -14,6 +14,8 @@
  */
 package com.codenvy.im.license;
 
+import com.codenvy.im.utils.InjectorBootstrap;
+
 import org.mockito.testng.MockitoTestNGListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -22,7 +24,6 @@ import org.testng.annotations.Test;
 import java.util.Calendar;
 import java.util.Map;
 
-import static com.codenvy.im.utils.InjectorBootstrap.INJECTOR;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -90,7 +91,8 @@ public class CodenvyLicenseTest {
 
     @BeforeMethod
     public void setUp() {
-        codenvyLicenseFactory = INJECTOR.getInstance(CodenvyLicenseFactory.class);
+        codenvyLicenseFactory = new CodenvyLicenseFactory("testId".toCharArray(),
+                                                          InjectorBootstrap.getProperty("license-manager.public_key"));
     }
 
 
