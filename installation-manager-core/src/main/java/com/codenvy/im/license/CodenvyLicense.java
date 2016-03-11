@@ -31,7 +31,9 @@ import static com.codenvy.im.license.LicenseFeature.USERS;
  * @author Anatoliy Bazko
  */
 public class CodenvyLicense {
-    public static final DateFormat EXPIRATION_DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd");
+    public static final DateFormat EXPIRATION_DATE_FORMAT     = new SimpleDateFormat("yyyy/MM/dd");
+    public static final long       MAX_NUMBER_OF_FREE_USERS   = 5;
+    public static final int        MAX_NUMBER_OF_FREE_SERVERS = 1;
 
     private final Map<LicenseFeature, String> features;
     private final String                      licenseText;
@@ -79,6 +81,36 @@ public class CodenvyLicense {
      */
     public LicenseType getLicenseType() {
         return (LicenseType)doGetFeature(TYPE);
+    }
+
+    /**
+     * @return true:
+     * 1) if (EVALUATION_PRODUCT_KEY IS NOT expired) AND (actual number of users <= allowed by license)
+     * 2) if (PRODUCT_KEY            IS NOT expired) AND (actual number of users <= allowed by license)
+     * 3) if (EVALUATION_PRODUCT_KEY IS     expired) AND ((actual number of users <= MAX_NUMBER_OF_FREE_USERS) AND (number of nodes <= MAX_NUMBER_OF_FREE_SERVERS))
+     * 4) if (PRODUCT_KEY            IS     expired) AND (actual number of users <= MAX_NUMBER_OF_FREE_USERS)
+     */
+    public boolean isLicenseUsageLegal(long actualUsers, int actualServers) {
+        if (isExpired()) {
+            switch (getLicenseType()) {
+                case PRODUCT_KEY:
+                    return actualUsers <= MAX_NUMBER_OF_FREE_USERS;   // don't take into account minimal free number of servers
+
+                case EVALUATION_PRODUCT_KEY:
+                default:
+                    return isFreeUsageLegal(actualUsers, actualServers);
+            }
+        }
+
+        return actualUsers <= getNumberOfUsers();
+    }
+
+    /**
+     * @return false if (actual number of users > MAX_NUMBER_OF_FREE_USERS) OR (actual number of nodes > MAX_NUMBER_OF_FREE_SERVERS)
+     */
+    public static boolean isFreeUsageLegal(long actualUsers, int actualServers) {
+        return actualUsers <= MAX_NUMBER_OF_FREE_USERS
+               && actualServers <= MAX_NUMBER_OF_FREE_SERVERS;
     }
 
     private Object doGetFeature(LicenseFeature feature) {

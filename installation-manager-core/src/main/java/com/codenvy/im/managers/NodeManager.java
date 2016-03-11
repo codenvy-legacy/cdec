@@ -29,6 +29,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static com.codenvy.im.commands.SimpleCommand.createCommand;
@@ -144,4 +145,7 @@ public class NodeManager {
         }
     }
 
+    public Map<String, List<String>> getNodes() throws IOException {
+        return getHelper().getNodes();
+    }
 }

@@ -25,6 +25,7 @@ import com.codenvy.im.license.InvalidLicenseException;
 import com.codenvy.im.license.LicenseNotFoundException;
 import com.codenvy.im.managers.BackupConfig;
 import com.codenvy.im.managers.BackupManager;
+import com.codenvy.im.managers.Config;
 import com.codenvy.im.managers.ConfigManager;
 import com.codenvy.im.managers.DownloadManager;
 import com.codenvy.im.managers.InstallManager;
@@ -40,6 +41,7 @@ import com.codenvy.im.saas.SaasRepositoryServiceProxy;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.HttpTransport;
 import com.codenvy.im.utils.Version;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
@@ -570,5 +572,22 @@ public class TestInstallationManagerFacade extends BaseTest {
 
         installationManagerFacade.logSaasAnalyticsEvent(event, token);
         verify(saasRepositoryServiceProxy).logAnalyticsEvent(event, token);
+    }
+
+    @Test
+    public void testGetCodenvyNodes() throws Exception {
+        final ImmutableMap<String, ImmutableList<String>> testNodes = ImmutableMap.of(Config.SWARM_NODES, ImmutableList.of("node1.test.com"));
+        doReturn(testNodes).when(nodeManager).getNodes();
+
+        Map result = installationManagerFacade.getNodes();
+        assertEquals(result, testNodes);
+    }
+
+    @Test
+    public void testGetNumberOfUsers() throws Exception {
+        final long testUsers = 3L;
+        doReturn(testUsers).when(ldapManager).getNumberOfUsers();
+        long result = installationManagerFacade.getNumberOfUsers();
+        assertEquals(result, testUsers);
     }
 }

@@ -33,9 +33,6 @@ import com.codenvy.im.managers.InstallationNotStartedException;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.PropertyNotFoundException;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelper;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3Impl;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy4Impl;
 import com.codenvy.im.response.ArtifactInfo;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
@@ -421,15 +418,7 @@ public class InstallationManagerService {
                 properties.put(Config.HOST_URL, hostUrl);
             }
 
-            // get additional nodes dns lists of Codenvy 4.x AIO
-            String codenvyVersionStr = config.getValue(Config.VERSION);
-            if (Version.is4Major(codenvyVersionStr)) {
-                AdditionalNodesConfigHelper helper = new AdditionalNodesConfigHelperCodenvy4Impl(config);
-                Map<String, List<String>> additionalMachines = helper.extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE);
-                if (additionalMachines != null) {
-                    properties.putAll(additionalMachines);
-                }
-            }
+            properties.putAll(delegate.getNodes());
 
             if (InstallType.SINGLE_SERVER.equals(installType)) {
                 return Response.ok(toJson(properties)).build();
@@ -440,20 +429,6 @@ public class InstallationManagerService {
             for (NodeConfig node : nodes) {
                 String nodeHostPropertyName = node.getType().toString().toLowerCase() + Config.NODE_HOST_PROPERTY_SUFFIX;
                 properties.put(nodeHostPropertyName, node.getHost());
-            }
-
-            // get additional nodes dns lists of Codenvy 3.x
-            if (Version.is3Major(codenvyVersionStr)) {
-                AdditionalNodesConfigHelper helper = new AdditionalNodesConfigHelperCodenvy3Impl(config);
-                Map<String, List<String>> additionalRunners = helper.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
-                if (additionalRunners != null) {
-                    properties.putAll(additionalRunners);
-                }
-
-                Map<String, List<String>> additionalBuilders = helper.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
-                if (additionalBuilders != null) {
-                    properties.putAll(additionalBuilders);
-                }
             }
 
             return Response.ok(toJson(properties)).build();

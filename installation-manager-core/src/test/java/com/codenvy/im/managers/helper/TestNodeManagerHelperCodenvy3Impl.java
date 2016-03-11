@@ -24,6 +24,7 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
@@ -32,7 +33,9 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
@@ -269,5 +272,19 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
         prepareMultiNodeEnv(mockConfigManager);
         AdditionalNodesConfigHelper helper = spyHelperCodenvy3.getNodesConfigHelper(new Config(Collections.EMPTY_MAP));
         assertNotNull(helper);
+    }
+
+    @Test
+    public void testGetNodes() throws Exception {
+        ImmutableMap<String, ImmutableList<String>> testBuilders = ImmutableMap.of(Config.ADDITIONAL_BUILDERS, ImmutableList.of("builder1.test.com", "builder2.test.com"));
+        doReturn(testBuilders).when(mockNodesConfigHelper).extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
+
+        ImmutableMap<String, ImmutableList<String>> testRunners = ImmutableMap.of(Config.ADDITIONAL_RUNNERS, ImmutableList.of("runner2.test.com"));
+        doReturn(testRunners).when(mockNodesConfigHelper).extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
+
+        Map result = spyHelperCodenvy3.getNodes();
+        Map expected = new HashMap(testBuilders);
+        expected.putAll(testRunners);
+        assertEquals(result, expected);
     }
 }

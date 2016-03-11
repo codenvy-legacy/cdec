@@ -30,7 +30,6 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.PropertiesNotFoundException;
 import com.codenvy.im.managers.PropertyNotFoundException;
 import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy3Impl;
-import com.codenvy.im.managers.helper.AdditionalNodesConfigHelperCodenvy4Impl;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.InstallArtifactInfo;
@@ -88,13 +87,11 @@ import static org.testng.Assert.assertTrue;
  * @author Dmytro Nochevnov
  */
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
-public class TestInstallationManagerService  {
+public class InstallationManagerServiceTest {
 
     public static final String ARTIFACT_NAME      = "codenvy";
     public static final String VERSION_NUMBER     = "1.0.0";
     public static final String TEST_ACCESS_TOKEN  = "accessToken";
-    public static final String TEST_ACCOUNT_ID    = "accountId";
-    public static final String TEST_ACCOUNT_NAME  = "account";
     public static final String TEST_USER_NAME     = "user";
     public static final String TEST_USER_PASSWORD = "password";
 
@@ -122,8 +119,6 @@ public class TestInstallationManagerService  {
     private Artifact            mockArtifact;
 
     protected final String BACKUP_DIR = "target/backup";
-
-    RepositoryService testedRepositoryService;
 
     @Path("update/repository")
     public static class RepositoryService {
@@ -345,20 +340,21 @@ public class TestInstallationManagerService  {
 
     @Test
     public void testGetNodeConfigForMultiNodeCodenvy3() throws IOException {
-        Config testConfig = new Config(new LinkedHashMap<>(ImmutableMap.of(
-                Config.VERSION, "3.0.0",
-                "additional_runners", "http://runner1.dev.com:8080/runner/internal/runner,http://runner2.dev.com:8080/runner/internal/runner",
-                "analytics_host_name", "analytics.dev.com",
-                "additional_builders", "",
-                "host_url", "local.dev.com"
-                                                                          )));
-        doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
+        doReturn(ImmutableMap.<String, List<String>>of(Config.ADDITIONAL_BUILDERS, Collections.EMPTY_LIST,
+                                                       Config.ADDITIONAL_RUNNERS, ImmutableList.of("runner1.dev.com", "runner2.dev.com")))
+            .when(mockFacade).getNodes();
+
+        Config config = mock(Config.class);
+        doReturn("local").when(config).getHostUrl();
+        doReturn("analytics.dev.com").when(config).getValue("analytics_host_name");
+
+        doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.MULTI_SERVER);
         doReturn(InstallType.MULTI_SERVER).when(configManager).detectInstallationType();
 
         Response result = service.getNodesList();
         assertEquals(result.getStatus(), Response.Status.OK.getStatusCode());
         assertEquals(result.getEntity(), "{\n"
-                                         + "  \"host_url\" : \"local.dev.com\",\n"
+                                         + "  \"host_url\" : \"local\",\n"
                                          + "  \"additional_builders\" : [ ],\n"
                                          + "  \"analytics_host_name\" : \"analytics.dev.com\",\n"
                                          + "  \"additional_runners\" : [ \"runner1.dev.com\", \"runner2.dev.com\" ]\n"
@@ -398,11 +394,11 @@ public class TestInstallationManagerService  {
 
     @Test
     public void testGetNodeConfigWhenSingleNodeCodenvy4() throws IOException {
+        doReturn(ImmutableMap.<String, List<String>>of(Config.SWARM_NODES, ImmutableList.of("node1.codenvy", "node2.codenvy")))
+            .when(mockFacade).getNodes();
+
         Config config = mock(Config.class);
         doReturn("local").when(config).getHostUrl();
-        doReturn("4.0.0").when(config).getValue(Config.VERSION);
-        doReturn(ImmutableList.of("$host_url:2375", "node1.codenvy:2375", "node2.codenvy:2375")).when(config).getAllValues(Config.SWARM_NODES,
-                                                                        String.valueOf(AdditionalNodesConfigHelperCodenvy4Impl.ADDITIONAL_NODE_DELIMITER));
 
         doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
         doReturn(config).when(configManager).loadInstalledCodenvyConfig(InstallType.SINGLE_SERVER);
