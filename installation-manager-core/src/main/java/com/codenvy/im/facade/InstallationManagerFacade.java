@@ -51,7 +51,6 @@ import com.codenvy.im.utils.Version;
 import com.google.common.collect.FluentIterable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.eclipse.che.api.auth.AuthenticationException;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.eclipse.che.api.auth.shared.dto.Token;
@@ -479,6 +478,13 @@ public class InstallationManagerFacade {
     }
 
     /**
+     * @see com.codenvy.im.managers.NodeManager#getNodes()
+     */
+    public Map<String, List<String>> getNodes() throws IOException {
+        return nodeManager.getNodes();
+    }
+
+    /**
      * @see com.codenvy.im.managers.BackupManager#backup(com.codenvy.im.managers.BackupConfig)
      */
     public BackupInfo backup(@NotNull BackupConfig config) throws IOException {
@@ -525,6 +531,13 @@ public class InstallationManagerFacade {
      */
     public void changeAdminPassword(byte[] currentPassword, byte[] newPassword) throws IOException {
         ldapManager.changeAdminPassword(currentPassword, newPassword);
+    }
+
+    /**
+     * @see com.codenvy.im.managers.LdapManager#getNumberOfUsers()
+     */
+    public long getNumberOfUsers() throws IOException {
+        return ldapManager.getNumberOfUsers();
     }
 
     /**

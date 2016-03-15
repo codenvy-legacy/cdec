@@ -28,8 +28,10 @@ import com.codenvy.im.managers.UnknownInstallationTypeException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
@@ -216,6 +218,18 @@ public class NodeManagerHelperCodenvy4Impl extends NodeManagerHelper {
         }
 
         return new MacroCommand(commands, "Commands to update puppet.conf file in additional nodes.");
+    }
+
+    @Override public Map<String, List<String>> getNodes() throws IOException {
+        Config config = configManager.loadInstalledCodenvyConfig();
+
+        AdditionalNodesConfigHelper helper = getNodesConfigHelper(config);
+        Map<String, List<String>> additionalMachines = helper.extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE);
+        if (additionalMachines != null) {
+            return additionalMachines;
+        }
+
+        return new HashMap<>();
     }
 
     @Override 

@@ -254,4 +254,13 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
         AdditionalNodesConfigHelper helper = spyHelperCodenvy4.getNodesConfigHelper(new Config(Collections.EMPTY_MAP));
         assertNotNull(helper);
     }
+
+    @Test
+    public void testGetNodes() throws Exception {
+        ImmutableMap<String, ImmutableList<String>> testNodes = ImmutableMap.of(Config.SWARM_NODES, ImmutableList.of("node1.test.com", "node2.test.com"));
+        doReturn(testNodes).when(mockNodesConfigHelper).extractAdditionalNodesDns(NodeConfig.NodeType.MACHINE);
+
+        Map result = spyHelperCodenvy4.getNodes();
+        assertEquals(result, new HashMap(testNodes));
+    }
 }

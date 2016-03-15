@@ -27,12 +27,15 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.managers.NodeConfig;
 import com.codenvy.im.managers.NodeException;
 import com.codenvy.im.managers.UnknownInstallationTypeException;
+import com.codenvy.im.utils.Version;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static com.codenvy.im.commands.CommandLibrary.createFileBackupCommand;
 import static com.codenvy.im.commands.CommandLibrary.createForcePuppetAgentCommand;
@@ -204,6 +207,25 @@ public class NodeManagerHelperCodenvy3Impl extends NodeManagerHelper {
     @Override
     public Command getUpdatePuppetConfigCommand(String oldHostName, String newHostName) {
         return CommandLibrary.EMPTY_COMMAND;
+    }
+
+    @Override
+    public Map<String, List<String>> getNodes() throws IOException {
+        Map<String, List<String>> nodes = new HashMap<>();
+        Config config = configManager.loadInstalledCodenvyConfig();
+
+        AdditionalNodesConfigHelper helper = getNodesConfigHelper(config);
+        Map<String, List<String>> additionalRunners = helper.extractAdditionalNodesDns(NodeConfig.NodeType.RUNNER);
+        if (additionalRunners != null) {
+            nodes.putAll(additionalRunners);
+        }
+
+        Map<String, List<String>> additionalBuilders = helper.extractAdditionalNodesDns(NodeConfig.NodeType.BUILDER);
+        if (additionalBuilders != null) {
+            nodes.putAll(additionalBuilders);
+        }
+
+        return nodes;
     }
 
     @Override

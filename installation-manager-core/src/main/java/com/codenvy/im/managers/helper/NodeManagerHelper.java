@@ -22,6 +22,8 @@ import com.codenvy.im.managers.UnknownInstallationTypeException;
 import org.eclipse.che.commons.annotation.Nullable;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmytro Nochevnov
@@ -71,4 +73,8 @@ public abstract class NodeManagerHelper {
 
     /** Update puppet.conf on additional nodes */
     public abstract Command getUpdatePuppetConfigCommand(String oldHostName, String newHostName) throws IOException;
+
+    /** @return Map<NodeType, List<NodeDns>> */
+    public abstract Map<String,List<String>> getNodes() throws IOException;
+
 }

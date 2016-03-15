@@ -28,17 +28,14 @@ import com.codenvy.im.managers.InstallType;
 import com.codenvy.im.response.BackupInfo;
 import com.codenvy.im.response.DownloadProgressResponse;
 import com.codenvy.im.response.NodeInfo;
-import com.codenvy.im.saas.SaasUserCredentials;
 import com.codenvy.im.utils.Commons;
 import com.codenvy.im.utils.Version;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.specification.RequestSpecification;
 import org.eclipse.che.api.auth.server.dto.DtoServerImpls;
 import org.eclipse.che.api.auth.shared.dto.Credentials;
 import org.everrest.assured.EverrestJetty;
-import org.everrest.assured.JettyHttpServer;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.testng.MockitoTestNGListener;
@@ -50,12 +47,9 @@ import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
 import static com.codenvy.im.artifacts.ArtifactFactory.createArtifact;
-import static com.jayway.restassured.RestAssured.given;
 import static java.lang.String.format;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -63,27 +57,20 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 /**
  * @author Dmytro Nochevnov
  */
 @Listeners(value = {EverrestJetty.class, MockitoTestNGListener.class})
-public class TestInstallationManagerServiceContract {
-    public static final String OK_RESPONSE_BODY = "{\n"
-                                                  + "    \n"
-                                                  + "}";
+public class InstallationManagerServiceContractTest extends BaseContractTest {
+
     @Mock
     public IMCliFilteredFacade facade;
     @Mock
     public ConfigManager       configManager;
-    @Mock
-    public SaasUserCredentials saasUserCredentials;
 
     public InstallationManagerService service;
-
-    enum HttpMethod {GET, POST, PUT, DELETE}
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -95,50 +82,48 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testBackup() {
         testContract(
-                "backup",                                     // path
-                ImmutableMap.of("artifact", CDECArtifact.NAME,
-                                "backupDir", "test"),         // query parameters
-                null,                                         // request body
-                null,                                         // consume content type
-                ContentType.JSON,                             // produce content type
-                HttpMethod.POST,                              // HTTP method
-                OK_RESPONSE_BODY,                             // response body
-                Response.Status.CREATED,                      // response status
-                o -> {                                        // before test
-                    try {
-                        doReturn(new BackupInfo()).when(facade).backup(any(BackupConfig.class));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
-                },
-                null // assertion
+            "backup",                                     // path
+            ImmutableMap.of("artifact", CDECArtifact.NAME,
+                            "backupDir", "test"),         // query parameters
+            null,                                         // request body
+            null,                                         // consume content type
+            ContentType.JSON,                             // produce content type
+            HttpMethod.POST,                              // HTTP method
+            OK_RESPONSE_BODY,                             // response body
+            Response.Status.CREATED,                      // response status
+            () -> {                                       // before test
+                try {
+                    doReturn(new BackupInfo()).when(facade).backup(any(BackupConfig.class));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
+                }
+            },
+            null // assertion
         );
     }
 
     @Test
     public void testRestore() {
         testContract(
-                "restore",                                    // path
-                ImmutableMap.of("artifact", CDECArtifact.NAME,
-                                "backupFile", "test"),        // query parameters
-                null,                                         // request body
-                null,                                         // consume content type
-                ContentType.JSON,                             // produce content type
-                HttpMethod.POST,                              // HTTP method
-                OK_RESPONSE_BODY,                             // response body
-                Response.Status.CREATED,                           // response status
-                o -> {                                        // before test
-                    BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
-                                                                      .setBackupFile("test");
-                    try {
-                        doReturn(new BackupInfo()).when(facade).restore(testBackupConfig);
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
-                },
-                null // assertion
+            "restore",                                    // path
+            ImmutableMap.of("artifact", CDECArtifact.NAME,
+                            "backupFile", "test"),        // query parameters
+            null,                                         // request body
+            null,                                         // consume content type
+            ContentType.JSON,                             // produce content type
+            HttpMethod.POST,                              // HTTP method
+            OK_RESPONSE_BODY,                             // response body
+            Response.Status.CREATED,                           // response status
+            () -> {                                        // before test
+                BackupConfig testBackupConfig = new BackupConfig().setArtifactName(CDECArtifact.NAME)
+                                                                  .setBackupFile("test");
+                try {
+                    doReturn(new BackupInfo()).when(facade).restore(testBackupConfig);
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
+                }
+            },
+            null // assertion
         );
     }
 
@@ -153,13 +138,12 @@ public class TestInstallationManagerServiceContract {
              HttpMethod.POST,                 // HTTP method
              OK_RESPONSE_BODY,                // response body
              Response.Status.CREATED,              // response status
-             o -> {                                        // before test
+             () -> {                                        // before test
                  try {
                      doReturn(new NodeInfo()).when(facade).addNode("test");
                  } catch (IOException e) {
                      fail(e.getMessage(), e);
                  }
-                 return null;
              },
              null // assertion
         );
@@ -176,13 +160,12 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.DELETE,               // HTTP method
             null,                // response body
             Response.Status.NO_CONTENT,              // response status
-            o -> {                            // before test
+            () -> {                            // before test
                 try {
                     doReturn(new NodeInfo()).when(facade).removeNode("test");
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -201,13 +184,12 @@ public class TestInstallationManagerServiceContract {
             "    \"id\": \"id\"\n" +
             "}",                // response body
             Response.Status.OK,              // response status
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     doReturn("id").when(facade).getDownloadIdInProgress();
                 } catch (DownloadNotStartedException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -226,13 +208,12 @@ public class TestInstallationManagerServiceContract {
             null,                            // response body
             Response.Status.ACCEPTED,        // response status
             null,                            // before test
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     verify(facade).startDownload(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
                 } catch (InterruptedException | DownloadAlreadyStartedException | IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             });
     }
 
@@ -248,13 +229,12 @@ public class TestInstallationManagerServiceContract {
             null,                            // response body
             Response.Status.NO_CONTENT,      // response status
             null,                            // before test
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     verify(facade).stopDownload();
                 } catch (InterruptedException | DownloadNotStartedException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             });
     }
 
@@ -271,14 +251,13 @@ public class TestInstallationManagerServiceContract {
             "    \"percents\": 0\n" +
             "}",                           // response body
             Response.Status.OK,              // response status
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     DownloadProgressResponse downloadDescriptor = new DownloadProgressResponse();
                     doReturn(downloadDescriptor).when(facade).getDownloadProgress();
                 } catch (IOException | DownloadNotStartedException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -297,13 +276,12 @@ public class TestInstallationManagerServiceContract {
             "    \n" +
             "]",                // response body
             Response.Status.OK,              // response status
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     doReturn(ImmutableList.of()).when(facade).getInstalledVersions();
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -322,13 +300,12 @@ public class TestInstallationManagerServiceContract {
             "    \n" +
             "]",                // response body
             Response.Status.OK,              // response status
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     doReturn(Collections.emptyList()).when(facade).getUpdates();
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -345,7 +322,7 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.POST,                 // HTTP method
             null,                // response body
             Response.Status.ACCEPTED,              // response status
-            o -> {                           // before test
+            () -> {                           // before test
                 try {
                     doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
                     doReturn(null).when(configManager).prepareInstallProperties(anyString(),
@@ -360,8 +337,6 @@ public class TestInstallationManagerServiceContract {
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-
-                return null;
             },
             null // assertion
         );
@@ -378,7 +353,7 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.POST,                                   // HTTP method
             "",                                                // response body
             Response.Status.OK,                                // response status
-            o -> {                                             // before test
+            () -> {                                             // before test
                 try {
                     doReturn(new DtoServerImpls.TokenImpl().withValue("token"))
                             .when(facade)
@@ -386,8 +361,6 @@ public class TestInstallationManagerServiceContract {
                 } catch (Exception e) {
                     fail(e.getMessage(), e);
                 }
-
-                return null;
             },
             null // assertion
         );
@@ -406,13 +379,12 @@ public class TestInstallationManagerServiceContract {
             + "    \"a\": \"b\"\n"
             + "}",                                             // response body
             Response.Status.OK,                                // response status
-            o -> {                                             // before test
+            () -> {                                             // before test
                 try {
                     doReturn(ImmutableMap.of("a", "b")).when(facade).loadStorageProperties();
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -430,13 +402,12 @@ public class TestInstallationManagerServiceContract {
             "",                                                // response body
             Response.Status.OK,                                // response status
             null,                                              // before test
-            o -> {                                             // before test
+            () -> {                                             // before test
                 try {
                     verify(facade).storeStorageProperties(ImmutableMap.of("a", "b"));
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             }                                                 // assertion
         );
     }
@@ -452,13 +423,12 @@ public class TestInstallationManagerServiceContract {
             HttpMethod.GET,                                   // HTTP method
             "b",                                              // response body
             Response.Status.OK,                               // response status
-            o -> {                                            // before test
+            () -> {                                            // before test
                 try {
                     doReturn("b").when(facade).loadStorageProperty("a");
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -476,13 +446,12 @@ public class TestInstallationManagerServiceContract {
             "",                                               // response body
             Response.Status.OK,                               // response status
             null,                                             // before test
-            o -> {                                            // before test
+            () -> {                                            // before test
                 try {
                     verify(facade).storeStorageProperty("a", "b");
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             }                                                 // assertion
         );
     }
@@ -499,13 +468,12 @@ public class TestInstallationManagerServiceContract {
             null,                                             // response body
             Response.Status.NO_CONTENT,                       // response status
             null,                                             // before test
-            o -> {                                            // before test
+            () -> {                                            // before test
                 try {
                     verify(facade).deleteStorageProperty("a");
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             }                                                 // assertion
         );
     }
@@ -524,14 +492,13 @@ public class TestInstallationManagerServiceContract {
             + "    \"password\": \"*****\"\n"
             + "}",                                             // response body
             Response.Status.OK,                                // response status
-            o -> {                                             // before test
+            () -> {                                             // before test
                 try {
                     Config testConfig = new Config(ImmutableMap.of("a", "b", "password", "123"));
                     doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -550,14 +517,13 @@ public class TestInstallationManagerServiceContract {
             "    \"host_url\": \"test.com\"\n" +
             "}",                                       // response body
             Response.Status.OK,                               // response status
-            o -> {                                            // before test
+            () -> {                                            // before test
                 try {
                     Config testConfig = new Config(ImmutableMap.of("host_url", "test.com"));
                     doReturn(testConfig).when(configManager).loadInstalledCodenvyConfig();
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             },
             null // assertion
         );
@@ -575,13 +541,12 @@ public class TestInstallationManagerServiceContract {
             null,                                               // response body
             Response.Status.CREATED,                               // response status
             null,                                             // before test
-            o -> {
+            () -> {
                 try {
                     verify(facade).updateArtifactConfig(createArtifact(CDECArtifact.NAME), ImmutableMap.of("a", "b"));
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             }                                                 // assertion
         );
     }
@@ -617,9 +582,9 @@ public class TestInstallationManagerServiceContract {
              + "    \"a\": \"b\"\n"
              + "}",                                               // response body
              Response.Status.OK,                                  // response status
-             o -> {                                               // before test
+             () -> {                                               // before test
                  doReturn(ImmutableMap.of("a", "b")).when(facade).getInstallationManagerProperties();
-                 return null;
+
              },
              null                                                 // assertion
         );
@@ -637,13 +602,12 @@ public class TestInstallationManagerServiceContract {
             null,                                             // response body
             Response.Status.NO_CONTENT,                       // response status
             null,                                             // before test
-            o -> {
+            () -> {
                 try {
                     verify(facade).deleteDownloadedArtifact(createArtifact(CDECArtifact.NAME), Version.valueOf("1.0.0"));
                 } catch (IOException e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             }                                                 // assertion
         );
     }
@@ -651,79 +615,77 @@ public class TestInstallationManagerServiceContract {
     @Test
     public void testGetUpdatesInfo() {
         testContract(
-                "update/info",       // path
-                null,                                             // query parameters
-                null,                                             // request body
-                null,                                             // consume content type
-                ContentType.JSON,                                             // produce content type
-                HttpMethod.GET,                                // HTTP method
-                "[\n" +
-                "    \n" +
-                "]",                                             // response body
-                Response.Status.OK,                       // response status
-                null,                                             // before test
-                o -> {
-                    try {
-                        doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
-                        doReturn(Collections.emptyList()).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
-                    } catch (IOException e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
-                }                                                 // assertion
-                    );
+            "update/info",       // path
+            null,                                             // query parameters
+            null,                                             // request body
+            null,                                             // consume content type
+            ContentType.JSON,                                             // produce content type
+            HttpMethod.GET,                                // HTTP method
+            "[\n" +
+            "    \n" +
+            "]",                                             // response body
+            Response.Status.OK,                       // response status
+            null,                                             // before test
+            () -> {
+                try {
+                    doReturn(InstallType.SINGLE_SERVER).when(configManager).detectInstallationType();
+                    doReturn(Collections.emptyList()).when(facade).getUpdateInfo(any(Artifact.class), any(InstallType.class));
+                } catch (IOException e) {
+                    fail(e.getMessage(), e);
+                }
+
+            }                                                 // assertion
+        );
     }
 
     @Test
     public void testLogAnalyticsEvent() {
         testContract(
-                "event",                                          // path
-                null,                                             // query parameters
-                "{" +
-                "\"type\":\"CDEC_FIRST_LOGIN\"," +
-                "\"parameters\":{\"a\":\"b\"}" +
-                "}",                                             // request body
-                ContentType.JSON,                                // consume content type
-                null,                                             // produce content type
-                HttpMethod.POST,                                // HTTP method
-                null,                                             // response body
-                Response.Status.ACCEPTED,                       // response status
-                null,                                             // before test
-                o -> {
-                    try {
-                        verify(facade).logSaasAnalyticsEvent(new Event(Event.Type.CDEC_FIRST_LOGIN, ImmutableMap.of("a", "b")), null);
-                    } catch (Exception e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
-                }                                                 // assertion
+            "event",                                          // path
+            null,                                             // query parameters
+            "{" +
+            "\"type\":\"CDEC_FIRST_LOGIN\"," +
+            "\"parameters\":{\"a\":\"b\"}" +
+            "}",                                             // request body
+            ContentType.JSON,                                // consume content type
+            null,                                             // produce content type
+            HttpMethod.POST,                                // HTTP method
+            null,                                             // response body
+            Response.Status.ACCEPTED,                       // response status
+            null,                                             // before test
+            () -> {
+                try {
+                    verify(facade).logSaasAnalyticsEvent(new Event(Event.Type.CDEC_FIRST_LOGIN, ImmutableMap.of("a", "b")), null);
+                } catch (Exception e) {
+                    fail(e.getMessage(), e);
+                }
+            }                                                 // assertion
         );
     }
 
     @Test
     public void testChangeAdminPassword() {
         testContract(
-                "password",                                          // path
-                null,                                             // query parameters
-                "{" +
-                "\"currentPassword\":\"current\"," +
-                "\"newPassword\":\"new\"" +
-                "}",                                             // request body
-                ContentType.JSON,                                // consume content type
-                null,                                             // produce content type
-                HttpMethod.POST,                                // HTTP method
-                null,                                             // response body
-                Response.Status.OK,                       // response status
-                null,                                             // before test
-                o -> {
-                    try {
-                        verify(facade).changeAdminPassword("current".getBytes("UTF-8"), "new".getBytes("UTF-8"));
-                    } catch (Exception e) {
-                        fail(e.getMessage(), e);
-                    }
-                    return null;
-                }                                                 // assertion
-                    );
+            "password",                                          // path
+            null,                                             // query parameters
+            "{" +
+            "\"currentPassword\":\"current\"," +
+            "\"newPassword\":\"new\"" +
+            "}",                                             // request body
+            ContentType.JSON,                                // consume content type
+            null,                                             // produce content type
+            HttpMethod.POST,                                // HTTP method
+            null,                                             // response body
+            Response.Status.OK,                       // response status
+            null,                                             // before test
+            () -> {
+                try {
+                    verify(facade).changeAdminPassword("current".getBytes("UTF-8"), "new".getBytes("UTF-8"));
+                } catch (Exception e) {
+                    fail(e.getMessage(), e);
+                }
+            }                                                 // assertion
+        );
     }
 
     @Test
@@ -747,98 +709,14 @@ public class TestInstallationManagerServiceContract {
             null,                                             // response body
             Response.Status.INTERNAL_SERVER_ERROR,            // response status
             null,                                             // before test
-            o -> {
+            () -> {
                 try {
                     verify(facade, never()).logSaasAnalyticsEvent(any(Event.class), any(String.class));
                 } catch (Exception e) {
                     fail(e.getMessage(), e);
                 }
-                return null;
             }                                                 // assertion
         );
-    }
-
-    private void testContract(String path,
-                             Map<String, String> queryParameters,
-                             String requestBody,
-                             ContentType consumeContentType,
-                             ContentType produceContentType,
-                             HttpMethod httpMethod,
-                             String expectedResponseBody,
-                             Response.Status expectedResponseStatus,
-                             Function<Object, Object> doBeforeTest,
-                             Function<Object, Object> doAssertion) {
-
-        if (doBeforeTest != null) {
-            doBeforeTest.apply(null);
-        }
-
-        RequestSpecification requestSpec = getRequestSpecification();
-        com.jayway.restassured.response.Response response;
-
-        if (queryParameters != null) {
-            requestSpec.queryParameters(queryParameters);
-        }
-
-        if (requestBody != null) {
-            requestSpec.body(requestBody);
-        }
-
-        if (consumeContentType != null) {
-            requestSpec.contentType(consumeContentType);
-        }
-
-        switch (httpMethod) {
-            case GET :
-                response = requestSpec.get(getSecurePath(path));
-                break;
-
-            case PUT :
-                response = requestSpec.put(getSecurePath(path));
-                break;
-
-            case POST :
-                response = requestSpec.post(getSecurePath(path));
-                break;
-
-            case DELETE :
-                response = requestSpec.delete(getSecurePath(path));
-                break;
-
-            default:
-                throw new RuntimeException("Unknown HTTP method");
-        }
-
-        assertResponse(response, produceContentType, expectedResponseBody, expectedResponseStatus);
-
-        if (doAssertion != null) {
-            doAssertion.apply(null);
-        }
-    }
-
-    private void assertResponse(com.jayway.restassured.response.Response response,
-                                ContentType PRODUCE_CONTENT_TYPE,
-                                String RESPONSE_BODY,
-                                Response.Status RESPONSE_STATUS) {
-        assertEquals(response.statusCode(), RESPONSE_STATUS.getStatusCode());
-
-        if (PRODUCE_CONTENT_TYPE != null) {
-            assertEquals(response.getContentType(), PRODUCE_CONTENT_TYPE.toString());
-        }
-
-        if (RESPONSE_BODY != null) {
-            assertEquals(response.getBody().prettyPrint(), RESPONSE_BODY);
-        }
-    }
-
-    private String getSecurePath(String path) {
-        return format("%s/%s", JettyHttpServer.SECURE_PATH, path);
-    }
-
-    private RequestSpecification getRequestSpecification() {
-        return given()
-            .auth().basic(JettyHttpServer.ADMIN_USER_NAME, JettyHttpServer.ADMIN_USER_PASSWORD)
-            .when();
     }
 
 }
