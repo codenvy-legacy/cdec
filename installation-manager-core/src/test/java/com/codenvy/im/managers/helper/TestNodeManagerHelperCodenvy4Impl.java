@@ -101,7 +101,7 @@ public class TestNodeManagerHelperCodenvy4Impl extends BaseTest {
                                                  + "'agent'='LocalAgent'}");
         assertEquals(commands.get(1).toString(), "{'command'='yum clean all', 'agent'='LocalAgent'}");
         assertEquals(commands.get(2).toString(), format("{'command'='if [[ \"$(yum list installed | grep puppetlabs-release)\" == \"\" ]]; then   sudo yum -y -q install https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm; fi', 'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
-        assertEquals(commands.get(3).toString(), format("{'command'='sudo yum -y -q install puppet-3.5.1-1.el7.noarch', "
+        assertEquals(commands.get(3).toString(), format("{'command'='sudo yum -y -q install puppet-3.8.6-1.el7.noarch', "
                                                         + "'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));
         assertEquals(commands.get(4).toString(), format("{'command'='sudo systemctl enable puppet', "
                                                         + "'agent'='{'host'='node1.hostname', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}", SYSTEM_USER_NAME));

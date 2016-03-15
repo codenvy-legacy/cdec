@@ -77,7 +77,7 @@ public class TestConfig {
             {"property", "value1", ",", "7", new ArrayList<>(ImmutableList.of("value1"))},
             {"property", "value1,value2", ",", "7", new ArrayList<>(ImmutableList.of("value1", "value2"))},
             {"property", "value1,value2,value3", ",", "7", new ArrayList<>(ImmutableList.of("value1", "value2", "value3"))},
-            {Config.PUPPET_AGENT_PACKAGE, "", ",", "7", new ArrayList<>(ImmutableList.of("puppet-3.5.1-1.el7.noarch"))},
+            {Config.PUPPET_AGENT_PACKAGE, "", ",", "7", new ArrayList<>(ImmutableList.of("puppet-3.8.6-1.el7.noarch"))},
 
             {"property", "value1", "\n", "7", new ArrayList<>(ImmutableList.of("value1"))},
             {"property", "value1\n", "\n", "7", new ArrayList<>(ImmutableList.of("value1"))},
@@ -106,8 +106,8 @@ public class TestConfig {
 
         return new Object[][]{
             {"prop_1", null, config, String.format("value_1.1,$%s,value_4,value_1.2", Config.PUPPET_AGENT_PACKAGE)},  // enclosed variable remained as it because of osVersion = null
-            {"prop_1", "7", config, "value_1.1,puppet-3.5.1-1.el7.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
-            {"prop_2", "7", config, "puppet-3.5.1-1.el7.noarch,value_4"}                      // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_1", "7", config, "value_1.1,puppet-3.8.6-1.el7.noarch,value_4,value_1.2"}, // Config.PUPPET_AGENT_VERSION depends on version
+            {"prop_2", "7", config, "puppet-3.8.6-1.el7.noarch,value_4"}                      // Config.PUPPET_AGENT_VERSION depends on version
             };
     }
 
