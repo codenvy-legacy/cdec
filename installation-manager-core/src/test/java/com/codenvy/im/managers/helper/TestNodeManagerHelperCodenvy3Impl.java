@@ -127,7 +127,7 @@ public class TestNodeManagerHelperCodenvy3Impl extends BaseTest {
                      format("{'command'='if [ \"`yum list installed | grep puppetlabs-release`\" == \"\" ]; then sudo yum -y -q install https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm; fi', 'agent'='{'host'='runner1.hostname', 'port'='22', 'user'='%s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
         assertEquals(commands.get(7).toString(),
-                     format("{'command'='sudo yum -y -q install puppet-3.5.1-1.el7.noarch', 'agent'='{'host'='runner1.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
+                     format("{'command'='sudo yum -y -q install puppet-3.8.6-1.el7.noarch', 'agent'='{'host'='runner1.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",
                             SYSTEM_USER_NAME));
         assertEquals(commands.get(8).toString(),
                      format("{'command'='sudo systemctl enable puppet', 'agent'='{'host'='runner1.hostname', 'port'='22', 'user'='%1$s', 'identity'='[~/.ssh/id_rsa]'}'}",

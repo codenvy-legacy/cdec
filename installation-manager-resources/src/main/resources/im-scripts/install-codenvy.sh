@@ -20,8 +20,8 @@ unset SYSTEM_ADMIN_PASSWORD
 JDK_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jdk-8u45-linux-x64.tar.gz
 JRE_URL=http://download.oracle.com/otn-pub/java/jdk/8u45-b14/jre-8u45-linux-x64.tar.gz
 
-PUPPET_AGENT_PACKAGE=puppet-3.5.1-1.el7.noarch
-PUPPET_SERVER_PACKAGE=puppet-server-3.5.1-1.el7.noarch
+PUPPET_AGENT_PACKAGE=puppet-3.8.6-1.el7.noarch
+PUPPET_SERVER_PACKAGE=puppet-server-3.8.6-1.el7.noarch
 
 EXTERNAL_DEPENDENCIES=("https://codenvy.com||0"
                        "https://install.codenvycorp.com||0"

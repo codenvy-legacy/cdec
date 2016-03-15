@@ -111,10 +111,10 @@ public class Config {
 
     public static final Map<String, Map<String, String>> PROPERTIES_BY_VERSION = new HashMap<String, Map<String, String>>() {{
         put(PUPPET_AGENT_PACKAGE, new HashMap<String, String>() {{
-            put("7", "puppet-3.5.1-1.el7.noarch");
+            put("7", "puppet-3.8.6-1.el7.noarch");
         }});
         put(PUPPET_SERVER_PACKAGE, new HashMap<String, String>() {{
-            put("7", "puppet-server-3.5.1-1.el7.noarch");
+            put("7", "puppet-server-3.8.6-1.el7.noarch");
         }});
         put(PUPPET_RESOURCE_URL, new HashMap<String, String>() {{
             put("7", "https://yum.puppetlabs.com/el/7/products/x86_64/puppetlabs-release-7-11.noarch.rpm");
