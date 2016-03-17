@@ -104,7 +104,7 @@ public class TestSimpleCommand {
         String host = "localhost";
         int port = 22;
         String user = System.getProperty("user.name");
-        Path privateKeyFile = Paths.get(format("/home/%s/.ssh/id_rsa", System.getProperty("user.name")));
+        Path privateKeyFile = Paths.get(System.getProperty("user.home"), "/.ssh/id_rsa");
 
         String expectedResult = format("{'command'='%s', 'agent'='{'host'='%s', 'port'='22', 'user'='%s', 'identity'='[%s]'}'}", command, host, user, privateKeyFile);
 

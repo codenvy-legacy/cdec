@@ -15,9 +15,12 @@
 package com.codenvy.im.commands;
 
 import org.apache.commons.io.FileUtils;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,8 +37,15 @@ public class TestReadRedHatVersionCommand {
 
     @Test
     public void shouldReturnNullIfFileAbsent() throws Exception {
-        Files.delete(RELEASE_FILE);
         assertNull(fetchRedHatVersion());
+    }
+
+    @BeforeMethod
+    @AfterMethod
+    public void clean() throws IOException {
+        if(Files.exists(RELEASE_FILE)) {
+            Files.delete(RELEASE_FILE);
+        }
     }
 
     @Test(dataProvider = "GetTestedVersions")
