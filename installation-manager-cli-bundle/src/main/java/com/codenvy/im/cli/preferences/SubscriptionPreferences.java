@@ -1,9 +1,5 @@
-package com.codenvy.im.cli.preferences;
 /*
- * CODENVY CONFIDENTIAL
- * __________________
- *
- *  [2012] - [2015] Codenvy, S.A.
+ *  2012-2016 Codenvy, S.A.
  *  All Rights Reserved.
  *
  * NOTICE:  All information contained herein is, and remains
@@ -16,7 +12,7 @@ package com.codenvy.im.cli.preferences;
  * is strictly forbidden unless prior written permission is obtained
  * from Codenvy S.A..
  */
-
+package com.codenvy.im.cli.preferences;
 
 /** @author Dmytro Nochevnov */
 public class SubscriptionPreferences {
